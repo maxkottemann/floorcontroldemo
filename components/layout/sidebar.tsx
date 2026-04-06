@@ -5,10 +5,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   HomeIcon,
-  Cog6ToothIcon,
-  UserIcon,
   GlobeAltIcon,
   ChartBarIcon,
+  ClipboardDocumentIcon,
+  BuildingOffice2Icon,
+  UserCircleIcon,
 } from "@heroicons/react/24/outline";
 
 interface SidebarProps {
@@ -59,8 +60,8 @@ export default function Sidebar({ className }: SidebarProps) {
       <nav
         className={`
           fixed top-0 left-0 w-64 lg:w-45 xl:w-64 min-h-screen flex flex-col z-50
-          bg-[#fcfcfd] shadow-lg border-r border-gray-200
-          transition-transform duration-300 
+          bg-[#f2f3f4] shadow-lg border-r border-gray-200
+          transition-transform duration-300 pr-1
           ${open ? "translate-x-0" : "-translate-x-full"}
           lg:translate-x-0 lg:static
           ${className ?? ""}
@@ -78,9 +79,21 @@ export default function Sidebar({ className }: SidebarProps) {
           <ChartBarIcon className="w-5 h-5" />
           Status
         </Link>
+        <Link href="/locaties" className={linkClass("/locaties")}>
+          <BuildingOffice2Icon className="w-5 h-5" />
+          Locaties
+        </Link>
+        <Link href="/vloerpaspoort" className={linkClass("/vloerpaspoort")}>
+          <ClipboardDocumentIcon className="w-5 h-5" />
+          Vloerpaspoort
+        </Link>
         <Link href="/milieu" className={linkClass("/milieu")}>
           <GlobeAltIcon className="w-5 h-5" />
           Milieu
+        </Link>
+        <Link href="/gebruikers" className={linkClass("/gebruikers")}>
+          <UserCircleIcon className="w-5 h-5" />
+          Gebruikers
         </Link>
       </nav>
     </>
