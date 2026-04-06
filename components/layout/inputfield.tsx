@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 
 interface InputfieldProps {
-  id: string;
   title: string;
   placeholder?: string;
   value?: string;
@@ -9,7 +8,6 @@ interface InputfieldProps {
 }
 
 export default function Inputfield({
-  id,
   title,
   placeholder,
   onChange,

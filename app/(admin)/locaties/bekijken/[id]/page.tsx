@@ -127,13 +127,12 @@ export default function LocatieBekijkenPage() {
             </div>
           </Card>
 
-          {/* Navigation card */}
           <Card>
             <p className="text-[10px] uppercase tracking-widest text-slate-400 font-medium mb-4">
               Gerelateerd
             </p>
             <a
-              href={`/locaties/${id}/kamers`}
+              href={`/locaties/kamers/${id}`}
               className="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:border-gray-200 hover:bg-gray-50 transition-all duration-150 group"
             >
               <div className="flex items-center gap-3">
@@ -156,6 +155,69 @@ export default function LocatieBekijkenPage() {
                   <p className="text-sm font-medium text-gray-800">Kamers</p>
                   <p className="text-xs text-gray-400">
                     Bekijk alle kamers van deze locatie
+                  </p>
+                </div>
+              </div>
+              <svg
+                className="w-4 h-4 text-gray-300 group-hover:text-gray-500 transition-colors"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <path d="M9 18l6-6-6-6" />
+              </svg>
+            </a>
+            <a
+              href={`/vloerenpaspoort`}
+              className="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:border-gray-200 hover:bg-gray-50 transition-all duration-150 group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+                  <svg
+                    className="w-4 h-4 text-gray-500"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    viewBox="0 0 24 24"
+                  >
+                    <rect
+                      x="4"
+                      y="2"
+                      width="16"
+                      height="20"
+                      rx="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M4 12h16"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M4 7h16"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M4 17h16"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M8 2v20"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-800">
+                    Vloerenpaspoort
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    Bekijk vloerenpaspoort van deze locatie
                   </p>
                 </div>
               </div>

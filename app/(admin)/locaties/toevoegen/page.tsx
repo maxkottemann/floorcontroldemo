@@ -131,7 +131,6 @@ export default function LocatiesToevoegen() {
 
             <form className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Inputfield
-                id="naam"
                 title="Naam"
                 placeholder="Naam van de locatie"
                 value={naam}
@@ -163,7 +162,6 @@ export default function LocatiesToevoegen() {
               />
 
               <Inputfield
-                id="plaats"
                 title="Plaats"
                 placeholder="Bijv. Amsterdam"
                 value={plaats}
@@ -171,7 +169,6 @@ export default function LocatiesToevoegen() {
               />
 
               <Inputfield
-                id="adres"
                 title="Adres"
                 placeholder="Straatnaam en nummer"
                 value={adres}
@@ -179,7 +176,6 @@ export default function LocatiesToevoegen() {
               />
 
               <Inputfield
-                id="contactpersoon"
                 title="Contactpersoon"
                 placeholder="Naam van contactpersoon"
                 value={contactPersoon}
@@ -187,7 +183,6 @@ export default function LocatiesToevoegen() {
               />
 
               <Inputfield
-                id="telefoonnummer"
                 title="Telefoonnummer"
                 placeholder="06 12345678"
                 value={telefoonnummer}

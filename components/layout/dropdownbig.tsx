@@ -9,6 +9,7 @@ interface DropdownProps {
   value?: string;
   initialValue?: string;
   onChange?: (value: string) => void;
+  className?: string;
 }
 
 export default function DropdownBig({
@@ -18,6 +19,7 @@ export default function DropdownBig({
   placeholder = "Select an option",
   onChange,
   initialValue,
+  className,
 }: DropdownProps) {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
@@ -88,6 +90,7 @@ export default function DropdownBig({
         className={`
           relative rounded-xl border bg-white cursor-pointer
           transition-all duration-200 select-none z-60
+          ${className}
           ${
             open
               ? "border-p shadow-[0_0_0_3px_rgba(15,23,42,0.08)]"
