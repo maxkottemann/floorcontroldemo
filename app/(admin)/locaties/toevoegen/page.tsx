@@ -29,6 +29,19 @@ export default function LocatiesToevoegen() {
   const extraCheckinOptions = ["Ja", "Nee"];
   const perceelOptions = ["Perceel 1", "Perceel 2", "Perceel 3"];
 
+  const [gebouwen, setGebouwen] = useState<string[]>(["Gebouw 1"]);
+
+  const addGebouw = () => setGebouwen([...gebouwen, ""]);
+
+  const updateGebouw = (index: number, value: string) => {
+    const updated = [...gebouwen];
+    updated[index] = value;
+    setGebouwen(updated);
+  };
+
+  const removeGebouw = (index: number) => {
+    setGebouwen(gebouwen.filter((_, i) => i !== index));
+  };
   const router = useRouter();
 
   function checkValues(): boolean {
@@ -93,17 +106,36 @@ export default function LocatiesToevoegen() {
 
     const extraCheckinBoolean = extraCheckin === "Ja" ? true : false;
 
-    const { error: error2 } = await supabase.from("locaties").insert({
-      perceel_id: data.id,
-      naam: naam,
-      type: type,
-      plaats: plaats,
-      adres: adres,
-      extra_checkin: extraCheckinBoolean,
-      contact_persoon: contactPersoon,
-      telefoonnummer: telefoonnummer,
-    });
+    const { data: data2, error: error2 } = await supabase
+      .from("locaties")
+      .insert({
+        perceel_id: data.id,
+        naam: naam,
+        type: type,
+        plaats: plaats,
+        adres: adres,
+        extra_checkin: extraCheckinBoolean,
+        contact_persoon: contactPersoon,
+        telefoonnummer: telefoonnummer,
+      })
+      .select("id")
+      .single();
+
     if (error2) {
+      console.log(error2);
+      showToast("Er ging iets mis, probeer het opnieuw", "error");
+      return;
+    }
+    console.log(data2);
+
+    const { error: error3 } = await supabase.from("bouwdeel").insert(
+      gebouwen.map((gebouw) => ({
+        locatie_id: data2?.id,
+        naam: gebouw,
+      })),
+    );
+
+    if (error3) {
       console.log(error2);
       showToast("Er ging iets mis, probeer het opnieuw", "error");
       return;
@@ -189,6 +221,58 @@ export default function LocatiesToevoegen() {
                 onChange={setTelefoonnummer}
               />
             </form>
+
+            <div className="flex flex-col gap-2 mt-5">
+              {gebouwen.map((gebouw, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <input
+                    value={gebouw}
+                    onChange={(e) => updateGebouw(index, e.target.value)}
+                    placeholder={`Gebouw ${index + 1}`}
+                    className="flex-1 h-9 px-3 text-sm bg-white border border-gray-200 rounded-lg outline-none focus:border-gray-400 focus:ring-2 focus:ring-gray-100 placeholder:text-gray-400 transition-all duration-150"
+                  />
+                  {gebouwen.length > 1 && (
+                    <button
+                      onClick={() => removeGebouw(index)}
+                      className="text-gray-400 hover:text-red-500 transition-colors"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M18 6L6 18M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              ))}
+              <button
+                onClick={addGebouw}
+                className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-600 transition-colors w-fit"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+                Gebouw toevoegen
+              </button>
+            </div>
 
             <div className="mt-8 flex justify-end">
               <MainButton

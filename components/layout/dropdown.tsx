@@ -1,30 +1,27 @@
 "use client";
-
 import { useState, useRef, useEffect } from "react";
 
-interface DropdownProps {
+interface DropdownProps<T> {
   title?: string;
-  options: string[];
+  options: T[];
+  displayKey: keyof T; // which property to show in the UI
+  value?: T | null;
   placeholder?: string;
-  value?: string;
-  initialValue?: string;
-  onChange?: (value: string) => void;
+  onChange?: (selected: T) => void;
   className?: string;
 }
 
-export default function Dropdown({
+export default function Dropdown<T extends object>({
   title,
   options,
+  displayKey,
   value,
   placeholder,
   onChange,
-  initialValue,
   className,
-}: DropdownProps) {
+}: DropdownProps<T>) {
   const [open, setOpen] = useState(false);
-  const [selected, setSelected] = useState<string | null>(
-    value || initialValue || null,
-  );
+  const [selected, setSelected] = useState<T | null>(value || null);
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -38,10 +35,6 @@ export default function Dropdown({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  useEffect(() => {
-    if (value) setSelected(value);
-  }, [value]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!open) {
@@ -68,7 +61,7 @@ export default function Dropdown({
     }
   };
 
-  const selectOption = (option: string) => {
+  const selectOption = (option: T) => {
     setSelected(option);
     setOpen(false);
     setHighlightedIndex(-1);
@@ -77,10 +70,11 @@ export default function Dropdown({
 
   return (
     <div className={`max-w-sm relative ${className}`} ref={ref}>
-      <label className="block mb-1 text-sm font-medium text-gray-700">
-        {title}
-      </label>
-
+      {title && (
+        <label className="block mb-1 text-sm font-medium text-gray-700">
+          {title}
+        </label>
+      )}
       <div
         tabIndex={0}
         onClick={() => setOpen((prev) => !prev)}
@@ -90,9 +84,8 @@ export default function Dropdown({
         <span
           className={`${selected ? "text-gray-900" : "text-gray-400"} text-sm`}
         >
-          {selected || placeholder}
+          {selected ? String(selected[displayKey]) : placeholder}
         </span>
-
         <svg
           className={`w-4 h-4 ml-2 transition-transform ${
             open ? "rotate-180" : ""
@@ -111,7 +104,7 @@ export default function Dropdown({
           <ul className="max-h-60 overflow-auto">
             {options.map((option, index) => (
               <li
-                key={option}
+                key={index}
                 onMouseEnter={() => setHighlightedIndex(index)}
                 onClick={() => selectOption(option)}
                 className={`px-4 py-2 text-sm cursor-pointer transition
@@ -123,7 +116,7 @@ export default function Dropdown({
                   ${selected === option ? "font-semibold bg-gray-100" : ""}
                   hover:bg-blue-50`}
               >
-                {option}
+                {String(option[displayKey])}
               </li>
             ))}
           </ul>

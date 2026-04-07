@@ -132,7 +132,7 @@ export default function LocatieBekijkenPage() {
               Gerelateerd
             </p>
             <a
-              href={`/locaties/kamers/${id}`}
+              href={`/locaties/kamertoevoegen/${id}`}
               className="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:border-gray-200 hover:bg-gray-50 transition-all duration-150 group"
             >
               <div className="flex items-center gap-3">
@@ -152,7 +152,9 @@ export default function LocatieBekijkenPage() {
                   </svg>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-800">Kamers</p>
+                  <p className="text-sm font-medium text-gray-800">
+                    Kamers toevoegen
+                  </p>
                   <p className="text-xs text-gray-400">
                     Bekijk alle kamers van deze locatie
                   </p>
