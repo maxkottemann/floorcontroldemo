@@ -17,7 +17,7 @@ export default function Inputfield({
   const [value, setValue] = useState("");
 
   useEffect(() => {
-    if (initialValue) setValue(initialValue);
+    setValue(initialValue ?? "");
   }, [initialValue]);
 
   const hasContent = value.length > 0;

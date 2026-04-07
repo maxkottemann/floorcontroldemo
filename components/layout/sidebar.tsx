@@ -11,6 +11,7 @@ import {
   BuildingOffice2Icon,
   UserCircleIcon,
 } from "@heroicons/react/24/outline";
+import { BsPassport } from "react-icons/bs";
 
 interface SidebarProps {
   className?: string;
@@ -83,8 +84,12 @@ export default function Sidebar({ className }: SidebarProps) {
           <BuildingOffice2Icon className="w-5 h-5" />
           Locaties
         </Link>
-        <Link href="/vloerpaspoort" className={linkClass("/vloerpaspoort")}>
+        <Link href="/projecten" className={linkClass("/projecten")}>
           <ClipboardDocumentIcon className="w-5 h-5" />
+          Projecten
+        </Link>
+        <Link href="/vloerpaspoort" className={linkClass("/vloerpaspoort")}>
+          <BsPassport className="w-5 h-5" />
           Vloerpaspoort
         </Link>
         <Link href="/milieu" className={linkClass("/milieu")}>

@@ -1,27 +1,48 @@
 "use client";
-import Card from "@/components/layout/card";
 import Sidebar from "@/components/layout/sidebar";
 import Topbar from "@/components/layout/topbar";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/hooks/usetoasts";
 import Toast from "@/components/layout/toast";
 import { useParams } from "next/navigation";
 import { Locatie } from "@/types/locatie";
+import {
+  MapPinIcon,
+  BuildingOfficeIcon,
+  PhoneIcon,
+  UserIcon,
+  CheckBadgeIcon,
+  ChevronRightIcon,
+  PencilSquareIcon,
+  HomeModernIcon,
+  DocumentTextIcon,
+} from "@heroicons/react/24/outline";
 
-function InfoBlock({ label, value }: { label: string; value?: string }) {
+function InfoBlock({
+  label,
+  value,
+  icon: Icon,
+}: {
+  label: string;
+  value?: string;
+  icon?: React.ElementType;
+}) {
   return (
-    <div className="flex flex-col gap-1">
-      <p className="text-[10px] uppercase tracking-widest text-slate-400 font-medium">
+    <div className="flex flex-col gap-1.5">
+      <p className="text-[10px] uppercase tracking-widest text-gray-400 font-medium">
         {label}
       </p>
-      <p className="text-sm font-medium text-slate-800">{value || "—"}</p>
+      <div className="flex items-center gap-2">
+        {Icon && <Icon className="w-4 h-4 text-[#154273] shrink-0" />}
+        <p className="text-sm font-semibold text-gray-800">{value || "—"}</p>
+      </div>
     </div>
   );
 }
 
 export default function LocatieBekijkenPage() {
-  const { toast, showToast, hideToast } = useToast();
+  const { toast, hideToast } = useToast();
   const { id } = useParams();
   const [locatie, setLocatie] = useState<Locatie>();
 
@@ -35,7 +56,6 @@ export default function LocatieBekijkenPage() {
         )
         .eq("id", id)
         .single();
-      console.log(data);
 
       if (error) {
         console.error(error);
@@ -53,7 +73,7 @@ export default function LocatieBekijkenPage() {
   }, [id]);
 
   return (
-    <div className="min-h-screen flex bg-gray-50">
+    <div className="min-h-screen flex bg-[#F5F6FA]">
       <Sidebar className="fixed top-0 left-0 h-screen" />
       {toast && (
         <Toast message={toast.message} type={toast.type} onClose={hideToast} />
@@ -62,178 +82,160 @@ export default function LocatieBekijkenPage() {
       <div className="flex flex-col flex-1 h-screen">
         <Topbar title="Locatie bekijken" />
 
-        <main className="flex-1 overflow-auto p-6 space-y-4">
-          <Card>
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-[10px] uppercase tracking-widest text-slate-400 font-medium mb-2">
-                  Locatie
-                </p>
-                <div className="flex items-center gap-3 flex-wrap">
-                  <h2 className="text-2xl font-bold text-slate-800">
+        <main className="flex-1 overflow-auto p-8">
+          <div className="flex flex-col gap-6">
+            <div>
+              <p className="text-xs font-semibold tracking-widest text-[#154273] uppercase mb-1">
+                Locatie
+              </p>
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
                     {locatie?.naam ?? "—"}
-                  </h2>
-                  {locatie?.extra_checkin && (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-orange-50 text-orange-500 border border-orange-100 uppercase tracking-wider">
-                      Extra check-in
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-2 mt-2">
-                  <span className="text-xs text-gray-400 uppercase tracking-widest font-medium">
-                    {locatie?.type}
-                  </span>
-                  <span className="text-gray-300">•</span>
-                  <span className="text-xs font-medium text-gray-500">
-                    {locatie?.perceel || "Onbekend"}
-                  </span>
-                </div>
-              </div>
+                  </h1>
+                  <div className="flex items-center gap-2 mt-2">
+                    {locatie?.type && (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold bg-[#154273]/10 text-[#154273] border border-[#154273]/20">
+                        {locatie.type}
+                      </span>
+                    )}
+                    {locatie?.extra_checkin && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
+                        <CheckBadgeIcon className="w-3.5 h-3.5" />
+                        Extra check-in
+                      </span>
+                    )}
+                  </div>
 
-              <a href={`/locaties/bewerken/${id}`}>
-                <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:border-gray-300 hover:bg-gray-50 transition-all duration-150 cursor-pointer">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="13"
-                    height="13"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                  </svg>
-                  Wijzigen
-                </button>
-              </a>
+                  <div className="flex flex-wrap gap-3 mt-4">
+                    {locatie?.adres && (
+                      <div className="inline-flex items-center gap-2 px-3 py-2 bg-white border border-gray-100 rounded-lg shadow-sm text-sm text-gray-700">
+                        <MapPinIcon className="w-4 h-4 text-[#154273] shrink-0" />
+                        <span className="font-medium">{locatie.adres}</span>
+                        {locatie.plaats && (
+                          <span className="text-gray-400">
+                            · {locatie.plaats}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    {locatie?.perceel && (
+                      <div className="inline-flex items-center gap-2 px-3 py-2 bg-white border border-gray-100 rounded-lg shadow-sm text-sm text-gray-700">
+                        <BuildingOfficeIcon className="w-4 h-4 text-[#154273] shrink-0" />
+                        <span className="font-medium">{locatie.perceel}</span>
+                      </div>
+                    )}
+                    {locatie?.contact_persoon && (
+                      <div className="inline-flex items-center gap-2 px-3 py-2 bg-white border border-gray-100 rounded-lg shadow-sm text-sm text-gray-700">
+                        <UserIcon className="w-4 h-4 text-[#154273] shrink-0" />
+                        <span className="font-medium">
+                          {locatie.contact_persoon}
+                        </span>
+                      </div>
+                    )}
+                    {locatie?.telefoonnummer && (
+                      <div className="inline-flex items-center gap-2 px-3 py-2 bg-white border border-gray-100 rounded-lg shadow-sm text-sm text-gray-700">
+                        <PhoneIcon className="w-4 h-4 text-[#154273] shrink-0" />
+                        <span className="font-medium">
+                          {locatie.telefoonnummer}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <a href={`/locaties/bewerken/${id}`}>
+                  <button className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-sm font-semibold text-gray-700 rounded-xl shadow-sm transition-colors whitespace-nowrap">
+                    <PencilSquareIcon className="w-4 h-4" />
+                    Wijzigen
+                  </button>
+                </a>
+              </div>
             </div>
-          </Card>
 
-          <Card>
-            <div className="grid grid-cols-2 gap-x-8 gap-y-6">
-              <InfoBlock label="Plaats" value={locatie?.plaats} />
-              <InfoBlock label="Adres" value={locatie?.adres} />
-              <InfoBlock
-                label="Contactpersoon"
-                value={locatie?.contact_persoon}
-              />
-              <InfoBlock
-                label="Telefoonnummer"
-                value={locatie?.telefoonnummer}
-              />
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              <div className="px-6 py-5 border-b border-gray-50">
+                <h2 className="text-base font-semibold text-gray-900">
+                  Locatiegegevens
+                </h2>
+                <p className="text-sm text-gray-400 mt-0.5">
+                  Contactinformatie en adresgegevens
+                </p>
+              </div>
+              <div className="p-6">
+                <div className="grid grid-cols-2 gap-x-8 gap-y-6">
+                  <InfoBlock
+                    label="Plaats"
+                    value={locatie?.plaats}
+                    icon={MapPinIcon}
+                  />
+                  <InfoBlock
+                    label="Adres"
+                    value={locatie?.adres}
+                    icon={MapPinIcon}
+                  />
+                  <InfoBlock
+                    label="Contactpersoon"
+                    value={locatie?.contact_persoon}
+                    icon={UserIcon}
+                  />
+                  <InfoBlock
+                    label="Telefoonnummer"
+                    value={locatie?.telefoonnummer}
+                    icon={PhoneIcon}
+                  />
+                </div>
+              </div>
             </div>
-          </Card>
 
-          <Card>
-            <p className="text-[10px] uppercase tracking-widest text-slate-400 font-medium mb-4">
-              Gerelateerd
-            </p>
-            <a
-              href={`/locaties/kamertoevoegen/${id}`}
-              className="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:border-gray-200 hover:bg-gray-50 transition-all duration-150 group"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
-                  <svg
-                    className="w-4 h-4 text-gray-500"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-800">
-                    Kamers toevoegen
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    Bekijk alle kamers van deze locatie
-                  </p>
-                </div>
+            {/* Gerelateerd */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              <div className="px-5 py-4 border-b border-gray-50">
+                <h2 className="text-base font-semibold text-gray-900">
+                  Gerelateerd
+                </h2>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  Navigeer naar gerelateerde pagina's
+                </p>
               </div>
-              <svg
-                className="w-4 h-4 text-gray-300 group-hover:text-gray-500 transition-colors"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-              >
-                <path d="M9 18l6-6-6-6" />
-              </svg>
-            </a>
-            <a
-              href={`/vloerenpaspoort`}
-              className="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:border-gray-200 hover:bg-gray-50 transition-all duration-150 group"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
-                  <svg
-                    className="w-4 h-4 text-gray-500"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    viewBox="0 0 24 24"
-                  >
-                    <rect
-                      x="4"
-                      y="2"
-                      width="16"
-                      height="20"
-                      rx="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M4 12h16"
-                    />
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M4 7h16"
-                    />
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M4 17h16"
-                    />
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M8 2v20"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-800">
-                    Vloerenpaspoort
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    Bekijk vloerenpaspoort van deze locatie
-                  </p>
-                </div>
+              <div className="divide-y divide-gray-50">
+                <a
+                  href={`/locaties/kamertoevoegen/${id}`}
+                  className="flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 transition-colors group"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-[#154273]/10 flex items-center justify-center shrink-0 group-hover:bg-[#154273]/20 transition-colors">
+                    <HomeModernIcon className="w-4 h-4 text-[#154273]" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-800">
+                      Kamers toevoegen
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      Bekijk alle kamers van deze locatie
+                    </p>
+                  </div>
+                  <ChevronRightIcon className="w-4 h-4 text-gray-200 group-hover:text-[#154273] shrink-0 transition-colors" />
+                </a>
+                <a
+                  href={`/vloerenpaspoort`}
+                  className="flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 transition-colors group"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-[#154273]/10 flex items-center justify-center shrink-0 group-hover:bg-[#154273]/20 transition-colors">
+                    <DocumentTextIcon className="w-4 h-4 text-[#154273]" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-800">
+                      Vloerenpaspoort
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      Bekijk vloerenpaspoort van deze locatie
+                    </p>
+                  </div>
+                  <ChevronRightIcon className="w-4 h-4 text-gray-200 group-hover:text-[#154273] shrink-0 transition-colors" />
+                </a>
               </div>
-              <svg
-                className="w-4 h-4 text-gray-300 group-hover:text-gray-500 transition-colors"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-              >
-                <path d="M9 18l6-6-6-6" />
-              </svg>
-            </a>
-          </Card>
+            </div>
+          </div>
         </main>
       </div>
     </div>

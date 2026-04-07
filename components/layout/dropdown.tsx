@@ -36,6 +36,10 @@ export default function Dropdown<T extends object>({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    setSelected(value ?? null);
+  }, [value]);
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!open) {
       if (e.key === "Enter" || e.key === " ") setOpen(true);
@@ -107,7 +111,7 @@ export default function Dropdown<T extends object>({
                 key={index}
                 onMouseEnter={() => setHighlightedIndex(index)}
                 onClick={() => selectOption(option)}
-                className={`px-4 py-2 text-sm cursor-pointer transition
+                className={`px-4 py-2 text-sm cursor-pointer transition 
                   ${
                     highlightedIndex === index
                       ? "bg-blue-50 text-blue-600"
