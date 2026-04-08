@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import MainButton from "@/components/layout/mainbutton";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
+import DropdownString from "@/components/layout/dropdownstrings";
 
 interface locatie {
   id: string;
@@ -141,7 +142,7 @@ export default function locatiePage() {
                   className="w-full h-9 pl-9 pr-3 text-sm bg-white border border-gray-200 rounded-lg outline-none focus:border-gray-400 focus:ring-2 focus:ring-gray-100 placeholder:text-gray-400 transition-all duration-150"
                 />
               </div>
-              <Dropdown
+              <DropdownString
                 className="w-52"
                 placeholder="Selecteer een perceel"
                 options={allePercelen.map((p) => p.naam)}
@@ -154,7 +155,7 @@ export default function locatiePage() {
                   ""
                 }
               />
-              <Dropdown
+              <DropdownString
                 placeholder="Locatie type"
                 className="w-40"
                 options={["Type 1", "Type 2", "Type 3"]}

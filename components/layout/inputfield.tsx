@@ -5,6 +5,7 @@ interface InputfieldProps {
   placeholder?: string;
   value?: string;
   onChange?: (value: string) => void;
+  className?: string;
 }
 
 export default function Inputfield({
@@ -12,6 +13,7 @@ export default function Inputfield({
   placeholder,
   onChange,
   value: initialValue,
+  className,
 }: InputfieldProps) {
   const [focused, setFocused] = useState(false);
   const [value, setValue] = useState("");
@@ -58,10 +60,11 @@ export default function Inputfield({
             setValue(e.target.value);
             onChange?.(e.target.value);
           }}
-          className="
+          className={`
             w-full rounded-xl bg-transparent px-4 pb-3 pt-5 text-sm
             text-slate-900 placeholder-slate-300 outline-none
-          "
+            ${className}
+          `}
         />
 
         <div

@@ -1,27 +1,25 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 
-interface DropdownProps<T> {
+interface DropdownStringProps {
   title?: string;
-  options: T[];
-  displayKey: keyof T;
-  value?: T | null;
+  options: string[];
+  value?: string | null;
   placeholder?: string;
-  onChange?: (selected: T) => void;
+  onChange?: (selected: string) => void;
   className?: string;
 }
 
-export default function Dropdown<T extends object>({
+export default function DropdownString({
   title,
   options,
-  displayKey,
   value,
   placeholder,
   onChange,
   className,
-}: DropdownProps<T>) {
+}: DropdownStringProps) {
   const [open, setOpen] = useState(false);
-  const [selected, setSelected] = useState<T | null>(value || null);
+  const [selected, setSelected] = useState<string | null>(value ?? null);
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -65,7 +63,7 @@ export default function Dropdown<T extends object>({
     }
   };
 
-  const selectOption = (option: T) => {
+  const selectOption = (option: string) => {
     setSelected(option);
     setOpen(false);
     setHighlightedIndex(-1);
@@ -88,7 +86,7 @@ export default function Dropdown<T extends object>({
         <span
           className={`${selected ? "text-gray-900" : "text-gray-400"} text-sm`}
         >
-          {selected ? String(selected[displayKey]) : placeholder}
+          {selected ?? placeholder}
         </span>
         <svg
           className={`w-4 h-4 ml-2 transition-transform ${
@@ -120,7 +118,7 @@ export default function Dropdown<T extends object>({
                   ${selected === option ? "font-semibold bg-gray-100" : ""}
                   hover:bg-blue-50`}
               >
-                {String(option[displayKey])}
+                {option}
               </li>
             ))}
           </ul>

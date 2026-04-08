@@ -192,7 +192,7 @@ export default function getKamersPage({}) {
       const { data } = await supabase
         .from("locaties")
         .select(
-          "naam,type,plaats,adres,contact_persoon, telefoonnummer, percelen!inner(naam)",
+          "id, naam,type,plaats,adres,contact_persoon, telefoonnummer, percelen!inner(naam)",
         )
         .eq("id", id)
         .single();
@@ -205,6 +205,7 @@ export default function getKamersPage({}) {
         contact_persoon: data?.contact_persoon,
         telefoonnummer: data?.telefoonnummer,
         perceel: (data?.percelen as any)?.naam,
+        id: data?.id,
       });
     }
     fetchLocatieData();
@@ -298,11 +299,12 @@ export default function getKamersPage({}) {
 
                 <div className="p-6 space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="md:col-span-1 mt-1">
+                    <div className="md:col-span-1">
                       <Inputfield
                         value={naam}
                         onChange={(e) => setNaam(e)}
                         title="Kamernaam"
+                        className="pb-5"
                       />
                     </div>
                     <div>
