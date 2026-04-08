@@ -12,7 +12,7 @@ import {
 
 interface SelectItem {
   id: string;
-  naam?: string;
+  naam: string;
 }
 
 interface Bouwdeel extends SelectItem {
@@ -24,8 +24,10 @@ interface Verdieping extends SelectItem {
 interface Kamer extends SelectItem {
   verdieping_id: string;
 }
-interface Kamervloer extends SelectItem {
+interface Kamervloer {
+  id: string;
   kamer_id: string;
+  naam?: string;
   vloertype_naam?: string;
   vierkante_meter?: number;
   status?: string;
@@ -36,7 +38,6 @@ interface SelectedState {
   alleKamersPerBouwdeel: Record<string, boolean>;
   verdiepingIds: string[];
   alleKamersPerVerdieping: Record<string, boolean>;
-  kamerIds: string[];
   vloerIds: string[];
 }
 
@@ -66,55 +67,13 @@ function Toggle({
           e.stopPropagation();
           onChange(!enabled);
         }}
-        className={`relative w-8 h-4 rounded-full transition-colors duration-200 ${
-          enabled ? "bg-p" : "bg-slate-200"
-        }`}
+        className={`relative w-8 h-4 rounded-full transition-colors duration-200 ${enabled ? "bg-p" : "bg-slate-200"}`}
       >
         <div
-          className={`absolute top-0.5 w-3 h-3 rounded-full bg-white shadow transition-transform duration-200 ${
-            enabled ? "translate-x-4" : "translate-x-0.5"
-          }`}
+          className={`absolute top-0.5 w-3 h-3 rounded-full bg-white shadow transition-transform duration-200 ${enabled ? "translate-x-4" : "translate-x-0.5"}`}
         />
       </div>
     </label>
-  );
-}
-
-function SelectRow({
-  icon,
-  label,
-  sub,
-  selected,
-  onClick,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  sub?: string;
-  selected: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <div
-      onClick={onClick}
-      className={`flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer transition-all duration-150 group
-        ${selected ? "bg-p/8 border border-p/20" : "border border-transparent hover:bg-slate-50"}`}
-    >
-      <div
-        className={`w-6 h-6 rounded-md flex items-center justify-center shrink-0 transition-colors
-          ${selected ? "bg-p/15 text-p" : "bg-slate-100 text-slate-400 group-hover:bg-slate-200"}`}
-      >
-        {icon}
-      </div>
-      <div className="flex-1 min-w-0">
-        <p
-          className={`text-sm font-medium truncate ${selected ? "text-p" : "text-slate-700"}`}
-        >
-          {label}
-        </p>
-        {sub && <p className="text-xs text-slate-400 truncate">{sub}</p>}
-      </div>
-      {selected && <CheckIcon className="w-3.5 h-3.5 text-p shrink-0" />}
-    </div>
   );
 }
 
@@ -126,14 +85,30 @@ export default function BouwdeelTree({
   selected,
   onChange,
 }: BouwdeelTreeProps) {
+  const [expandedKamerIds, setExpandedKamerIds] = useState<string[]>([]);
+
+  const toggleKamerExpand = (id: string) => {
+    setExpandedKamerIds((prev) =>
+      prev.includes(id) ? prev.filter((k) => k !== id) : [...prev, id],
+    );
+  };
+
   const toggleBouwdeel = (id: string) => {
     const isSelected = selected.bouwdeelIds.includes(id);
     const bouwdeelIds = isSelected
       ? selected.bouwdeelIds.filter((b) => b !== id)
       : [...selected.bouwdeelIds, id];
 
-    // clean up children if deselected
     const alleKamersPerBouwdeel = { ...selected.alleKamersPerBouwdeel };
+    const alleKamersPerVerdieping = { ...selected.alleKamersPerVerdieping };
+
+    if (isSelected) {
+      delete alleKamersPerBouwdeel[id];
+      alleVerdiepingen
+        .filter((v) => v.bouwdeel_id === id)
+        .forEach((v) => delete alleKamersPerVerdieping[v.id]);
+    }
+
     const verdiepingIds = isSelected
       ? selected.verdiepingIds.filter(
           (v) =>
@@ -143,13 +118,24 @@ export default function BouwdeelTree({
         )
       : selected.verdiepingIds;
 
-    if (isSelected) delete alleKamersPerBouwdeel[id];
+    const vloerIds = isSelected
+      ? selected.vloerIds.filter((vid) => {
+          const vloer = alleKamersvloeren.find((v) => v.id === vid);
+          const kamer = alleKamers.find((k) => k.id === vloer?.kamer_id);
+          const verd = alleVerdiepingen.find(
+            (v) => v.id === kamer?.verdieping_id,
+          );
+          return verd?.bouwdeel_id !== id;
+        })
+      : selected.vloerIds;
 
     onChange({
       ...selected,
       bouwdeelIds,
       alleKamersPerBouwdeel,
+      alleKamersPerVerdieping,
       verdiepingIds,
+      vloerIds,
     });
   };
 
@@ -163,23 +149,24 @@ export default function BouwdeelTree({
     });
   };
 
-  const toggleVerdieping = (id: string, bouwdeelId: string) => {
+  const toggleVerdieping = (id: string) => {
     const isSelected = selected.verdiepingIds.includes(id);
     const verdiepingIds = isSelected
       ? selected.verdiepingIds.filter((v) => v !== id)
       : [...selected.verdiepingIds, id];
 
     const alleKamersPerVerdieping = { ...selected.alleKamersPerVerdieping };
-    const kamerIds = isSelected
-      ? selected.kamerIds.filter(
-          (k) =>
-            !alleKamers.find((ak) => ak.id === k && ak.verdieping_id === id),
-        )
-      : selected.kamerIds;
-
     if (isSelected) delete alleKamersPerVerdieping[id];
 
-    onChange({ ...selected, verdiepingIds, alleKamersPerVerdieping, kamerIds });
+    const vloerIds = isSelected
+      ? selected.vloerIds.filter((vid) => {
+          const vloer = alleKamersvloeren.find((v) => v.id === vid);
+          const kamer = alleKamers.find((k) => k.id === vloer?.kamer_id);
+          return kamer?.verdieping_id !== id;
+        })
+      : selected.vloerIds;
+
+    onChange({ ...selected, verdiepingIds, alleKamersPerVerdieping, vloerIds });
   };
 
   const toggleAlleKamersPerVerdieping = (
@@ -193,22 +180,6 @@ export default function BouwdeelTree({
         [verdiepingId]: value,
       },
     });
-  };
-
-  const toggleKamer = (id: string) => {
-    const isSelected = selected.kamerIds.includes(id);
-    const kamerIds = isSelected
-      ? selected.kamerIds.filter((k) => k !== id)
-      : [...selected.kamerIds, id];
-
-    const vloerIds = isSelected
-      ? selected.vloerIds.filter(
-          (v) =>
-            !alleKamersvloeren.find((av) => av.id === v && av.kamer_id === id),
-        )
-      : selected.vloerIds;
-
-    onChange({ ...selected, kamerIds, vloerIds });
   };
 
   const toggleVloer = (id: string) => {
@@ -228,14 +199,14 @@ export default function BouwdeelTree({
   }
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-2">
       <p className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-2">
         Bouwdelen & verdiepingen
       </p>
 
       {alleBouwdelen.map((bouwdeel) => {
         const isBouwdeelSelected = selected.bouwdeelIds.includes(bouwdeel.id);
-        const alleKamers_bouwdeel =
+        const alleVloeren_bouwdeel =
           selected.alleKamersPerBouwdeel[bouwdeel.id] ?? false;
         const verdiepingen = alleVerdiepingen.filter(
           (v) => v.bouwdeel_id === bouwdeel.id,
@@ -246,15 +217,16 @@ export default function BouwdeelTree({
             key={bouwdeel.id}
             className="rounded-xl border border-slate-100 overflow-hidden"
           >
-            {/* Bouwdeel row */}
-            <div className="flex items-center gap-2 px-3 py-2 bg-slate-50">
+            {/* Bouwdeel */}
+            <div
+              className={`flex items-center gap-2 px-3 py-2.5 transition-colors ${isBouwdeelSelected ? "bg-p/5" : "bg-slate-50"}`}
+            >
               <div
                 onClick={() => toggleBouwdeel(bouwdeel.id)}
-                className={`flex items-center gap-2.5 flex-1 cursor-pointer rounded-lg transition-all duration-150 group`}
+                className="flex items-center gap-2.5 flex-1 cursor-pointer"
               >
                 <div
-                  className={`w-6 h-6 rounded-md flex items-center justify-center shrink-0 transition-colors
-                    ${isBouwdeelSelected ? "bg-p/15 text-p" : "bg-slate-200 text-slate-400"}`}
+                  className={`w-6 h-6 rounded-md flex items-center justify-center shrink-0 transition-colors ${isBouwdeelSelected ? "bg-p/15 text-p" : "bg-slate-200 text-slate-400"}`}
                 >
                   <BuildingOfficeIcon className="w-3.5 h-3.5" />
                 </div>
@@ -267,25 +239,24 @@ export default function BouwdeelTree({
                   <CheckIcon className="w-3.5 h-3.5 text-p" />
                 )}
               </div>
-
               {isBouwdeelSelected && (
                 <Toggle
-                  enabled={alleKamers_bouwdeel}
+                  enabled={alleVloeren_bouwdeel}
                   onChange={(v) => toggleAlleKamersPerBouwdeel(bouwdeel.id, v)}
-                  label="Alle kamers"
+                  label="Alle vloeren"
                 />
               )}
             </div>
 
             {/* Verdiepingen */}
             {isBouwdeelSelected &&
-              !alleKamers_bouwdeel &&
+              !alleVloeren_bouwdeel &&
               verdiepingen.length > 0 && (
                 <div className="p-2 space-y-1 border-t border-slate-100">
                   {verdiepingen.map((verdieping) => {
                     const isVerdiepingSelected =
                       selected.verdiepingIds.includes(verdieping.id);
-                    const alleKamers_verdieping =
+                    const alleVloeren_verdieping =
                       selected.alleKamersPerVerdieping[verdieping.id] ?? false;
                     const kamers = alleKamers.filter(
                       (k) => k.verdieping_id === verdieping.id,
@@ -294,24 +265,23 @@ export default function BouwdeelTree({
                     return (
                       <div
                         key={verdieping.id}
-                        className="ml-4 rounded-lg border border-slate-100 overflow-hidden"
+                        className="ml-3 rounded-lg border border-slate-100 overflow-hidden"
                       >
-                        {/* Verdieping row */}
-                        <div className="flex items-center gap-2 px-2 py-1.5 bg-white">
+                        {/* Verdieping */}
+                        <div
+                          className={`flex items-center gap-2 px-2 py-2 transition-colors ${isVerdiepingSelected ? "bg-p/5" : "bg-white"}`}
+                        >
                           <div
-                            onClick={() =>
-                              toggleVerdieping(verdieping.id, bouwdeel.id)
-                            }
+                            onClick={() => toggleVerdieping(verdieping.id)}
                             className="flex items-center gap-2 flex-1 cursor-pointer"
                           >
                             <div
-                              className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 transition-colors
-                              ${isVerdiepingSelected ? "bg-p/15 text-p" : "bg-slate-100 text-slate-400"}`}
+                              className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 transition-colors ${isVerdiepingSelected ? "bg-p/15 text-p" : "bg-slate-100 text-slate-400"}`}
                             >
                               <Square3Stack3DIcon className="w-3 h-3" />
                             </div>
                             <p
-                              className={`text-xs font-medium ${isVerdiepingSelected ? "text-p" : "text-slate-600"}`}
+                              className={`text-xs font-semibold ${isVerdiepingSelected ? "text-p" : "text-slate-600"}`}
                             >
                               {verdieping.naam}
                             </p>
@@ -319,56 +289,61 @@ export default function BouwdeelTree({
                               <CheckIcon className="w-3 h-3 text-p" />
                             )}
                           </div>
-
                           {isVerdiepingSelected && (
                             <Toggle
-                              enabled={alleKamers_verdieping}
+                              enabled={alleVloeren_verdieping}
                               onChange={(v) =>
                                 toggleAlleKamersPerVerdieping(verdieping.id, v)
                               }
-                              label="Alle kamers"
+                              label="Alle vloeren"
                             />
                           )}
                         </div>
 
-                        {/* Kamers */}
+                        {/* Kamers — grouping only, expandable */}
                         {isVerdiepingSelected &&
-                          !alleKamers_verdieping &&
+                          !alleVloeren_verdieping &&
                           kamers.length > 0 && (
-                            <div className="px-2 pb-2 pt-1 space-y-1 border-t border-slate-50 bg-slate-50/50">
+                            <div className="border-t border-slate-50 bg-slate-50/40 px-2 py-1.5 space-y-1">
                               {kamers.map((kamer) => {
-                                const isKamerSelected =
-                                  selected.kamerIds.includes(kamer.id);
                                 const vloeren = alleKamersvloeren.filter(
                                   (v) => v.kamer_id === kamer.id,
                                 );
+                                const isExpanded = expandedKamerIds.includes(
+                                  kamer.id,
+                                );
+                                const selectedCount = vloeren.filter((v) =>
+                                  selected.vloerIds.includes(v.id),
+                                ).length;
 
                                 return (
-                                  <div key={kamer.id} className="ml-3">
+                                  <div key={kamer.id} className="ml-2">
+                                    {/* Kamer header — expand only */}
                                     <div
-                                      onClick={() => toggleKamer(kamer.id)}
-                                      className={`flex items-center gap-2 px-2 py-1.5 rounded-lg cursor-pointer transition-colors
-                                    ${isKamerSelected ? "bg-p/8 border border-p/15" : "border border-transparent hover:bg-white"}`}
+                                      onClick={() =>
+                                        toggleKamerExpand(kamer.id)
+                                      }
+                                      className="flex items-center gap-2 px-2 py-1.5 rounded-lg cursor-pointer hover:bg-white transition-colors group"
                                     >
-                                      <div
-                                        className={`w-4 h-4 rounded flex items-center justify-center shrink-0
-                                      ${isKamerSelected ? "bg-p/15 text-p" : "bg-slate-200 text-slate-400"}`}
-                                      >
+                                      <div className="w-4 h-4 rounded flex items-center justify-center shrink-0 bg-slate-200 text-slate-400 group-hover:bg-slate-300 transition-colors">
                                         <HomeModernIcon className="w-2.5 h-2.5" />
                                       </div>
-                                      <p
-                                        className={`text-xs font-medium flex-1 ${isKamerSelected ? "text-p" : "text-slate-600"}`}
-                                      >
+                                      <p className="text-xs font-medium text-slate-600 flex-1">
                                         {kamer.naam}
                                       </p>
-                                      {isKamerSelected && (
-                                        <CheckIcon className="w-3 h-3 text-p" />
+                                      {selectedCount > 0 && (
+                                        <span className="text-[10px] font-bold text-p bg-p/10 px-1.5 py-0.5 rounded-full">
+                                          {selectedCount}/{vloeren.length}
+                                        </span>
                                       )}
+                                      <ChevronDownIcon
+                                        className={`w-3 h-3 text-slate-300 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}
+                                      />
                                     </div>
 
-                                    {/* Vloeren */}
-                                    {isKamerSelected && vloeren.length > 0 && (
-                                      <div className="ml-4 mt-1 space-y-0.5">
+                                    {/* Vloeren — primary selectable */}
+                                    {isExpanded && vloeren.length > 0 && (
+                                      <div className="ml-4 mt-0.5 mb-1 space-y-0.5">
                                         {vloeren.map((vloer) => {
                                           const isVloerSelected =
                                             selected.vloerIds.includes(
@@ -380,28 +355,29 @@ export default function BouwdeelTree({
                                               onClick={() =>
                                                 toggleVloer(vloer.id)
                                               }
-                                              className={`flex items-center gap-2 px-2 py-1 rounded-md cursor-pointer transition-colors
-                                            ${isVloerSelected ? "bg-p/8 border border-p/15" : "border border-transparent hover:bg-white"}`}
+                                              className={`flex items-center gap-2 px-2 py-1.5 rounded-lg cursor-pointer transition-all duration-150
+                                            ${isVloerSelected ? "bg-p/8 border border-p/20" : "border border-transparent hover:bg-white hover:border-slate-100"}`}
                                             >
                                               <div
-                                                className={`w-3.5 h-3.5 rounded flex items-center justify-center shrink-0
-                                              ${isVloerSelected ? "bg-p/15 text-p" : "bg-slate-200 text-slate-400"}`}
+                                                className={`w-3.5 h-3.5 rounded flex items-center justify-center shrink-0 transition-colors ${isVloerSelected ? "bg-p/15 text-p" : "bg-slate-200 text-slate-400"}`}
                                               >
                                                 <SwatchIcon className="w-2 h-2" />
                                               </div>
                                               <p
-                                                className={`text-xs flex-1 ${isVloerSelected ? "text-p font-medium" : "text-slate-500"}`}
+                                                className={`text-xs flex-1 font-medium ${isVloerSelected ? "text-p" : "text-slate-500"}`}
                                               >
                                                 {vloer.vloertype_naam ??
                                                   vloer.naam}
                                                 {vloer.vierkante_meter && (
-                                                  <span className="text-slate-400 font-normal ml-1">
+                                                  <span
+                                                    className={`font-normal ml-1 ${isVloerSelected ? "text-p/60" : "text-slate-400"}`}
+                                                  >
                                                     · {vloer.vierkante_meter}m²
                                                   </span>
                                                 )}
                                               </p>
                                               {isVloerSelected && (
-                                                <CheckIcon className="w-2.5 h-2.5 text-p" />
+                                                <CheckIcon className="w-3 h-3 text-p shrink-0" />
                                               )}
                                             </div>
                                           );

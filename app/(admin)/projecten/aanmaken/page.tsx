@@ -27,7 +27,6 @@ interface SelectedState {
   alleKamersPerBouwdeel: Record<string, boolean>;
   verdiepingIds: string[];
   alleKamersPerVerdieping: Record<string, boolean>;
-  kamerIds: string[];
   vloerIds: string[];
 }
 
@@ -100,6 +99,7 @@ export default function ProjectenOverzichtPage() {
 
   const [projectnaam, setProjectnaam] = useState("");
   const [beschrijving, setBeschrijving] = useState("");
+  const [opmerking, setOpmerking] = useState("");
 
   const [alleLocaties, setAlleLocaties] = useState<Locatie[]>([]);
   const [alleBouwdelen, setAlleBouwdelen] = useState<bouwdeel[]>([]);
@@ -113,7 +113,6 @@ export default function ProjectenOverzichtPage() {
     alleKamersPerBouwdeel: {},
     verdiepingIds: [],
     alleKamersPerVerdieping: {},
-    kamerIds: [],
     vloerIds: [],
   });
 
@@ -134,7 +133,6 @@ export default function ProjectenOverzichtPage() {
         alleKamersPerBouwdeel: {},
         verdiepingIds: [],
         alleKamersPerVerdieping: {},
-        kamerIds: [],
         vloerIds: [],
       });
 
@@ -252,9 +250,80 @@ export default function ProjectenOverzichtPage() {
   const totalSelected =
     selected.bouwdeelIds.length +
     selected.verdiepingIds.length +
-    selected.kamerIds.length +
     selected.vloerIds.length;
 
+  async function handleSubmit() {
+    if (!step1Done || !step2Done || !step3Done) return;
+
+    const geselecteerdeVloerIds = [
+      ...new Set([
+        ...selected.vloerIds,
+
+        ...alleKamersvloeren
+          .filter((v) =>
+            alleKamers.find(
+              (k) =>
+                k.id === v.kamer_id &&
+                alleVerdiepingen.find(
+                  (verd) =>
+                    verd.id === k.verdieping_id &&
+                    selected.alleKamersPerBouwdeel[verd.bouwdeel_id],
+                ),
+            ),
+          )
+          .map((v) => v.id),
+
+        ...alleKamersvloeren
+          .filter((v) =>
+            alleKamers.find(
+              (k) =>
+                k.id === v.kamer_id &&
+                selected.alleKamersPerVerdieping[k.verdieping_id],
+            ),
+          )
+          .map((v) => v.id),
+      ]),
+    ];
+
+    if (geselecteerdeVloerIds.length === 0) {
+      showToast("Selecteer minimaal één vloer", "error");
+      return;
+    }
+
+    const { data: project, error: projectError } = await supabase
+      .from("projecten")
+      .insert({
+        naam: projectnaam,
+        beschrijving,
+        locatie_id: selectedLocatie!.id,
+        opmerkingen: opmerking,
+      })
+      .select("id")
+      .single();
+
+    if (projectError || !project) {
+      showToast("Project kon niet worden aangemaakt", "error");
+      return;
+    }
+
+    const { error: vloerError } = await supabase.from("project_vloeren").insert(
+      geselecteerdeVloerIds.map((kamer_vloer_id) => ({
+        project_id: project.id,
+        kamervloer_id: kamer_vloer_id,
+      })),
+    );
+
+    if (vloerError) {
+      await supabase.from("projecten").delete().eq("id", project.id);
+      showToast(
+        "Vloeren konden niet worden opgeslagen, project verwijderd",
+        "error",
+      );
+      return;
+    }
+
+    showToast("Project aangemaakt", "success");
+  }
   return (
     <div className="min-h-screen flex bg-[#F5F6FA]">
       <Sidebar className="fixed top-0 left-0 h-screen" />
@@ -267,7 +336,6 @@ export default function ProjectenOverzichtPage() {
 
         <main className="flex-1 overflow-auto p-8">
           <div className="space-y-6">
-            {/* Header */}
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-p/60 mb-1">
@@ -291,7 +359,6 @@ export default function ProjectenOverzichtPage() {
                 )}
               </div>
 
-              {/* Progress steps */}
               <div className="flex items-center gap-5 bg-white rounded-2xl border border-slate-100 shadow-sm px-5 py-3">
                 <StepBadge
                   number={1}
@@ -318,7 +385,6 @@ export default function ProjectenOverzichtPage() {
 
             <div className="grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-6 items-start">
               <div className="space-y-5">
-                {/* Step 1 - Project details */}
                 <SectionCard
                   step={1}
                   icon={<ClipboardDocumentListIcon className="w-5 h-5" />}
@@ -338,10 +404,17 @@ export default function ProjectenOverzichtPage() {
                       onChange={setBeschrijving}
                       placeholder="Korte omschrijving"
                     />
+                    <div className="md:col-span-2">
+                      <Inputfield
+                        title="Opmerking"
+                        value={opmerking}
+                        onChange={setOpmerking}
+                        placeholder="Optionele opmerking"
+                      />
+                    </div>
                   </div>
                 </SectionCard>
 
-                {/* Step 2 - Locatie */}
                 <SectionCard
                   step={2}
                   icon={<MapPinIcon className="w-5 h-5" />}
@@ -355,7 +428,6 @@ export default function ProjectenOverzichtPage() {
                   />
                 </SectionCard>
 
-                {/* Step 3 - Bouwdeel selection */}
                 {selectedLocatie && (
                   <SectionCard
                     step={3}
@@ -375,7 +447,6 @@ export default function ProjectenOverzichtPage() {
                 )}
               </div>
 
-              {/* Summary sidebar */}
               <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden sticky top-6">
                 <div className="px-5 py-4 border-b border-slate-50">
                   <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
@@ -384,7 +455,6 @@ export default function ProjectenOverzichtPage() {
                 </div>
 
                 <div className="p-5 space-y-4">
-                  {/* Project name */}
                   <div>
                     <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-300 mb-1">
                       Project
@@ -405,7 +475,6 @@ export default function ProjectenOverzichtPage() {
 
                   <div className="h-px bg-slate-50" />
 
-                  {/* Locatie */}
                   <div>
                     <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-300 mb-1">
                       Locatie
@@ -435,7 +504,6 @@ export default function ProjectenOverzichtPage() {
 
                   <div className="h-px bg-slate-50" />
 
-                  {/* Selection counts */}
                   <div>
                     <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-300 mb-2">
                       Selectie
@@ -450,7 +518,6 @@ export default function ProjectenOverzichtPage() {
                           label: "Verdiepingen",
                           count: selected.verdiepingIds.length,
                         },
-                        { label: "Kamers", count: selected.kamerIds.length },
                         { label: "Vloeren", count: selected.vloerIds.length },
                       ].map(({ label, count }) => (
                         <div
@@ -489,12 +556,12 @@ export default function ProjectenOverzichtPage() {
 
                   <div className="h-px bg-slate-50" />
 
-                  {/* Submit */}
                   <button
+                    onClick={() => handleSubmit()}
                     disabled={!step1Done || !step2Done || !step3Done}
                     className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold transition-all duration-200
                       bg-p text-white shadow-sm hover:bg-p/90 hover:shadow-md
-                      disabled:opacity-30 disabled:cursor-not-allowed disabled:shadow-none"
+                      disabled:opacity-30 disabled:cursor-not-allowed disabled:shadow-none hover:cursor-pointer"
                   >
                     <PlusIcon className="w-4 h-4" />
                     Project aanmaken
