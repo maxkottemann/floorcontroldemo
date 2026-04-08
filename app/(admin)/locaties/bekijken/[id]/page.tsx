@@ -52,7 +52,7 @@ export default function LocatieBekijkenPage() {
       const { data, error } = await supabase
         .from("locaties")
         .select(
-          "naam, percelen(naam), plaats, adres, type, extra_checkin, contact_persoon, telefoonnummer",
+          "id, naam, percelen(naam), plaats, adres, type, extra_checkin, contact_persoon, telefoonnummer",
         )
         .eq("id", id)
         .single();
@@ -63,7 +63,14 @@ export default function LocatieBekijkenPage() {
       }
 
       setLocatie({
-        ...data,
+        id: data.id,
+        naam: data.naam,
+        type: data.type,
+        plaats: data.plaats,
+        adres: data.adres,
+        extra_checkin: data.extra_checkin,
+        contact_persoon: data.contact_persoon,
+        telefoonnummer: data.telefoonnummer,
         perceel:
           (data?.percelen as unknown as { naam: string } | null)?.naam ?? "",
       });
