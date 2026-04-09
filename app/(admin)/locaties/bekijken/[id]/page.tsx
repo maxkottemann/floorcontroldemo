@@ -15,10 +15,8 @@ import {
   CheckBadgeIcon,
   ChevronRightIcon,
   PencilSquareIcon,
-  HomeModernIcon,
-  DocumentTextIcon,
 } from "@heroicons/react/24/outline";
-
+import { BsHouse, BsHouseAdd, BsPassport } from "react-icons/bs";
 function InfoBlock({
   label,
   value,
@@ -211,7 +209,7 @@ export default function LocatieBekijkenPage() {
                   className="flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 transition-colors group"
                 >
                   <div className="w-8 h-8 rounded-lg bg-[#154273]/10 flex items-center justify-center shrink-0 group-hover:bg-[#154273]/20 transition-colors">
-                    <HomeModernIcon className="w-4 h-4 text-[#154273]" />
+                    <BsHouseAdd className="w-4 h-4 text-[#154273]" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-gray-800">
@@ -228,7 +226,7 @@ export default function LocatieBekijkenPage() {
                   className="flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 transition-colors group"
                 >
                   <div className="w-8 h-8 rounded-lg bg-[#154273]/10 flex items-center justify-center shrink-0 group-hover:bg-[#154273]/20 transition-colors">
-                    <DocumentTextIcon className="w-4 h-4 text-[#154273]" />
+                    <BsPassport className="w-4 h-4 text-[#154273]" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-gray-800">

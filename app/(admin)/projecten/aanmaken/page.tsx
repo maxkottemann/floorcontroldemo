@@ -5,7 +5,7 @@ import Topbar from "@/components/layout/topbar";
 import Sidebar from "@/components/layout/sidebar";
 import { useToast } from "@/components/hooks/usetoasts";
 import Inputfield from "@/components/layout/inputfield";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Locatie } from "@/types/locatie";
 import { supabase } from "@/lib/supabase";
 import { bouwdeel } from "@/types/bouwdeel";
@@ -13,6 +13,8 @@ import { verdieping } from "@/types/verdieping";
 import { kamer } from "@/types/kamer";
 import { kamervloer } from "@/types/kamervloer";
 import LocatieSelector from "@/components/layout/locatieselector";
+import { useRouter } from "next/navigation";
+import Datepicker from "@/components/layout/datepicker";
 import BouwdeelTree from "@/components/layout/bouwdeeltree";
 import {
   ClipboardDocumentListIcon,
@@ -20,7 +22,14 @@ import {
   BuildingOffice2Icon,
   PlusIcon,
   CheckCircleIcon,
+  TruckIcon,
+  XMarkIcon,
+  MagnifyingGlassIcon,
+  CheckIcon,
+  UserGroupIcon,
+  PencilSquareIcon,
 } from "@heroicons/react/24/outline";
+import { routeModule } from "next/dist/build/templates/pages";
 
 interface SelectedState {
   bouwdeelIds: string[];
@@ -28,6 +37,233 @@ interface SelectedState {
   verdiepingIds: string[];
   alleKamersPerVerdieping: Record<string, boolean>;
   vloerIds: string[];
+}
+
+interface Bus {
+  id: string;
+  naam: string;
+  type: string;
+  kenteken: string;
+}
+
+interface Medewerker {
+  id: string;
+  voornaam: string;
+  achternaam: string;
+}
+
+interface ProjectBus {
+  bus: Bus;
+  medewerkerIds: string[];
+}
+
+function MedewerkerPopup({
+  bus,
+  alleMedewerkers,
+  selectedIds,
+  onClose,
+  onSave,
+}: {
+  bus: Bus;
+  alleMedewerkers: Medewerker[];
+  selectedIds: string[];
+  onClose: () => void;
+  onSave: (ids: string[]) => void;
+}) {
+  const [zoek, setZoek] = useState("");
+  const [ids, setIds] = useState<string[]>(selectedIds);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [onClose]);
+
+  const filtered = alleMedewerkers.filter((m) =>
+    `${m.voornaam} ${m.achternaam}`.toLowerCase().includes(zoek.toLowerCase()),
+  );
+
+  const toggle = (id: string) =>
+    setIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
+    );
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm">
+      <div
+        ref={ref}
+        className="bg-white rounded-2xl shadow-xl border border-slate-100 w-full max-w-md mx-4 overflow-hidden"
+      >
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+          <div>
+            <p className="text-sm font-bold text-slate-800">
+              Bezetting bewerken
+            </p>
+            <p className="text-xs text-slate-400 mt-0.5">
+              {bus.naam} · {bus.kenteken}
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-7 h-7 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"
+          >
+            <XMarkIcon className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="px-4 py-3 border-b border-slate-50">
+          <div className="relative">
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
+            <input
+              value={zoek}
+              onChange={(e) => setZoek(e.target.value)}
+              placeholder="Zoek medewerker..."
+              className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 rounded-lg border border-slate-100 outline-none focus:border-p/40 focus:ring-2 focus:ring-p/10 placeholder:text-slate-300 transition-all"
+            />
+          </div>
+        </div>
+
+        <ul className="max-h-64 overflow-y-auto divide-y divide-slate-50 px-2 py-1">
+          {filtered.length === 0 ? (
+            <li className="py-6 text-center text-sm text-slate-300">
+              Geen medewerkers gevonden
+            </li>
+          ) : (
+            filtered.map((m) => {
+              const isSelected = ids.includes(m.id);
+              return (
+                <li
+                  key={m.id}
+                  onClick={() => toggle(m.id)}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-colors ${isSelected ? "bg-p/5" : "hover:bg-slate-50"}`}
+                >
+                  <div
+                    className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-colors
+                  ${isSelected ? "bg-p text-white" : "bg-slate-100 text-slate-500"}`}
+                  >
+                    {m.voornaam[0]}
+                    {m.achternaam[0]}
+                  </div>
+                  <p
+                    className={`text-sm flex-1 font-medium ${isSelected ? "text-slate-800" : "text-slate-600"}`}
+                  >
+                    {m.voornaam} {m.achternaam}
+                  </p>
+                  {isSelected && (
+                    <CheckIcon className="w-4 h-4 text-p shrink-0" />
+                  )}
+                </li>
+              );
+            })
+          )}
+        </ul>
+
+        <div className="flex items-center justify-between px-5 py-4 border-t border-slate-100 bg-slate-50/50">
+          <p className="text-xs text-slate-400">{ids.length} geselecteerd</p>
+          <div className="flex gap-2">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-sm font-semibold text-slate-500 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition-colors"
+            >
+              Annuleren
+            </button>
+            <button
+              onClick={() => {
+                onSave(ids);
+                onClose();
+              }}
+              className="px-4 py-2 text-sm font-bold text-white bg-p hover:bg-p/90 rounded-lg transition-colors"
+            >
+              Opslaan
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BusCard({
+  bus,
+  alleMedewerkers,
+  medewerkerIds,
+  onRemove,
+  onMedewerkersSave,
+}: {
+  bus: Bus;
+  alleMedewerkers: Medewerker[];
+  medewerkerIds: string[];
+  onRemove: () => void;
+  onMedewerkersSave: (ids: string[]) => void;
+}) {
+  const [popupOpen, setPopupOpen] = useState(false);
+  const crew = alleMedewerkers.filter((m) => medewerkerIds.includes(m.id));
+
+  return (
+    <>
+      <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-50">
+          <div className="w-8 h-8 rounded-lg bg-p/10 flex items-center justify-center shrink-0">
+            <TruckIcon className="w-4 h-4 text-p" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-slate-800">{bus.naam}</p>
+            <p className="text-xs text-slate-400">
+              {bus.type} · {bus.kenteken}
+            </p>
+          </div>
+          <button
+            onClick={() => setPopupOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-p bg-p/8 hover:bg-p/15 rounded-lg transition-colors"
+          >
+            <PencilSquareIcon className="w-3.5 h-3.5" />
+            Bewerk bezetting
+          </button>
+          <button
+            onClick={onRemove}
+            className="w-7 h-7 rounded-lg hover:bg-red-50 flex items-center justify-center text-slate-300 hover:text-red-400 transition-colors"
+          >
+            <XMarkIcon className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="px-4 py-2.5">
+          {crew.length === 0 ? (
+            <p className="text-xs text-slate-300 italic">
+              Geen medewerkers toegewezen
+            </p>
+          ) : (
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {crew.map((m) => (
+                <span
+                  key={m.id}
+                  className="inline-flex items-center gap-1 px-2 py-1 bg-slate-50 border border-slate-100 rounded-lg text-xs font-medium text-slate-600"
+                >
+                  <span className="w-4 h-4 rounded-full bg-p/15 text-p text-[9px] font-bold flex items-center justify-center shrink-0">
+                    {m.voornaam[0]}
+                  </span>
+                  {m.voornaam} {m.achternaam}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {popupOpen && (
+        <MedewerkerPopup
+          bus={bus}
+          alleMedewerkers={alleMedewerkers}
+          selectedIds={medewerkerIds}
+          onClose={() => setPopupOpen(false)}
+          onSave={onMedewerkersSave}
+        />
+      )}
+    </>
+  );
 }
 
 function StepBadge({
@@ -74,7 +310,7 @@ function SectionCard({
   step: number;
 }) {
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-visible">
       <div className="flex items-center gap-4 px-6 py-4 border-b border-slate-50">
         <div className="w-9 h-9 rounded-xl bg-p/8 flex items-center justify-center text-p shrink-0">
           {icon}
@@ -94,12 +330,14 @@ function SectionCard({
   );
 }
 
-export default function ProjectenOverzichtPage() {
+export default function ProjectenAanmakenPage() {
   const { toast, showToast, hideToast } = useToast();
 
   const [projectnaam, setProjectnaam] = useState("");
   const [beschrijving, setBeschrijving] = useState("");
   const [opmerking, setOpmerking] = useState("");
+  const [startDatum, setStartDatum] = useState("");
+  const [eindDatum, setEindDatum] = useState("");
 
   const [alleLocaties, setAlleLocaties] = useState<Locatie[]>([]);
   const [alleBouwdelen, setAlleBouwdelen] = useState<bouwdeel[]>([]);
@@ -116,14 +354,55 @@ export default function ProjectenOverzichtPage() {
     vloerIds: [],
   });
 
+  const [alleBussen, setAlleBussen] = useState<Bus[]>([]);
+  const [alleMedewerkers, setAlleMedewerkers] = useState<Medewerker[]>([]);
+  const [projectBussen, setProjectBussen] = useState<ProjectBus[]>([]);
+  const [busZoek, setBusZoek] = useState("");
+
   const step1Done = !!(projectnaam && beschrijving);
   const step2Done = !!selectedLocatie;
   const step3Done = selected.bouwdeelIds.length > 0;
+  const step4Done = projectBussen.length > 0;
+
+  useEffect(() => {
+    async function loadBussenEnMedewerkers() {
+      const [{ data: bussen }, { data: medewerkers }] = await Promise.all([
+        supabase.from("bussen").select("id,naam,type,kenteken").order("naam"),
+        supabase
+          .from("medewerkers")
+          .select("id,voornaam,achternaam")
+          .eq("actief", true)
+          .order("achternaam"),
+      ]);
+      setAlleBussen(bussen ?? []);
+      setAlleMedewerkers(medewerkers ?? []);
+    }
+    loadBussenEnMedewerkers();
+  }, []);
+
+  async function addBus(bus: Bus) {
+    if (projectBussen.find((pb) => pb.bus.id === bus.id)) return;
+    const { data: defaultCrew } = await supabase
+      .from("bus_medewerkers")
+      .select("medewerker_id")
+      .eq("bus_id", bus.id);
+    const medewerkerIds = defaultCrew?.map((d) => d.medewerker_id) ?? [];
+    setProjectBussen((prev) => [...prev, { bus, medewerkerIds }]);
+    setBusZoek("");
+  }
+
+  const removeBus = (busId: string) =>
+    setProjectBussen((prev) => prev.filter((pb) => pb.bus.id !== busId));
+  const updateMedewerkers = (busId: string, ids: string[]) =>
+    setProjectBussen((prev) =>
+      prev.map((pb) =>
+        pb.bus.id === busId ? { ...pb, medewerkerIds: ids } : pb,
+      ),
+    );
 
   useEffect(() => {
     async function loadLocatieData() {
       if (!selectedLocatie) return;
-
       setAlleBouwdelen([]);
       setAlleVerdiepingen([]);
       setAlleKamers([]);
@@ -136,11 +415,11 @@ export default function ProjectenOverzichtPage() {
         vloerIds: [],
       });
 
-      const { error: bouwdelenError, data: bouwdelen } = await supabase
+      const { data: bouwdelen } = await supabase
         .from("bouwdeel")
         .select("id,locatie_id,naam")
         .eq("locatie_id", selectedLocatie.id);
-      if (bouwdelenError || !bouwdelen) {
+      if (!bouwdelen) {
         showToast("Bouwdelen konden niet laden", "error");
         return;
       }
@@ -152,14 +431,14 @@ export default function ProjectenOverzichtPage() {
         })),
       );
 
-      const { error: verdiepingError, data: verdiepingen } = await supabase
+      const { data: verdiepingen } = await supabase
         .from("verdiepingen")
         .select("id,bouwdeel_id,naam")
         .in(
           "bouwdeel_id",
           bouwdelen.map((d) => d.id),
         );
-      if (verdiepingError || !verdiepingen) {
+      if (!verdiepingen) {
         showToast("Verdiepingen konden niet laden", "error");
         return;
       }
@@ -171,14 +450,14 @@ export default function ProjectenOverzichtPage() {
         })),
       );
 
-      const { error: kamerError, data: kamers } = await supabase
+      const { data: kamers } = await supabase
         .from("kamers")
         .select("id,verdieping_id,naam")
         .in(
           "verdieping_id",
           verdiepingen.map((v) => v.id),
         );
-      if (kamerError || !kamers) {
+      if (!kamers) {
         showToast("Kamers konden niet laden", "error");
         return;
       }
@@ -190,14 +469,14 @@ export default function ProjectenOverzichtPage() {
         })),
       );
 
-      const { error: vloerenError, data: vloeren } = await supabase
+      const { data: vloeren } = await supabase
         .from("kamer_vloeren")
         .select("id,kamer_id,vloer_types(naam),vierkante_meter,status")
         .in(
           "kamer_id",
           kamers.map((k) => k.id),
         );
-      if (vloerenError || !vloeren) {
+      if (!vloeren) {
         showToast("Vloeren konden niet laden", "error");
         return;
       }
@@ -216,13 +495,13 @@ export default function ProjectenOverzichtPage() {
 
   useEffect(() => {
     async function getAllLocaties() {
-      const { error, data } = await supabase
+      const { data } = await supabase
         .from("locaties")
         .select(
           "id,naam,type,plaats,adres,extra_checkin,contact_persoon,telefoonnummer,percelen!inner(naam)",
         )
         .order("naam", { ascending: true });
-      if (error || !data) {
+      if (!data) {
         showToast("Locaties konden niet worden geladen", "error");
         return;
       }
@@ -243,14 +522,19 @@ export default function ProjectenOverzichtPage() {
     getAllLocaties();
   }, []);
 
+  const router = useRouter();
+
   const filteredLocatie = alleLocaties.filter((l) =>
     l.naam.toLowerCase().includes(locatieZoekterm.toLowerCase()),
   );
-
-  const totalSelected =
-    selected.bouwdeelIds.length +
-    selected.verdiepingIds.length +
-    selected.vloerIds.length;
+  const beschikbareBussen = alleBussen.filter(
+    (b) => !projectBussen.find((pb) => pb.bus.id === b.id),
+  );
+  const filteredBussen = beschikbareBussen.filter((b) =>
+    `${b.naam} ${b.type} ${b.kenteken}`
+      .toLowerCase()
+      .includes(busZoek.toLowerCase()),
+  );
 
   async function handleSubmit() {
     if (!step1Done || !step2Done || !step3Done) return;
@@ -258,7 +542,6 @@ export default function ProjectenOverzichtPage() {
     const geselecteerdeVloerIds = [
       ...new Set([
         ...selected.vloerIds,
-
         ...alleKamersvloeren
           .filter((v) =>
             alleKamers.find(
@@ -272,13 +555,12 @@ export default function ProjectenOverzichtPage() {
             ),
           )
           .map((v) => v.id),
-
         ...alleKamersvloeren
           .filter((v) =>
             alleKamers.find(
-              (k) =>
+              (k: any) =>
                 k.id === v.kamer_id &&
-                selected.alleKamersPerVerdieping[k.verdieping_id],
+                selected.alleKamersPerVerdieping[k.verdieping_naam],
             ),
           )
           .map((v) => v.id),
@@ -297,6 +579,8 @@ export default function ProjectenOverzichtPage() {
         beschrijving,
         locatie_id: selectedLocatie!.id,
         opmerkingen: opmerking,
+        start_datum: startDatum || null,
+        eind_datum: eindDatum || null,
       })
       .select("id")
       .single();
@@ -322,8 +606,34 @@ export default function ProjectenOverzichtPage() {
       return;
     }
 
+    for (const pb of projectBussen) {
+      const { data: projectBus, error: busError } = await supabase
+        .from("project_bussen")
+        .insert({ project_id: project.id, bus_id: pb.bus.id })
+        .select("id")
+        .single();
+
+      if (busError || !projectBus) {
+        showToast(`Bus ${pb.bus.naam} kon niet worden opgeslagen`, "error");
+        continue;
+      }
+
+      if (pb.medewerkerIds.length > 0) {
+        await supabase.from("project_bus_medewerkers").insert(
+          pb.medewerkerIds.map((medewerker_id) => ({
+            project_bus_id: projectBus.id,
+            medewerker_id,
+          })),
+        );
+      }
+    }
+
     showToast("Project aangemaakt", "success");
+    setTimeout(() => {
+      router.back;
+    }, 1000);
   }
+
   return (
     <div className="min-h-screen flex bg-[#F5F6FA]">
       <Sidebar className="fixed top-0 left-0 h-screen" />
@@ -359,26 +669,33 @@ export default function ProjectenOverzichtPage() {
                 )}
               </div>
 
-              <div className="flex items-center gap-5 bg-white rounded-2xl border border-slate-100 shadow-sm px-5 py-3">
+              <div className="flex items-center gap-4 bg-white rounded-2xl border border-slate-100 shadow-sm px-5 py-3">
                 <StepBadge
                   number={1}
                   label="Details"
                   active={!step1Done}
                   done={step1Done}
                 />
-                <div className="w-6 h-px bg-slate-200" />
+                <div className="w-5 h-px bg-slate-200" />
                 <StepBadge
                   number={2}
                   label="Locatie"
                   active={step1Done && !step2Done}
                   done={step2Done}
                 />
-                <div className="w-6 h-px bg-slate-200" />
+                <div className="w-5 h-px bg-slate-200" />
                 <StepBadge
                   number={3}
-                  label="Selectie"
+                  label="Ruimtes"
                   active={step2Done && !step3Done}
                   done={step3Done}
+                />
+                <div className="w-5 h-px bg-slate-200" />
+                <StepBadge
+                  number={4}
+                  label="Wagens"
+                  active={step3Done && !step4Done}
+                  done={step4Done}
                 />
               </div>
             </div>
@@ -403,6 +720,16 @@ export default function ProjectenOverzichtPage() {
                       value={beschrijving}
                       onChange={setBeschrijving}
                       placeholder="Korte omschrijving"
+                    />
+                    <Datepicker
+                      title="Startdatum"
+                      value={startDatum}
+                      onChange={setStartDatum}
+                    />
+                    <Datepicker
+                      title="Einddatum"
+                      value={eindDatum}
+                      onChange={setEindDatum}
                     />
                     <div className="md:col-span-2">
                       <Inputfield
@@ -433,7 +760,7 @@ export default function ProjectenOverzichtPage() {
                     step={3}
                     icon={<BuildingOffice2Icon className="w-5 h-5" />}
                     title="Ruimtes selecteren"
-                    subtitle="Selecteer de bouwdelen, verdiepingen en kamers"
+                    subtitle="Selecteer de bouwdelen, verdiepingen en vloeren"
                   >
                     <BouwdeelTree
                       alleBouwdelen={alleBouwdelen}
@@ -445,8 +772,92 @@ export default function ProjectenOverzichtPage() {
                     />
                   </SectionCard>
                 )}
+
+                {step3Done && (
+                  <SectionCard
+                    step={4}
+                    icon={<TruckIcon className="w-5 h-5" />}
+                    title="Wagens toewijzen"
+                    subtitle="Selecteer één of meerdere wagens en stel de bezetting in"
+                  >
+                    {/* Bus picker */}
+                    {beschikbareBussen.length > 0 && (
+                      <div className="mb-5">
+                        <div className="relative mb-2">
+                          <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
+                          <input
+                            value={busZoek}
+                            onChange={(e) => setBusZoek(e.target.value)}
+                            placeholder="Zoek wagen op naam, type of kenteken..."
+                            className="w-full pl-9 pr-4 py-2.5 text-sm bg-slate-50 rounded-xl border border-slate-100 outline-none focus:border-p/40 focus:ring-2 focus:ring-p/10 placeholder:text-slate-300 transition-all"
+                          />
+                        </div>
+
+                        <div className="rounded-xl border border-slate-100 overflow-hidden">
+                          {filteredBussen.length === 0 ? (
+                            <p className="py-4 text-center text-sm text-slate-300">
+                              Geen wagens gevonden
+                            </p>
+                          ) : (
+                            filteredBussen.map((bus) => (
+                              <div
+                                key={bus.id}
+                                onClick={() => addBus(bus)}
+                                className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 cursor-pointer transition-colors border-b border-slate-50 last:border-0 bg-white"
+                              >
+                                <div className="w-7 h-7 rounded-lg bg-p/10 flex items-center justify-center shrink-0">
+                                  <TruckIcon className="w-3.5 h-3.5 text-p" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-semibold text-slate-800">
+                                    {bus.naam}
+                                  </p>
+                                  <p className="text-xs text-slate-400">
+                                    {bus.type} · {bus.kenteken}
+                                  </p>
+                                </div>
+                                <PlusIcon className="w-4 h-4 text-slate-300" />
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Assigned bussen */}
+                    {projectBussen.length > 0 ? (
+                      <div className="space-y-3">
+                        {beschikbareBussen.length > 0 && (
+                          <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">
+                            Toegewezen wagens
+                          </p>
+                        )}
+                        {projectBussen.map((pb) => (
+                          <BusCard
+                            key={pb.bus.id}
+                            bus={pb.bus}
+                            alleMedewerkers={alleMedewerkers}
+                            medewerkerIds={pb.medewerkerIds}
+                            onRemove={() => removeBus(pb.bus.id)}
+                            onMedewerkersSave={(ids) =>
+                              updateMedewerkers(pb.bus.id, ids)
+                            }
+                          />
+                        ))}
+                      </div>
+                    ) : beschikbareBussen.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center py-8 text-center">
+                        <UserGroupIcon className="w-8 h-8 text-slate-200 mb-2" />
+                        <p className="text-sm text-slate-300">
+                          Geen wagens beschikbaar
+                        </p>
+                      </div>
+                    ) : null}
+                  </SectionCard>
+                )}
               </div>
 
+              {/* Summary sidebar */}
               <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden sticky top-6">
                 <div className="px-5 py-4 border-b border-slate-50">
                   <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
@@ -519,6 +930,7 @@ export default function ProjectenOverzichtPage() {
                           count: selected.verdiepingIds.length,
                         },
                         { label: "Vloeren", count: selected.vloerIds.length },
+                        { label: "Wagens", count: projectBussen.length },
                       ].map(({ label, count }) => (
                         <div
                           key={label}
@@ -537,31 +949,45 @@ export default function ProjectenOverzichtPage() {
                         </div>
                       ))}
                     </div>
-
-                    {Object.entries(selected.alleKamersPerBouwdeel).filter(
-                      ([, v]) => v,
-                    ).length > 0 && (
-                      <div className="mt-2 px-3 py-2 bg-emerald-50 border border-emerald-100 rounded-xl">
-                        <p className="text-xs text-emerald-600 font-medium">
-                          {
-                            Object.entries(
-                              selected.alleKamersPerBouwdeel,
-                            ).filter(([, v]) => v).length
-                          }{" "}
-                          bouwdeel(en) op "alle kamers"
-                        </p>
-                      </div>
-                    )}
                   </div>
+
+                  {projectBussen.length > 0 && (
+                    <>
+                      <div className="h-px bg-slate-50" />
+                      <div>
+                        <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-300 mb-2">
+                          Wagens
+                        </p>
+                        <div className="space-y-1.5">
+                          {projectBussen.map((pb) => (
+                            <div
+                              key={pb.bus.id}
+                              className="flex items-center justify-between px-3 py-2 bg-slate-50 rounded-lg"
+                            >
+                              <div>
+                                <p className="text-xs font-semibold text-slate-700">
+                                  {pb.bus.naam}
+                                </p>
+                                <p className="text-[10px] text-slate-400">
+                                  {pb.medewerkerIds.length} medewerker(s)
+                                </p>
+                              </div>
+                              <TruckIcon className="w-3.5 h-3.5 text-slate-300" />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
 
                   <div className="h-px bg-slate-50" />
 
                   <button
-                    onClick={() => handleSubmit()}
+                    onClick={handleSubmit}
                     disabled={!step1Done || !step2Done || !step3Done}
                     className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold transition-all duration-200
                       bg-p text-white shadow-sm hover:bg-p/90 hover:shadow-md
-                      disabled:opacity-30 disabled:cursor-not-allowed disabled:shadow-none hover:cursor-pointer"
+                      disabled:opacity-30 disabled:cursor-not-allowed disabled:shadow-none cursor-pointer"
                   >
                     <PlusIcon className="w-4 h-4" />
                     Project aanmaken
