@@ -780,7 +780,6 @@ export default function ProjectenAanmakenPage() {
                     title="Wagens toewijzen"
                     subtitle="Selecteer één of meerdere wagens en stel de bezetting in"
                   >
-                    {/* Bus picker */}
                     {beschikbareBussen.length > 0 && (
                       <div className="mb-5">
                         <div className="relative mb-2">
@@ -824,7 +823,6 @@ export default function ProjectenAanmakenPage() {
                       </div>
                     )}
 
-                    {/* Assigned bussen */}
                     {projectBussen.length > 0 ? (
                       <div className="space-y-3">
                         {beschikbareBussen.length > 0 && (
@@ -857,7 +855,6 @@ export default function ProjectenAanmakenPage() {
                 )}
               </div>
 
-              {/* Summary sidebar */}
               <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden sticky top-6">
                 <div className="px-5 py-4 border-b border-slate-50">
                   <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400">

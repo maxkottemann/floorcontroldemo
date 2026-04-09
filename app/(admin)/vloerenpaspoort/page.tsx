@@ -22,13 +22,11 @@ import {
   MagnifyingGlassIcon,
 } from "@heroicons/react/24/outline";
 
-// ─── Expandable row components ───────────────────────────────────────
-
 function VloerRij({ vloer }: { vloer: kamervloer }) {
   const router = useRouter();
   return (
     <div
-      onClick={() => router.push(`/vloerpaspoort/bekijken/${vloer.id}`)}
+      onClick={() => router.push(`/vloerenpaspoort/vloer/${vloer.id}`)}
       className="flex items-center gap-3 px-4 py-2.5 rounded-xl cursor-pointer hover:bg-p/5 hover:border-p/20 border border-transparent transition-all duration-150 group"
     >
       <div className="w-5 h-5 rounded-md bg-p/10 flex items-center justify-center shrink-0">
@@ -202,8 +200,6 @@ function BouwdeelRij({
   );
 }
 
-// ─── Main page ───────────────────────────────────────────────────────
-
 export default function VloerenPaspoortPage() {
   const { toast, showToast, hideToast } = useToast();
 
@@ -217,7 +213,6 @@ export default function VloerenPaspoortPage() {
   const [alleKamers, setAlleKamers] = useState<kamer[]>([]);
   const [alleKamersvloeren, setAlleKamersvloeren] = useState<kamervloer[]>([]);
 
-  // Load locaties on mount
   useEffect(() => {
     async function getLocaties() {
       const { data } = await supabase
@@ -244,7 +239,6 @@ export default function VloerenPaspoortPage() {
     getLocaties();
   }, []);
 
-  // Load data when locatie changes
   useEffect(() => {
     async function getLocatieData() {
       if (!selectedLocatie) return;
@@ -354,7 +348,6 @@ export default function VloerenPaspoortPage() {
 
         <main className="flex-1 overflow-hidden p-8">
           <div className="h-full flex flex-col gap-6">
-            {/* Header */}
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.14em] text-p/60 mb-1">
                 Overzicht
@@ -367,9 +360,7 @@ export default function VloerenPaspoortPage() {
               </p>
             </div>
 
-            {/* Main grid */}
             <div className="flex-1 grid grid-cols-[280px_1fr] gap-5 min-h-0">
-              {/* Locatie list */}
               <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden flex flex-col">
                 <div className="px-4 py-3 border-b border-slate-100">
                   <div className="relative">
@@ -378,7 +369,7 @@ export default function VloerenPaspoortPage() {
                       value={locatieZoek}
                       onChange={(e) => setLocatieZoek(e.target.value)}
                       placeholder="Zoek locatie..."
-                      className="w-full pl-9 pr-3 py-2 text-sm bg-slate-50 rounded-lg border border-slate-100 outline-none focus:border-p/40 focus:ring-2 focus:ring-p/10 placeholder:text-slate-300 transition-all"
+                      className="w-full pl-9 pr-3 py-2 text-sm text-slate-700 bg-slate-50 rounded-lg border border-slate-100 outline-none focus:border-p/40 focus:ring-2 focus:ring-p/10 placeholder:text-slate-300 transition-all"
                     />
                   </div>
                 </div>

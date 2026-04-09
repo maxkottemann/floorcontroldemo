@@ -315,30 +315,71 @@ export default function BouwdeelTree({
                                 const selectedCount = vloeren.filter((v) =>
                                   selected.vloerIds.includes(v.id),
                                 ).length;
+                                const allSelected =
+                                  vloeren.length > 0 &&
+                                  selectedCount === vloeren.length;
+
+                                const toggleAllKamerVloeren = (
+                                  e: React.MouseEvent,
+                                ) => {
+                                  e.stopPropagation();
+                                  const kamerVloerIds = vloeren.map(
+                                    (v) => v.id,
+                                  );
+                                  const vloerIds = allSelected
+                                    ? selected.vloerIds.filter(
+                                        (id) => !kamerVloerIds.includes(id),
+                                      )
+                                    : [
+                                        ...new Set([
+                                          ...selected.vloerIds,
+                                          ...kamerVloerIds,
+                                        ]),
+                                      ];
+                                  onChange({ ...selected, vloerIds });
+                                };
 
                                 return (
                                   <div key={kamer.id} className="ml-2">
-                                    {/* Kamer header — expand only */}
+                                    {/* Kamer header — click body to select all, chevron to expand */}
                                     <div
-                                      onClick={() =>
-                                        toggleKamerExpand(kamer.id)
-                                      }
-                                      className="flex items-center gap-2 px-2 py-1.5 rounded-lg cursor-pointer hover:bg-white transition-colors group"
+                                      className={`flex items-center gap-2 px-2 py-1.5 rounded-lg transition-colors ${allSelected ? "bg-p/5" : "hover:bg-white"}`}
                                     >
-                                      <div className="w-4 h-4 rounded flex items-center justify-center shrink-0 bg-slate-200 text-slate-400 group-hover:bg-slate-300 transition-colors">
-                                        <HomeModernIcon className="w-2.5 h-2.5" />
+                                      <div
+                                        onClick={toggleAllKamerVloeren}
+                                        className="flex items-center gap-2 flex-1 cursor-pointer"
+                                      >
+                                        <div
+                                          className={`w-4 h-4 rounded flex items-center justify-center shrink-0 transition-colors ${allSelected ? "bg-p text-white" : "bg-slate-200 text-slate-400"}`}
+                                        >
+                                          {allSelected ? (
+                                            <CheckIcon className="w-2.5 h-2.5" />
+                                          ) : (
+                                            <HomeModernIcon className="w-2.5 h-2.5" />
+                                          )}
+                                        </div>
+                                        <p
+                                          className={`text-xs font-medium flex-1 ${allSelected ? "text-p font-semibold" : "text-slate-600"}`}
+                                        >
+                                          {kamer.naam}
+                                        </p>
+                                        {selectedCount > 0 && (
+                                          <span className="text-[10px] font-bold text-p bg-p/10 px-1.5 py-0.5 rounded-full">
+                                            {selectedCount}/{vloeren.length}
+                                          </span>
+                                        )}
                                       </div>
-                                      <p className="text-xs font-medium text-slate-600 flex-1">
-                                        {kamer.naam}
-                                      </p>
-                                      {selectedCount > 0 && (
-                                        <span className="text-[10px] font-bold text-p bg-p/10 px-1.5 py-0.5 rounded-full">
-                                          {selectedCount}/{vloeren.length}
-                                        </span>
-                                      )}
-                                      <ChevronDownIcon
-                                        className={`w-3 h-3 text-slate-300 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}
-                                      />
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          toggleKamerExpand(kamer.id);
+                                        }}
+                                        className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200 transition-colors shrink-0"
+                                      >
+                                        <ChevronDownIcon
+                                          className={`w-3 h-3 text-slate-300 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}
+                                        />
+                                      </button>
                                     </div>
 
                                     {/* Vloeren — primary selectable */}

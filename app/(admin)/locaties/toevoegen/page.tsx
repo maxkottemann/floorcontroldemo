@@ -144,13 +144,13 @@ export default function LocatiesToevoegen() {
   const [adres, setAdres] = useState("");
   const [contactPersoon, setContactPersoon] = useState("");
   const [telefoonnummer, setTelefoonnummer] = useState("");
-  const [perceel, setPerceel] = useState("Perceel 1");
+  const [perceel, setPerceel] = useState("");
 
   const { toast, showToast, hideToast } = useToast();
 
   const typeOptions = ["type 1", "type 2", "type 3"];
   const extraCheckinOptions = ["Ja", "Nee"];
-  const perceelOptions = ["Perceel 1", "Perceel 2", "Perceel 3"];
+  const perceelOptions = ["Perceel 2", "Perceel 5"];
 
   const [gebouwen, setGebouwen] = useState<Gebouw[]>([
     { naam: "Gebouw 1", verdiepingen: [] as string[], showAll: false },
@@ -207,12 +207,14 @@ export default function LocatiesToevoegen() {
   }
 
   function checkValidValues(): boolean {
-    return ["Perceel 1", "Perceel 2", "Perceel 3"].includes(perceel);
+    return ["Perceel 2", "Perceel 5"].includes(perceel);
   }
 
   async function handleSubmit() {
     if (!checkValues()) return;
     if (!checkValidValues()) return;
+
+    console.log("perceel value:", perceel);
 
     const { data, error } = await supabase
       .from("percelen")
@@ -222,6 +224,7 @@ export default function LocatiesToevoegen() {
 
     if (error) {
       showToast("Er ging iets mis, probeer het opnieuw", "error");
+      console.log(error);
       return;
     }
 
@@ -242,6 +245,7 @@ export default function LocatiesToevoegen() {
 
     if (error2) {
       showToast("Er ging iets mis, probeer het opnieuw", "error");
+      console.log(error2);
       return;
     }
 
@@ -254,6 +258,7 @@ export default function LocatiesToevoegen() {
 
       if (error3) {
         showToast("Er ging iets mis, probeer het opnieuw", "error");
+        console.log(error3);
         return;
       }
 
@@ -267,6 +272,7 @@ export default function LocatiesToevoegen() {
         .insert(verdiepingRows);
       if (error4) {
         showToast("Er ging iets mis bij verdiepingen", "error");
+        console.log(error4);
         return;
       }
     }
