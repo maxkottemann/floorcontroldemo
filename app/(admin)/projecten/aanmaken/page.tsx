@@ -484,7 +484,7 @@ export default function ProjectenAanmakenPage() {
         vloeren.map((v) => ({
           id: v.id,
           kamer_id: v.kamer_id,
-          vloertype_naam: (v.vloer_types as any)?.[0]?.naam,
+          vloertype_naam: (v.vloer_types as any)?.naam,
           vierkante_meter: v.vierkante_meter,
           status: v.status,
         })),
@@ -536,36 +536,36 @@ export default function ProjectenAanmakenPage() {
       .includes(busZoek.toLowerCase()),
   );
 
+  const geselecteerdeVloerIds = [
+    ...new Set([
+      ...selected.vloerIds,
+      ...alleKamersvloeren
+        .filter((v) =>
+          alleKamers.find(
+            (k) =>
+              k.id === v.kamer_id &&
+              alleVerdiepingen.find(
+                (verd) =>
+                  verd.id === k.verdieping_id &&
+                  selected.alleKamersPerBouwdeel[verd.bouwdeel_id],
+              ),
+          ),
+        )
+        .map((v) => v.id),
+      ...alleKamersvloeren
+        .filter((v) =>
+          alleKamers.find(
+            (k) =>
+              k.id === v.kamer_id &&
+              selected.alleKamersPerVerdieping[k.verdieping_id],
+          ),
+        )
+        .map((v) => v.id),
+    ]),
+  ];
+
   async function handleSubmit() {
     if (!step1Done || !step2Done || !step3Done) return;
-
-    const geselecteerdeVloerIds = [
-      ...new Set([
-        ...selected.vloerIds,
-        ...alleKamersvloeren
-          .filter((v) =>
-            alleKamers.find(
-              (k) =>
-                k.id === v.kamer_id &&
-                alleVerdiepingen.find(
-                  (verd) =>
-                    verd.id === k.verdieping_id &&
-                    selected.alleKamersPerBouwdeel[verd.bouwdeel_id],
-                ),
-            ),
-          )
-          .map((v) => v.id),
-        ...alleKamersvloeren
-          .filter((v) =>
-            alleKamers.find(
-              (k: any) =>
-                k.id === v.kamer_id &&
-                selected.alleKamersPerVerdieping[k.verdieping_naam],
-            ),
-          )
-          .map((v) => v.id),
-      ]),
-    ];
 
     if (geselecteerdeVloerIds.length === 0) {
       showToast("Selecteer minimaal één vloer", "error");
@@ -926,7 +926,10 @@ export default function ProjectenAanmakenPage() {
                           label: "Verdiepingen",
                           count: selected.verdiepingIds.length,
                         },
-                        { label: "Vloeren", count: selected.vloerIds.length },
+                        {
+                          label: "Vloeren",
+                          count: geselecteerdeVloerIds.length,
+                        },
                         { label: "Wagens", count: projectBussen.length },
                       ].map(({ label, count }) => (
                         <div

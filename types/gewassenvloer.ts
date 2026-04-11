@@ -1,6 +1,7 @@
 export interface gewassenvloer {
   id: string;
   kamervloernaam: string;
+  kamervloer_status: string;
   project_id: string;
   project_naam: string;
   reinigMethode_id: string;

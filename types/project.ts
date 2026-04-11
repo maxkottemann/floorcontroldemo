@@ -1,3 +1,5 @@
+import { bus } from "./bus";
+
 export interface project {
   id: string;
   locatie_naam: string;
@@ -7,4 +9,5 @@ export interface project {
   aangemaakt_op?: string;
   start_datum?: string;
   eind_datum?: string;
+  bus?: bus[];
 }

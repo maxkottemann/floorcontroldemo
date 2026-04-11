@@ -4,5 +4,4 @@ export interface kamervloer {
   vloertype_naam: string;
   vierkante_meter: number;
   status: string;
-  naam?: string;
 }

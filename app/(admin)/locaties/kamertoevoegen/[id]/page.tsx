@@ -224,7 +224,7 @@ export default function getKamersPage({}) {
       )}
 
       <div className="flex flex-col flex-1 h-screen">
-        <Topbar title="Kamerbeheer" />
+        <Topbar title="Ruimtebeheer" />
 
         <main className="flex-1 overflow-auto p-8">
           <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-6 items-start">
@@ -290,10 +290,10 @@ export default function getKamersPage({}) {
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                 <div className="px-6 py-5 border-b border-gray-50">
                   <h2 className="text-base font-semibold text-gray-900">
-                    Nieuwe kamer toevoegen
+                    Nieuwe ruimte toevoegen
                   </h2>
                   <p className="text-sm text-gray-400 mt-0.5">
-                    Vul de gegevens in om een kamer aan te maken
+                    Vul de gegevens in om een ruimte aan te maken
                   </p>
                 </div>
 
@@ -303,8 +303,8 @@ export default function getKamersPage({}) {
                       <Inputfield
                         value={naam}
                         onChange={(e) => setNaam(e)}
-                        title="Kamernaam"
-                        className="pb-5"
+                        title="Ruimtenaam"
+                        className="pb-3 pt-7"
                       />
                     </div>
                     <div>
@@ -409,7 +409,7 @@ export default function getKamersPage({}) {
                       className="inline-flex items-center  gap-2 px-5 py-2.5 bg-[#154273] hover:bg-[#0f2f52] hover:cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-xl shadow-sm transition-colors"
                     >
                       <PlusIcon className="w-4 h-4" />
-                      {isSubmitting ? "Bezig..." : "Kamer toevoegen"}
+                      {isSubmitting ? "Bezig..." : "Ruimte toevoegen"}
                     </button>
                   </div>
                 </div>
@@ -419,7 +419,7 @@ export default function getKamersPage({}) {
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="px-5 py-4 border-b border-gray-50">
                 <h2 className="text-base font-semibold text-gray-900">
-                  Recente kamers
+                  Recente ruimtes
                 </h2>
                 <p className="text-xs text-gray-400 mt-0.5">
                   Laatste 20 aangemaakt
