@@ -13,6 +13,8 @@ import {
   ChevronRightIcon,
   CheckCircleIcon,
   ArrowDownTrayIcon,
+  ArrowTopRightOnSquareIcon,
+  CalendarDaysIcon,
 } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 
@@ -83,6 +85,7 @@ export default function RapportenPage() {
 
         <main className="flex-1 overflow-auto p-8">
           <div className="space-y-6">
+            {/* Header */}
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.14em] text-p/60 mb-1">
                 Overzicht
@@ -96,7 +99,9 @@ export default function RapportenPage() {
             </div>
 
             <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-6 items-start">
+              {/* Project list */}
               <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                {/* Search */}
                 <div className="px-4 py-3 border-b border-slate-100">
                   <div className="relative">
                     <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
@@ -109,23 +114,25 @@ export default function RapportenPage() {
                   </div>
                 </div>
 
+                {/* Column headers */}
                 <div className="grid grid-cols-[1fr_160px_120px_40px] px-5 py-2.5 border-b border-slate-50 bg-slate-50/60">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                    Project
-                  </p>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                    Locatie
-                  </p>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                    Datum
-                  </p>
-                  <div />
+                  {["Project", "Locatie", "Datum", ""].map((h) => (
+                    <p
+                      key={h}
+                      className="text-[10px] font-bold uppercase tracking-widest text-slate-400"
+                    >
+                      {h}
+                    </p>
+                  ))}
                 </div>
 
+                {/* Rows */}
                 <div className="divide-y divide-slate-50">
                   {filtered.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-14 text-center">
-                      <DocumentTextIcon className="w-8 h-8 text-slate-200 mb-2" />
+                      <div className="w-10 h-10 rounded-2xl bg-slate-100 flex items-center justify-center mb-3">
+                        <DocumentTextIcon className="w-5 h-5 text-slate-300" />
+                      </div>
                       <p className="text-sm text-slate-400 font-medium">
                         Geen projecten gevonden
                       </p>
@@ -144,12 +151,8 @@ export default function RapportenPage() {
                           onClick={() =>
                             setSelectedId(isSelected ? null : p.id)
                           }
-                          className={`grid grid-cols-[1fr_160px_120px_40px] items-center px-5 py-3.5 cursor-pointer transition-all duration-150
-                            ${
-                              isSelected
-                                ? "bg-p/5 border-l-2 border-l-p"
-                                : "hover:bg-slate-50 border-l-2 border-l-transparent"
-                            }`}
+                          className={`grid grid-cols-[1fr_160px_120px_40px] items-center px-5 py-3.5 cursor-pointer transition-all duration-150 border-l-2
+                            ${isSelected ? "bg-p/5 border-l-p" : "border-l-transparent hover:bg-slate-50"}`}
                         >
                           <div className="flex items-center gap-3 min-w-0">
                             <div
@@ -197,6 +200,7 @@ export default function RapportenPage() {
                 </div>
               </div>
 
+              {/* Action panel */}
               <div className="space-y-4">
                 {!selected ? (
                   <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8 flex flex-col items-center justify-center text-center">
@@ -213,7 +217,7 @@ export default function RapportenPage() {
                 ) : (
                   <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                     {/* Selected project header */}
-                    <div className="px-5 py-5 border-b border-slate-50">
+                    <div className="px-5 py-5 border-b border-slate-50 space-y-1">
                       <p className="text-[10px] font-bold uppercase tracking-widest text-p/60 mb-1">
                         Geselecteerd
                       </p>
@@ -221,7 +225,7 @@ export default function RapportenPage() {
                         {selected.naam}
                       </p>
                       {selected.locatie_naam && (
-                        <div className="flex items-center gap-1.5 mt-1">
+                        <div className="flex items-center gap-1.5">
                           <MapPinIcon className="w-3.5 h-3.5 text-slate-300" />
                           <p className="text-sm text-slate-400">
                             {selected.locatie_naam}
@@ -229,19 +233,42 @@ export default function RapportenPage() {
                         </div>
                       )}
                       {(selected.start_datum || selected.eind_datum) && (
-                        <p className="text-xs text-slate-400 mt-1">
-                          {formatDate(selected.start_datum)} —{" "}
-                          {formatDate(selected.eind_datum)}
-                        </p>
+                        <div className="flex items-center gap-1.5">
+                          <CalendarDaysIcon className="w-3.5 h-3.5 text-slate-300" />
+                          <p className="text-xs text-slate-400">
+                            {formatDate(selected.start_datum)} —{" "}
+                            {formatDate(selected.eind_datum)}
+                          </p>
+                        </div>
                       )}
                     </div>
 
-                    {/* Actions */}
+                    <div className="px-5 py-4 border-b border-slate-50">
+                      <button
+                        onClick={() =>
+                          router.push(`/rapporten/bekijken/${selected.id}`)
+                        }
+                        className="w-full cursor-pointer flex items-center gap-3 px-4 py-3 rounded-xl bg-p/5 hover:bg-p/10 border border-p/15 transition-all duration-150 group"
+                      >
+                        <div className="w-8 h-8 rounded-lg bg-p/15 flex items-center justify-center shrink-0">
+                          <ArrowTopRightOnSquareIcon className="w-4 h-4 text-p" />
+                        </div>
+                        <div className="flex-1 text-left min-w-0">
+                          <p className="text-sm font-bold text-p">
+                            Bekijk project
+                          </p>
+                          <p className="text-xs text-p/60">
+                            Ga naar projectoverzicht
+                          </p>
+                        </div>
+                        <ChevronRightIcon className="w-4 h-4 text-p/40 group-hover:text-p shrink-0 transition-colors" />
+                      </button>
+                    </div>
+
                     <div className="p-5 space-y-2">
                       <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">
                         Rapport genereren
                       </p>
-
                       {[
                         {
                           label: "Vloerrapport",
@@ -259,7 +286,7 @@ export default function RapportenPage() {
                               `/rapporten/${selected.id}?type=${label.toLowerCase()}`,
                             )
                           }
-                          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-100 hover:border-p/30 hover:bg-p/5 transition-all duration-150 group text-left"
+                          className="w-full cursor-pointer flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-100 hover:border-p/30 hover:bg-p/5 transition-all duration-150 group text-left"
                         >
                           <div className="w-8 h-8 rounded-lg bg-slate-100 group-hover:bg-p/10 flex items-center justify-center shrink-0 transition-colors">
                             <ArrowDownTrayIcon className="w-4 h-4 text-slate-400 group-hover:text-p transition-colors" />

@@ -1,5 +1,6 @@
 export interface gewassenvloer {
   id: string;
+  kamervloer_id?: string;
   kamervloernaam: string;
   kamervloer_status: string;
   project_id: string;

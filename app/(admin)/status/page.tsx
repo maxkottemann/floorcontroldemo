@@ -190,7 +190,6 @@ export default function StatusPage() {
   const [finishedFloors, setFinishedFloors] = useState<gewassenvloer[]>([]);
   const [lastUpdate, setLastUpdate] = useState<Date>();
 
-  // Load active projects
   useEffect(() => {
     async function getAllActiveProjects() {
       const { data, error } = await supabase
@@ -224,12 +223,12 @@ export default function StatusPage() {
     getAllActiveProjects();
   }, []);
 
-  // Load floors for selected project
   async function loadProjectData(proj: project) {
     const { data: vloerIds } = await supabase
       .from("project_vloeren")
       .select("kamervloer_id")
       .eq("project_id", proj.id);
+
     if (!vloerIds?.length) {
       setAllFloors([]);
       setFinishedFloors([]);
@@ -273,7 +272,6 @@ export default function StatusPage() {
         aangemaakt_op: d.aangemaakt_op,
       })),
     );
-
     setLastUpdate(new Date());
   }
 
@@ -282,7 +280,6 @@ export default function StatusPage() {
     loadProjectData(activeProject);
   }, [activeProject]);
 
-  // Live subscription
   useEffect(() => {
     if (!activeProject) return;
 

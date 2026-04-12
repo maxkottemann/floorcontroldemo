@@ -562,18 +562,18 @@ export default function VloerenPaspoortPage() {
                       <div className="w-px h-6 bg-slate-100" />
 
                       <div className="flex items-center gap-1.5">
-                        {["goed", "matig", "slecht"].map((s) => {
+                        {["Goed", "Matig", "Slecht"].map((s) => {
                           const active = filterStatussen.includes(s);
                           const colors: Record<string, string> = {
-                            goed: active
-                              ? "bg-emerald-500 text-white border-emerald-500"
-                              : "bg-white text-emerald-600 border-emerald-200 hover:bg-emerald-50",
-                            matig: active
-                              ? "bg-amber-500 text-white border-amber-500"
-                              : "bg-white text-amber-600 border-amber-200 hover:bg-amber-50",
-                            slecht: active
-                              ? "bg-red-500 text-white border-red-500"
-                              : "bg-white text-red-600 border-red-200 hover:bg-red-50",
+                            Goed: active
+                              ? "bg-emerald-500 text-white border-emerald-500 cursor-pointer"
+                              : "bg-white text-emerald-600 border-emerald-200 hover:bg-emerald-50 hover:cursor-pointer",
+                            Matig: active
+                              ? "bg-amber-500 text-white border-amber-500 cursor-pointer"
+                              : "bg-white text-amber-600 border-amber-200 hover:bg-amber-50 cursor-pointer",
+                            Slecht: active
+                              ? "bg-red-500 text-white border-red-500 cursor-pointer"
+                              : "bg-white text-red-600 border-red-200 hover:bg-red-50 cursor-pointer",
                           };
                           return (
                             <button
