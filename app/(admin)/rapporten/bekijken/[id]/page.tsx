@@ -18,7 +18,9 @@ import {
   SwatchIcon,
   SparklesIcon,
   ChatBubbleBottomCenterTextIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/outline";
+import { CgClose } from "react-icons/cg";
 
 function DonutChart({
   segments,
@@ -134,59 +136,63 @@ export default function RapportBekijkenPage() {
     async function getProjectData() {
       if (!id) return;
       setLoading(true);
+      try {
+        const { data: vloerIds } = await supabase
+          .from("project_vloeren")
+          .select("kamervloer_id")
+          .eq("project_id", id);
 
-      const { data: vloerIds } = await supabase
-        .from("project_vloeren")
-        .select("kamervloer_id")
-        .eq("project_id", id);
+        if (!vloerIds?.length) {
+          setAllFinishedFloors([]);
+          setAllScheduledFloors([]);
+          return;
+        }
 
-      if (!vloerIds?.length) {
-        setAllFinishedFloors([]);
-        setAllScheduledFloors([]);
+        const ids = vloerIds.map((v) => v.kamervloer_id);
+        const { data: floors } = await supabase
+          .from("kamer_vloeren")
+          .select("id,kamer_id,vloer_types(naam),vierkante_meter,status")
+          .in("id", ids);
+        setAllScheduledFloors(
+          (floors ?? []).map((d) => ({
+            id: d.id,
+            kamer_id: d.kamer_id,
+            vloertype_naam: (d.vloer_types as any)?.naam,
+            vierkante_meter: d.vierkante_meter,
+            status: d.status,
+          })),
+        );
+
+        const { data: finished, error: finishedError } = await supabase
+          .from("gewassen_vloeren")
+          .select(
+            "id,kamervloer_id,kamer_vloeren(status,vloer_types(naam)),project_id,projecten(naam),reinigmethode_id,reinigings_methodes(naam),vierkante_meter,opmerking,aangemaakt_op",
+          )
+          .eq("project_id", id)
+          .order("aangemaakt_op", { ascending: false });
+
+        if (finishedError) console.log("finished error:", finishedError);
+
+        setAllFinishedFloors(
+          (finished ?? []).map((d: any) => ({
+            id: d.id,
+            kamervloer_id: d.kamervloer_id,
+            kamervloernaam: d.kamer_vloeren?.vloer_types?.naam ?? "—",
+            kamervloer_status: d.kamer_vloeren?.status ?? "—",
+            project_id: d.project_id,
+            project_naam: d.projecten?.naam ?? "—",
+            reinigMethode_id: d.reinigins_methode_id ?? "",
+            reinigMethode_naam: d.reinigings_methodes?.naam ?? "—",
+            vierkante_meter: d.vierkante_meter,
+            opmerking: d.opmerking ?? "",
+            aangemaakt_op: d.aangemaakt_op,
+          })),
+        );
+      } catch (err) {
+        console.log("getProjectData error:", err);
+      } finally {
         setLoading(false);
-        return;
       }
-
-      const ids = vloerIds.map((v) => v.kamervloer_id);
-      const { data: floors } = await supabase
-        .from("kamer_vloeren")
-        .select("id,kamer_id,vloer_types(naam),vierkante_meter,status")
-        .in("id", ids);
-      setAllScheduledFloors(
-        (floors ?? []).map((d) => ({
-          id: d.id,
-          kamer_id: d.kamer_id,
-          vloertype_naam: (d.vloer_types as any)?.naam,
-          vierkante_meter: d.vierkante_meter,
-          status: d.status,
-        })),
-      );
-
-      const { data: finished } = await supabase
-        .from("gewassen_vloeren")
-        .select(
-          "id,kamervloer_id,kamer_vloeren(status,vloer_types(naam)),project_id,projecten(naam),reinigmethode_id,reinigings_methodes(naam),vierkante_meter,opmerking,aangemaakt_op",
-        )
-        .eq("project_id", id)
-        .order("aangemaakt_op", { ascending: false });
-
-      setAllFinishedFloors(
-        (finished ?? []).map((d: any) => ({
-          id: d.id,
-          kamervloer_id: d.kamervloer_id,
-          kamervloernaam: d.kamer_vloeren?.vloer_types?.naam ?? "—",
-          kamervloer_status: d.kamer_vloeren?.status ?? "—",
-          project_id: d.project_id,
-          project_naam: d.projecten?.naam ?? "—",
-          reinigMethode_id: d.reinigins_methode_id ?? "",
-          reinigMethode_naam: d.reinigings_methodes?.naam ?? "—",
-          vierkante_meter: d.vierkante_meter,
-          opmerking: d.opmerking ?? "",
-          aangemaakt_op: d.aangemaakt_op,
-        })),
-      );
-
-      setLoading(false);
     }
     getProjectData();
   }, [id]);
@@ -274,14 +280,18 @@ export default function RapportBekijkenPage() {
 
               <div className="grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-6 items-start">
                 <div className="space-y-5">
-                  {/* Stat cards */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {[
                       {
+                        label: "Totaal m² onderhouden",
+                        value: `${washedM2}m²`,
+                        sub: `van ${totalM2}m² gepland`,
+                        accent: true,
+                      },
+                      {
                         label: "Voortgang",
                         value: `${progressPct}%`,
-                        sub: `${washedM2} / ${totalM2}m²`,
-                        accent: true,
+                        sub: "compleet",
                       },
                       {
                         label: "Gereed",
@@ -292,15 +302,6 @@ export default function RapportBekijkenPage() {
                         label: "Niet onderhouden",
                         value: todoCount,
                         sub: "vloeren openstaand",
-                      },
-                      {
-                        label: "Laatste onderhoud",
-                        value: allFinishedFloors[0]
-                          ? formatDate(allFinishedFloors[0].aangemaakt_op)
-                          : "—",
-                        sub: allFinishedFloors[0]
-                          ? formatTime(allFinishedFloors[0].aangemaakt_op)
-                          : "Nog geen onderhoud",
                       },
                     ].map(({ label, value, sub, accent }: any) => (
                       <div
@@ -432,7 +433,7 @@ export default function RapportBekijkenPage() {
                           <DonutChart
                             segments={methodeSegments}
                             centerLabel={`${allFinishedFloors.length}`}
-                            centerSub="beurten"
+                            centerSub=""
                           />
                           <div className="space-y-2 flex-1">
                             {methodeSegments.map((s) => (
@@ -549,8 +550,8 @@ export default function RapportBekijkenPage() {
                             Niet onderhouden
                           </p>
                           <p className="text-xs text-slate-400">
-                            {todoCount} vloer{todoCount !== 1 ? "en" : ""}{" "}
-                            openstaand
+                            {todoCount} vloer{todoCount !== 1 ? "en" : ""} niet
+                            uitgevoerd
                           </p>
                         </div>
                       </div>
@@ -583,8 +584,8 @@ export default function RapportBekijkenPage() {
                               <p className="text-sm text-slate-400">
                                 {f.vierkante_meter}m²
                               </p>
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-500 border border-slate-200 w-fit">
-                                Openstaand
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-bold bg-red-100 text-red-500 border border-slate-200 w-fit">
+                                <CgClose></CgClose>
                               </span>
                             </div>
                           ))}
@@ -593,7 +594,6 @@ export default function RapportBekijkenPage() {
                   )}
                 </div>
 
-                {/* Right sidebar */}
                 <div className="space-y-3">
                   <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                     <div className="px-5 py-5 border-b border-slate-50">
@@ -680,27 +680,29 @@ export default function RapportBekijkenPage() {
                       </div>
                       <div className="divide-y divide-slate-50 max-h-52 overflow-y-auto">
                         {opmerkingen.map((f) => (
-                          <div
+                          <a
+                            href={`/vloerenpaspoort/bekijken/${f.kamervloer_id}`}
                             key={f.id}
-                            className="flex items-start gap-3 px-5 py-3"
                           >
-                            <div className="w-6 h-6 rounded-lg bg-amber-50 flex items-center justify-center shrink-0 mt-0.5">
-                              <span className="text-amber-500 text-xs font-bold">
-                                !
-                              </span>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs font-semibold text-slate-500 truncate">
-                                {f.kamervloernaam}
+                            <div className="flex items-start gap-3 px-5 py-3">
+                              <div className="w-6 h-6 rounded-lg bg-amber-50 flex items-center justify-center shrink-0 mt-0.5">
+                                <span className="text-amber-500 text-xs font-bold">
+                                  !
+                                </span>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-semibold text-slate-500 truncate">
+                                  {f.kamervloernaam}
+                                </p>
+                                <p className="text-sm text-slate-700 font-medium mt-0.5">
+                                  {f.opmerking}
+                                </p>
+                              </div>
+                              <p className="text-[10px] text-slate-300 shrink-0 mt-0.5">
+                                {formatTime(f.aangemaakt_op)}
                               </p>
-                              <p className="text-sm text-slate-700 font-medium mt-0.5">
-                                {f.opmerking}
-                              </p>
                             </div>
-                            <p className="text-[10px] text-slate-300 shrink-0 mt-0.5">
-                              {formatTime(f.aangemaakt_op)}
-                            </p>
-                          </div>
+                          </a>
                         ))}
                       </div>
                     </div>

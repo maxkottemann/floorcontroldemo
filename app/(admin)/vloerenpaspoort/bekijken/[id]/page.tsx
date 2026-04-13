@@ -31,6 +31,11 @@ interface VloerInfo {
   locatie_naam: string;
 }
 
+interface Opmerkingen {
+  id: string;
+  opmerking: string;
+}
+
 function formatDate(dateStr?: string) {
   if (!dateStr) return "—";
   return new Date(dateStr).toLocaleDateString("nl-NL", {
@@ -98,6 +103,30 @@ export default function VloerPaspoortBekijkenPage() {
   const [wasbeurten, setWasbeurten] = useState<gewassenvloer[]>([]);
   const [loadingInfo, setLoadingInfo] = useState(true);
   const [loadingHistory, setLoadingHistory] = useState(true);
+  const [alleOpmerkingen, setAlleOpmerkingen] = useState<Opmerkingen[]>([]);
+
+  useEffect(() => {
+    async function getOpmerkingen() {
+      if (!id) return;
+      const { data, error } = await supabase
+        .from("gewassen_vloeren")
+        .select("id,opmerking")
+        .eq("kamervloer_id", id);
+
+      if (!data || error) {
+        return;
+      }
+      console.log(data);
+
+      setAlleOpmerkingen(
+        (data || []).map((d) => ({
+          id: d.id,
+          opmerking: d.opmerking,
+        })),
+      );
+    }
+    getOpmerkingen();
+  }, [id]);
 
   useEffect(() => {
     async function getVloerInfo() {
@@ -148,7 +177,6 @@ export default function VloerPaspoortBekijkenPage() {
     getVloerInfo();
   }, [id]);
 
-  // Fetch wash history
   useEffect(() => {
     async function getVloerHistory() {
       if (!id) return;
@@ -219,9 +247,7 @@ export default function VloerPaspoortBekijkenPage() {
             </div>
 
             <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-6 items-start">
-              {/* Main — wash history */}
               <div className="space-y-4">
-                {/* Stats row */}
                 {!loadingHistory && (
                   <div className="grid grid-cols-3 gap-4">
                     <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-5 py-4">
@@ -266,7 +292,16 @@ export default function VloerPaspoortBekijkenPage() {
                   </div>
                 )}
 
-                {/* History timeline */}
+                <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                  <div className="flex items-center gap-3 px-6 py-5 border-b border-slate-50">
+                    <ul>
+                      {alleOpmerkingen.map((o) => (
+                        <li key={o.id}>{o.opmerking}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
                 <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                   <div className="flex items-center gap-3 px-6 py-5 border-b border-slate-50">
                     <div className="w-9 h-9 rounded-xl bg-p/10 flex items-center justify-center">

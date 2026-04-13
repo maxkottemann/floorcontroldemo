@@ -485,7 +485,7 @@ export default function StatusPage() {
                       accent: false,
                     },
                     {
-                      label: "Laatste wasbeurt",
+                      label: "Laatste onderhoud geregisteerd",
                       value: finishedFloors[0]
                         ? formatTime(finishedFloors[0].aangemaakt_op)
                         : "—",
@@ -589,14 +589,14 @@ export default function StatusPage() {
                     </p>
                     {methodeSegments.length === 0 ? (
                       <div className="flex-1 flex items-center justify-center text-slate-300 text-sm">
-                        Nog geen wasbeurten
+                        Nog geen onderhoud uitgevoerd
                       </div>
                     ) : (
                       <div className="flex items-center gap-6">
                         <DonutChart
                           segments={methodeSegments}
                           centerLabel={`${finishedFloors.length}`}
-                          centerSub="beurten"
+                          centerSub="totaal"
                           size={150}
                           strokeWidth={20}
                         />
