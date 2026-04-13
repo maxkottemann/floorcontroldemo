@@ -30,7 +30,7 @@ export default function LoginPage() {
       .single();
 
     if (profiel?.rol === "locatie_manager") {
-      router.push("/status");
+      router.push("/klant/dashboard");
     } else {
       router.push("/dashboard");
     }
