@@ -11,17 +11,31 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   async function handleLogin() {
-    const { error } = await supabase.auth.signInWithPassword({
+    setLoading(true);
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
     if (error) {
       setError(true);
+      setLoading(false);
       return;
+    }
+
+    const { data: profiel } = await supabase
+      .from("profielen")
+      .select("rol")
+      .eq("gebruiker_id", data.user.id)
+      .single();
+
+    if (profiel?.rol === "locatie_manager") {
+      router.push("/status");
     } else {
       router.push("/dashboard");
     }
+
+    setLoading(false);
   }
 
   return (
