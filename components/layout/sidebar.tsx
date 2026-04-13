@@ -10,9 +10,11 @@ import {
   ClipboardDocumentIcon,
   BuildingOffice2Icon,
   UserCircleIcon,
+  BellAlertIcon,
 } from "@heroicons/react/24/outline";
 import { BsPassport } from "react-icons/bs";
 import { DocumentArrowUpIcon } from "@heroicons/react/24/outline";
+import { BiNotification } from "react-icons/bi";
 
 interface SidebarProps {
   className?: string;
@@ -100,6 +102,10 @@ export default function Sidebar({ className }: SidebarProps) {
         <Link href="/milieu" className={linkClass("/milieu")}>
           <GlobeAltIcon className="w-5 h-5" />
           Milieu
+        </Link>
+        <Link href="/meldingen" className={linkClass("/meldingen")}>
+          <BellAlertIcon className="w-5 h-5" />
+          Meldingen
         </Link>
         <Link href="/gebruikers" className={linkClass("/gebruikers")}>
           <UserCircleIcon className="w-5 h-5" />

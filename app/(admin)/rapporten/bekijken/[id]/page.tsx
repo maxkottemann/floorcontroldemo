@@ -265,7 +265,6 @@ export default function RapportBekijkenPage() {
             </div>
           ) : (
             <div className="space-y-6">
-              {/* Header */}
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-p/60 mb-1">
                   Projectrapport
@@ -327,7 +326,6 @@ export default function RapportBekijkenPage() {
                     ))}
                   </div>
 
-                  {/* Progress bar */}
                   <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-6 py-4">
                     <div className="flex items-center gap-4">
                       <p className="text-xs font-bold text-slate-500 shrink-0">
@@ -348,7 +346,6 @@ export default function RapportBekijkenPage() {
                     </div>
                   </div>
 
-                  {/* Charts */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                     <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 flex flex-col">
                       <p className="text-sm font-bold text-slate-800 mb-5">
@@ -433,7 +430,7 @@ export default function RapportBekijkenPage() {
                           <DonutChart
                             segments={methodeSegments}
                             centerLabel={`${allFinishedFloors.length}`}
-                            centerSub=""
+                            centerSub="totaal"
                           />
                           <div className="space-y-2 flex-1">
                             {methodeSegments.map((s) => (
