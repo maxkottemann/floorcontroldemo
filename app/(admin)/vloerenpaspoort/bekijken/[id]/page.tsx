@@ -252,7 +252,7 @@ export default function VloerPaspoortBekijkenPage() {
                   <div className="grid grid-cols-3 gap-4">
                     <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-5 py-4">
                       <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">
-                        Wasbeurten
+                        Onderhoudsbeurten
                       </p>
                       <p className="text-3xl font-bold text-p">
                         {wasbeurten.length}
@@ -263,7 +263,7 @@ export default function VloerPaspoortBekijkenPage() {
                     </div>
                     <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-5 py-4">
                       <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">
-                        Laatste wasbeurt
+                        Laatste onderhoud
                       </p>
                       <p className="text-2xl font-bold text-p mt-1 mb-1">
                         {lastWasbeurt

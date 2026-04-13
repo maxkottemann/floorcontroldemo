@@ -58,7 +58,7 @@ function PlanOnderhoudsPopup({
   kamervloer_id: string;
   kamervloer_naam?: string;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (uitleg: string) => void;
 }) {
   const { showToast } = useToast();
   const ref = useRef<HTMLDivElement>(null);
@@ -121,7 +121,7 @@ function PlanOnderhoudsPopup({
       }
 
       showToast("Project aangemaakt", "success");
-      onSuccess();
+      onSuccess("Onderhoud ingepland");
       onClose();
     } finally {
       setSaving(false);
@@ -211,6 +211,7 @@ export default function MeldingBekijkenPage() {
   const [confirm, setConfirm] = useState<"afhandelen" | "afwijzen" | null>(
     null,
   );
+  const [uitleg, setUitleg] = useState("");
 
   useEffect(() => {
     async function getMelding() {
@@ -288,12 +289,17 @@ export default function MeldingBekijkenPage() {
     getLocatieInfo();
   }, [melding?.kamervloer_id]);
 
-  async function markAfgehandeld() {
+  async function markAfgehandeld(uitlegOverride?: string) {
     if (!id) return;
+    const finalUitleg = uitlegOverride ?? uitleg;
+    if (!finalUitleg.trim()) {
+      showToast("Vul een uitleg in", "error");
+      return;
+    }
     setHandling(true);
     const { error } = await supabase
       .from("meldingen")
-      .update({ afgehandeld: true })
+      .update({ afgehandeld: true, uitleg: finalUitleg })
       .eq("id", id);
     if (error) {
       showToast("Kon melding niet afhandelen", "error");
@@ -301,16 +307,21 @@ export default function MeldingBekijkenPage() {
       return;
     }
     setMelding((prev) => (prev ? { ...prev, afgehandeld: true } : prev));
+    setUitleg("");
     showToast("Melding afgehandeld", "success");
     setHandling(false);
   }
 
   async function markRejected() {
     if (!id) return;
+    if (!uitleg.trim()) {
+      showToast("Vul een uitleg in", "error");
+      return;
+    }
     setRejecting(true);
     const { error } = await supabase
       .from("meldingen")
-      .update({ afgehandeld: true })
+      .update({ afgehandeld: true, uitleg })
       .eq("id", id);
     if (error) {
       showToast("Kon melding niet afwijzen", "error");
@@ -318,6 +329,7 @@ export default function MeldingBekijkenPage() {
       return;
     }
     setMelding((prev) => (prev ? { ...prev, afgehandeld: true } : prev));
+    setUitleg("");
     showToast("Melding afgewezen", "success");
     setRejecting(false);
   }
@@ -333,7 +345,7 @@ export default function MeldingBekijkenPage() {
           kamervloer_id={melding.kamervloer_id}
           kamervloer_naam={melding.kamervloer_naam}
           onClose={() => setPlanPopupOpen(false)}
-          onSuccess={() => markAfgehandeld()}
+          onSuccess={(uitleg) => markAfgehandeld(uitleg)}
         />
       )}
 
@@ -542,9 +554,19 @@ export default function MeldingBekijkenPage() {
                             <p className="text-xs font-semibold text-emerald-700 text-center">
                               Melding afhandelen?
                             </p>
+                            <textarea
+                              value={uitleg}
+                              onChange={(e) => setUitleg(e.target.value)}
+                              placeholder="Uitleg verplicht..."
+                              rows={3}
+                              className="w-full text-xs text-slate-700 bg-white border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-emerald-300 placeholder:text-slate-300 resize-none transition-all"
+                            />
                             <div className="flex gap-2">
                               <button
-                                onClick={() => setConfirm(null)}
+                                onClick={() => {
+                                  setConfirm(null);
+                                  setUitleg("");
+                                }}
                                 className="flex-1 py-1.5 text-xs font-semibold cursor-pointer text-slate-500 hover:text-slate-700 bg-white border border-slate-200 rounded-lg transition-colors"
                               >
                                 Annuleren
@@ -554,7 +576,7 @@ export default function MeldingBekijkenPage() {
                                   setConfirm(null);
                                   markAfgehandeld();
                                 }}
-                                disabled={handling}
+                                disabled={handling || !uitleg.trim()}
                                 className="flex-1 py-1.5 text-xs font-bold text-white cursor-pointer bg-emerald-500 hover:bg-emerald-600 rounded-lg transition-colors disabled:opacity-60"
                               >
                                 {handling ? "Bezig..." : "Bevestigen"}
@@ -583,9 +605,19 @@ export default function MeldingBekijkenPage() {
                             <p className="text-xs font-semibold text-slate-600 text-center">
                               Melding afwijzen?
                             </p>
+                            <textarea
+                              value={uitleg}
+                              onChange={(e) => setUitleg(e.target.value)}
+                              placeholder="Uitleg verplicht..."
+                              rows={3}
+                              className="w-full text-xs text-slate-700 bg-white border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-slate-300 placeholder:text-slate-300 resize-none transition-all"
+                            />
                             <div className="flex gap-2">
                               <button
-                                onClick={() => setConfirm(null)}
+                                onClick={() => {
+                                  setConfirm(null);
+                                  setUitleg("");
+                                }}
                                 className="flex-1 py-1.5 text-xs font-semibold text-slate-500 cursor-pointer hover:text-slate-700 bg-white border border-slate-200 rounded-lg transition-colors"
                               >
                                 Annuleren
@@ -595,7 +627,7 @@ export default function MeldingBekijkenPage() {
                                   setConfirm(null);
                                   markRejected();
                                 }}
-                                disabled={rejecting}
+                                disabled={rejecting || !uitleg.trim()}
                                 className="flex-1 py-1.5 text-xs font-bold text-white cursor-pointer bg-slate-500 hover:bg-slate-600 rounded-lg transition-colors disabled:opacity-60"
                               >
                                 {rejecting ? "Bezig..." : "Bevestigen"}
