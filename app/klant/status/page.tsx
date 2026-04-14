@@ -2,7 +2,7 @@
 
 import Toast from "@/components/layout/toast";
 import Topbar from "@/components/layout/topbar";
-import Sidebar from "@/components/layout/sidebar";
+import SidebarClient from "@/components/layout/sidebarclient";
 import { useToast } from "@/components/hooks/usetoasts";
 import { useEffect, useRef, useState } from "react";
 import { project } from "@/types/project";
@@ -377,7 +377,7 @@ export default function StatusPage() {
 
   return (
     <div className="min-h-screen flex bg-[#F5F6FA]">
-      <Sidebar className="fixed top-0 left-0 h-screen" />
+      <SidebarClient className="fixed top-0 left-0 h-screen" />
       {toast && (
         <Toast message={toast.message} type={toast.type} onClose={hideToast} />
       )}

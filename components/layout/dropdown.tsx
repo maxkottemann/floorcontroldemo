@@ -73,7 +73,7 @@ export default function Dropdown<T extends object>({
   };
 
   return (
-    <div className={`max-w-sm relative ${className}`} ref={ref}>
+    <div className={`max-w-lg relative ${className}`} ref={ref}>
       {title && (
         <label className="block mb-1 text-sm font-medium text-gray-700">
           {title}

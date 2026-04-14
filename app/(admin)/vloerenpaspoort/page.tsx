@@ -390,19 +390,7 @@ export default function VloerenPaspoortPage() {
 
         <main className="flex-1 overflow-hidden p-8">
           <div className="h-full flex flex-col gap-5">
-            {/* Header */}
             <div className="flex items-end justify-between">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-p/60 mb-1">
-                  Overzicht
-                </p>
-                <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-                  Vloerpaspoort
-                </h1>
-                <p className="text-sm text-slate-400 mt-0.5">
-                  Selecteer locaties en bekijk alle vloeren
-                </p>
-              </div>
               <div className="flex items-center gap-3 text-sm text-slate-500">
                 <span className="font-semibold text-p">
                   {selectedLocatieIds.length}
@@ -413,11 +401,8 @@ export default function VloerenPaspoortPage() {
               </div>
             </div>
 
-            {/* 3-column layout */}
             <div className="flex-1 grid grid-cols-[280px_1fr] gap-5 min-h-0">
-              {/* LEFT — filter + locatie sidebar */}
               <div className="flex flex-col gap-3 min-h-0">
-                {/* Locatie search */}
                 <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-4 py-3">
                   <div className="relative">
                     <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
@@ -430,7 +415,6 @@ export default function VloerenPaspoortPage() {
                   </div>
                 </div>
 
-                {/* Locatie filters */}
                 <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -471,7 +455,6 @@ export default function VloerenPaspoortPage() {
                   )}
                 </div>
 
-                {/* Locatie list */}
                 <div className="flex-1 bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden flex flex-col min-h-0">
                   <div className="px-4 py-3 border-b border-slate-50 shrink-0">
                     <p className="text-xs font-bold text-slate-500">
@@ -532,7 +515,6 @@ export default function VloerenPaspoortPage() {
                 </div>
               </div>
 
-              {/* RIGHT — vloer filters + table */}
               <div className="flex flex-col gap-4 min-h-0">
                 {!selectedLocatieIds.length ? (
                   <div className="flex-1 bg-white rounded-2xl border border-slate-100 shadow-sm flex flex-col items-center justify-center text-center">

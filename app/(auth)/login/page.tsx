@@ -60,6 +60,7 @@ export default function LoginPage() {
               type="email"
               placeholder="janjansen@gmail.com"
               value={email}
+              suppressHydrationWarning
               onChange={(e) => setEmail(e.target.value)}
               className="w-full px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-500 text-slate-900"
             />
@@ -73,6 +74,7 @@ export default function LoginPage() {
               type="password"
               placeholder="••••••••"
               value={password}
+              suppressHydrationWarning
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-500 text-slate-900"
             />
@@ -98,6 +100,17 @@ export default function LoginPage() {
               className="text-[#00539f] underline underline-offset-4 hover:cursor-pointer hover:text-[#00538e]"
             >
               Wacthwoord vergeten?
+            </a>
+          </div>
+          <div className="flex justify-center items-center mt-4">
+            <a
+              href="/aanvragen"
+              className="text-sm text-gray-600 hover:text-[#00539f] transition-colors duration-200"
+            >
+              Nog geen account?{" "}
+              <span className="font-semibold text-[#00539f] underline underline-offset-4">
+                Vraag er één aan
+              </span>
             </a>
           </div>
         </div>

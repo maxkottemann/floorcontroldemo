@@ -14,13 +14,12 @@ import {
 } from "@heroicons/react/24/outline";
 import { BsPassport } from "react-icons/bs";
 import { DocumentArrowUpIcon } from "@heroicons/react/24/outline";
-import { BiNotification } from "react-icons/bi";
 
 interface SidebarProps {
   className?: string;
 }
 
-export default function Sidebar({ className }: SidebarProps) {
+export default function SidebarClient({ className }: SidebarProps) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
@@ -75,41 +74,40 @@ export default function Sidebar({ className }: SidebarProps) {
 
         <div className="border-t border-gray-200 my-4" />
 
-        <Link href="/dashboard" className={linkClass("/dashboard")}>
+        <Link href="/klant/dashboard" className={linkClass("/klant/dashboard")}>
           <HomeIcon className="w-5 h-5" />
           Dashboard
         </Link>
-        <Link href="/status" className={linkClass("/status")}>
+        <Link href="/klant/status" className={linkClass("/klant/status")}>
           <ChartBarIcon className="w-5 h-5" />
           Status
         </Link>
-        <Link href="/projecten" className={linkClass("/projecten")}>
+        <Link href="/klant/projecten" className={linkClass("/klant/projecten")}>
           <ClipboardDocumentIcon className="w-5 h-5" />
           Projecten
         </Link>
-        <Link href="/locaties" className={linkClass("/locaties")}>
+        <Link href="/klant/locaties" className={linkClass("/klant/locaties")}>
           <BuildingOffice2Icon className="w-5 h-5" />
           Locaties
         </Link>
-        <Link href="/vloerenpaspoort" className={linkClass("/vloerenpaspoort")}>
+        <Link
+          href="/klant/vloerenpaspoort"
+          className={linkClass("/klant/vloerenpaspoort")}
+        >
           <BsPassport className="w-5 h-5" />
           Vloerpaspoort
         </Link>
-        <Link href="/rapporten" className={linkClass("/rapporten")}>
+        <Link href="/klant/rapporten" className={linkClass("/klant/rapporten")}>
           <DocumentArrowUpIcon className="w-5 h-5" />
           Rapporten
         </Link>
-        <Link href="/milieu" className={linkClass("/milieu")}>
+        <Link href="/klant/milieu" className={linkClass("/klant/milieu")}>
           <GlobeAltIcon className="w-5 h-5" />
           Milieu
         </Link>
-        <Link href="/meldingen" className={linkClass("/meldingen")}>
+        <Link href="/klant/meldingen" className={linkClass("/klant/meldingen")}>
           <BellAlertIcon className="w-5 h-5" />
           Meldingen
-        </Link>
-        <Link href="/gebruikers" className={linkClass("/gebruikers")}>
-          <UserCircleIcon className="w-5 h-5" />
-          Gebruikers
         </Link>
       </nav>
     </>

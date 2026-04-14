@@ -1,5 +1,4 @@
 "use client";
-import Sidebar from "@/components/layout/sidebar";
 import Topbar from "@/components/layout/topbar";
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
@@ -14,9 +13,9 @@ import {
   UserIcon,
   CheckBadgeIcon,
   ChevronRightIcon,
-  PencilSquareIcon,
 } from "@heroicons/react/24/outline";
 import { BsHouse, BsHouseAdd, BsPassport } from "react-icons/bs";
+import SidebarClient from "@/components/layout/sidebarclient";
 function InfoBlock({
   label,
   value,
@@ -79,7 +78,7 @@ export default function LocatieBekijkenPage() {
 
   return (
     <div className="min-h-screen flex bg-[#F5F6FA]">
-      <Sidebar className="fixed top-0 left-0 h-screen" />
+      <SidebarClient className="fixed top-0 left-0 h-screen" />
       {toast && (
         <Toast message={toast.message} type={toast.type} onClose={hideToast} />
       )}
@@ -148,13 +147,6 @@ export default function LocatieBekijkenPage() {
                     )}
                   </div>
                 </div>
-
-                <a href={`/locaties/bewerken/${id}`}>
-                  <button className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-sm font-semibold text-gray-700 rounded-xl shadow-sm transition-colors whitespace-nowrap">
-                    <PencilSquareIcon className="w-4 h-4" />
-                    Wijzigen
-                  </button>
-                </a>
               </div>
             </div>
 
@@ -193,6 +185,7 @@ export default function LocatieBekijkenPage() {
               </div>
             </div>
 
+            {/* Gerelateerd */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="px-5 py-4 border-b border-gray-50">
                 <h2 className="text-base font-semibold text-gray-900">
@@ -203,23 +196,6 @@ export default function LocatieBekijkenPage() {
                 </p>
               </div>
               <div className="divide-y divide-gray-50">
-                <a
-                  href={`/locaties/kamertoevoegen/${id}`}
-                  className="flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 transition-colors group"
-                >
-                  <div className="w-8 h-8 rounded-lg bg-[#154273]/10 flex items-center justify-center shrink-0 group-hover:bg-[#154273]/20 transition-colors">
-                    <BsHouseAdd className="w-4 h-4 text-[#154273]" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-800">
-                      Kamers toevoegen
-                    </p>
-                    <p className="text-xs text-gray-400">
-                      Bekijk alle kamers van deze locatie
-                    </p>
-                  </div>
-                  <ChevronRightIcon className="w-4 h-4 text-gray-200 group-hover:text-[#154273] shrink-0 transition-colors" />
-                </a>
                 <a
                   href={`/vloerenpaspoort`}
                   className="flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 transition-colors group"

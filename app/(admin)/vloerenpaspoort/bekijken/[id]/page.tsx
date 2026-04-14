@@ -15,11 +15,11 @@ import {
   HomeModernIcon,
   SwatchIcon,
   ClockIcon,
-  ClipboardDocumentListIcon,
   ChatBubbleBottomCenterTextIcon,
   CheckCircleIcon,
   SparklesIcon,
 } from "@heroicons/react/24/outline";
+import SidebarClient from "@/components/layout/sidebarclient";
 
 interface VloerInfo {
   vloertype_naam: string;
@@ -31,23 +31,24 @@ interface VloerInfo {
   locatie_naam: string;
 }
 
-interface Opmerkingen {
+interface Opmerking {
   id: string;
   opmerking: string;
+  project_naam: string;
+  aangemaakt_op: string;
 }
 
-function formatDate(dateStr?: string) {
-  if (!dateStr) return "—";
-  return new Date(dateStr).toLocaleDateString("nl-NL", {
+function formatDate(d?: string) {
+  if (!d) return "—";
+  return new Date(d).toLocaleDateString("nl-NL", {
     day: "numeric",
     month: "long",
     year: "numeric",
   });
 }
-
-function formatDateTime(dateStr?: string) {
-  if (!dateStr) return "—";
-  return new Date(dateStr).toLocaleDateString("nl-NL", {
+function formatDateTime(d?: string) {
+  if (!d) return "—";
+  return new Date(d).toLocaleDateString("nl-NL", {
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -57,40 +58,29 @@ function formatDateTime(dateStr?: string) {
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const config: Record<
-    string,
-    { bg: string; text: string; border: string; label: string }
-  > = {
+  const config: Record<string, { bg: string; text: string; border: string }> = {
     Goed: {
       bg: "bg-emerald-50",
       text: "text-emerald-700",
       border: "border-emerald-100",
-      label: "Goed",
     },
     Matig: {
       bg: "bg-amber-50",
       text: "text-amber-700",
       border: "border-amber-100",
-      label: "Matig",
     },
-    Slecht: {
-      bg: "bg-blue-50",
-      text: "text-blue-700",
-      border: "border-blue-100",
-      label: "Slecht",
-    },
+    Slecht: { bg: "bg-red-50", text: "text-red-700", border: "border-red-100" },
   };
   const s = config[status] ?? {
     bg: "bg-slate-100",
     text: "text-slate-500",
     border: "border-slate-200",
-    label: status,
   };
   return (
     <span
       className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border ${s.bg} ${s.text} ${s.border}`}
     >
-      {s.label}
+      {status}
     </span>
   );
 }
@@ -103,25 +93,23 @@ export default function VloerPaspoortBekijkenPage() {
   const [wasbeurten, setWasbeurten] = useState<gewassenvloer[]>([]);
   const [loadingInfo, setLoadingInfo] = useState(true);
   const [loadingHistory, setLoadingHistory] = useState(true);
-  const [alleOpmerkingen, setAlleOpmerkingen] = useState<Opmerkingen[]>([]);
+  const [alleOpmerkingen, setAlleOpmerkingen] = useState<Opmerking[]>([]);
 
   useEffect(() => {
     async function getOpmerkingen() {
       if (!id) return;
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("gewassen_vloeren")
-        .select("id,opmerking")
-        .eq("kamervloer_id", id);
-
-      if (!data || error) {
-        return;
-      }
-      console.log(data);
-
+        .select("id,opmerking,aangemaakt_op,projecten(naam)")
+        .eq("kamervloer_id", id)
+        .not("opmerking", "is", null)
+        .neq("opmerking", "");
       setAlleOpmerkingen(
-        (data || []).map((d) => ({
+        (data ?? []).map((d: any) => ({
           id: d.id,
           opmerking: d.opmerking,
+          project_naam: d.projecten?.naam ?? "—",
+          aangemaakt_op: d.aangemaakt_op,
         })),
       );
     }
@@ -132,35 +120,18 @@ export default function VloerPaspoortBekijkenPage() {
     async function getVloerInfo() {
       if (!id) return;
       setLoadingInfo(true);
-
       const { data } = await supabase
         .from("kamer_vloeren")
         .select(
-          `
-          vierkante_meter,
-          status,
-          vloer_types(naam),
-          kamers(
-            naam,
-            verdiepingen(
-              naam,
-              bouwdeel(
-                naam,
-                locaties(naam)
-              )
-            )
-          )
-        `,
+          "vierkante_meter,status,vloer_types(naam),kamers(naam,verdiepingen(naam,bouwdeel(naam,locaties(naam))))",
         )
         .eq("id", id)
         .single();
-
       if (data) {
         const kamer = data.kamers as any;
         const verdieping = kamer?.verdiepingen;
         const bouwdeel = verdieping?.bouwdeel;
         const locatie = bouwdeel?.locaties;
-
         setVloerInfo({
           vloertype_naam: (data.vloer_types as any)?.naam ?? "Onbekend",
           vierkante_meter: data.vierkante_meter,
@@ -171,7 +142,6 @@ export default function VloerPaspoortBekijkenPage() {
           locatie_naam: locatie?.naam ?? "—",
         });
       }
-
       setLoadingInfo(false);
     }
     getVloerInfo();
@@ -181,15 +151,13 @@ export default function VloerPaspoortBekijkenPage() {
     async function getVloerHistory() {
       if (!id) return;
       setLoadingHistory(true);
-
       const { data } = await supabase
         .from("gewassen_vloeren")
         .select(
-          "id, project_id, vierkante_meter, opmerking, aangemaakt_op, projecten(naam), kamer_vloeren(status, vloer_types(naam)), reinigings_methodes(id, naam)",
+          "id,project_id,vierkante_meter,opmerking,aangemaakt_op,projecten(naam),kamer_vloeren(status,vloer_types(naam)),reinigings_methodes(id,naam)",
         )
         .eq("kamervloer_id", id)
         .order("aangemaakt_op", { ascending: false });
-
       if (data) {
         setWasbeurten(
           data.map((d: any) => ({
@@ -206,13 +174,13 @@ export default function VloerPaspoortBekijkenPage() {
           })),
         );
       }
-
       setLoadingHistory(false);
     }
     getVloerHistory();
   }, [id]);
 
   const lastWasbeurt = wasbeurten[0];
+  const opmerkingen = alleOpmerkingen;
 
   return (
     <div className="min-h-screen flex bg-[#F5F6FA]">
@@ -248,6 +216,7 @@ export default function VloerPaspoortBekijkenPage() {
 
             <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-6 items-start">
               <div className="space-y-4">
+                {/* Stat cards */}
                 {!loadingHistory && (
                   <div className="grid grid-cols-3 gap-4">
                     <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-5 py-4">
@@ -292,16 +261,7 @@ export default function VloerPaspoortBekijkenPage() {
                   </div>
                 )}
 
-                <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-                  <div className="flex items-center gap-3 px-6 py-5 border-b border-slate-50">
-                    <ul>
-                      {alleOpmerkingen.map((o) => (
-                        <li key={o.id}>{o.opmerking}</li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-
+                {/* Wasgeschiedenis */}
                 <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                   <div className="flex items-center gap-3 px-6 py-5 border-b border-slate-50">
                     <div className="w-9 h-9 rounded-xl bg-p/10 flex items-center justify-center">
@@ -337,25 +297,19 @@ export default function VloerPaspoortBekijkenPage() {
                     </div>
                   ) : (
                     <div className="relative">
-                      {/* Timeline line */}
                       <div className="absolute left-[2.375rem] top-0 bottom-0 w-px bg-slate-100" />
-
                       <div className="divide-y divide-slate-50">
                         {wasbeurten.map((w, i) => (
                           <div key={w.id} className="flex gap-4 px-6 py-5">
-                            {/* Timeline dot */}
                             <div className="relative shrink-0 mt-0.5">
                               <div
-                                className={`w-5 h-5 rounded-full border-2 flex items-center justify-center z-10 relative
-                                ${i === 0 ? "border-p bg-p" : "border-slate-200 bg-white"}`}
+                                className={`w-5 h-5 rounded-full border-2 flex items-center justify-center z-10 relative ${i === 0 ? "border-p bg-p" : "border-slate-200 bg-white"}`}
                               >
                                 {i === 0 && (
                                   <div className="w-2 h-2 rounded-full bg-white" />
                                 )}
                               </div>
                             </div>
-
-                            {/* Content */}
                             <div className="flex-1 min-w-0 pb-1">
                               <div className="flex items-start justify-between gap-4 mb-2">
                                 <div>
@@ -372,7 +326,6 @@ export default function VloerPaspoortBekijkenPage() {
                                   </span>
                                 )}
                               </div>
-
                               <div className="flex flex-wrap gap-2">
                                 {w.reinigMethode_naam &&
                                   w.reinigMethode_naam !== "—" && (
@@ -389,14 +342,6 @@ export default function VloerPaspoortBekijkenPage() {
                                     {w.vierkante_meter}m² gewassen
                                   </span>
                                 </div>
-                                {w.opmerking && (
-                                  <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-lg">
-                                    <ChatBubbleBottomCenterTextIcon className="w-3.5 h-3.5 text-slate-400" />
-                                    <span className="text-xs font-semibold text-slate-600">
-                                      {w.opmerking}
-                                    </span>
-                                  </div>
-                                )}
                               </div>
                             </div>
                           </div>
@@ -405,11 +350,70 @@ export default function VloerPaspoortBekijkenPage() {
                     </div>
                   )}
                 </div>
+
+                {/* Opmerkingen card */}
+                <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                  <div className="flex items-start gap-3 px-6 py-5 border-b border-slate-50">
+                    <div className="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
+                      <ChatBubbleBottomCenterTextIcon className="w-5 h-5 text-amber-500" />
+                    </div>
+                    <div className="flex-1">
+                      <h2 className="text-base font-bold text-slate-800">
+                        Opmerkingen
+                      </h2>
+                      <p className="text-sm text-slate-400">
+                        {opmerkingen.length} opmerking
+                        {opmerkingen.length !== 1 ? "en" : ""} geregistreerd
+                      </p>
+                    </div>
+                    {opmerkingen.length > 0 && (
+                      <span className="text-xs font-bold text-amber-600 bg-amber-50 border border-amber-100 px-2.5 py-1 rounded-full shrink-0">
+                        {opmerkingen.length}
+                      </span>
+                    )}
+                  </div>
+
+                  {opmerkingen.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-10 text-center">
+                      <CheckCircleIcon className="w-7 h-7 text-slate-200 mb-2" />
+                      <p className="text-sm text-slate-300">
+                        Geen opmerkingen geregistreerd
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-slate-50 max-h-48 overflow-y-auto">
+                      {opmerkingen.map((o) => (
+                        <div
+                          key={o.id}
+                          className="flex items-start gap-3 px-6 py-3.5"
+                        >
+                          <div className="w-6 h-6 rounded-lg bg-amber-50 flex items-center justify-center shrink-0 mt-0.5">
+                            <span className="text-amber-500 text-xs font-bold">
+                              !
+                            </span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <p className="text-xs font-semibold text-p truncate">
+                                {o.project_naam}
+                              </p>
+                              <p className="text-[10px] text-slate-500 shrink-0">
+                                {formatDate(o.aangemaakt_op)}
+                              </p>
+                            </div>
+                            <p className="text-sm text-slate-600 leading-snug">
+                              {o.opmerking}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {/* Right sidebar — vloer info */}
+              {/* Right sidebar */}
               <div className="space-y-4">
-                {/* Locatie breadcrumb */}
                 <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                   <div className="flex items-center gap-3 px-5 py-5 border-b border-slate-50">
                     <div className="w-9 h-9 rounded-xl bg-p/10 flex items-center justify-center">
@@ -424,7 +428,6 @@ export default function VloerPaspoortBekijkenPage() {
                       </p>
                     </div>
                   </div>
-
                   {loadingInfo ? (
                     <div className="flex items-center justify-center py-8">
                       <div className="w-5 h-5 rounded-full border-2 border-p border-t-transparent animate-spin" />

@@ -2,7 +2,7 @@
 
 import Toast from "@/components/layout/toast";
 import Topbar from "@/components/layout/topbar";
-import Sidebar from "@/components/layout/sidebar";
+import SidebarClient from "@/components/layout/sidebarclient";
 import { useToast } from "@/components/hooks/usetoasts";
 import { useState, useEffect } from "react";
 import { project } from "@/types/project";
@@ -69,7 +69,7 @@ export default function ProjectenOverzichtPage() {
 
   return (
     <div className="min-h-screen flex bg-[#F5F6FA]">
-      <Sidebar className="fixed top-0 left-0 h-screen" />
+      <SidebarClient className="fixed top-0 left-0 h-screen" />
       {toast && (
         <Toast message={toast.message} type={toast.type} onClose={hideToast} />
       )}
@@ -93,18 +93,11 @@ export default function ProjectenOverzichtPage() {
               </div>
               <div className="flex flex-row gap-5">
                 <button
-                  onClick={() => router.push("/projecten/agenda")}
+                  onClick={() => router.push("/klant/projecten/agenda")}
                   className="inline-flex items-center gap-2 px-4 py-2.5 bg-p hover:bg-p/90 text-white text-sm font-semibold rounded-xl shadow-sm transition-all cursor-pointer"
                 >
                   <CalendarDaysIcon className="w-4 h-4" />
                   Agenda bekijken
-                </button>
-                <button
-                  onClick={() => router.push("/projecten/aanmaken")}
-                  className="flex items-center gap-2 px-4 py-2.5 bg-p text-white text-sm font-bold rounded-xl shadow-sm hover:bg-p/90 transition-colors cursor-pointer"
-                >
-                  <PlusIcon className="w-4 h-4" />
-                  Nieuw project
                 </button>
               </div>
             </div>
@@ -138,7 +131,7 @@ export default function ProjectenOverzichtPage() {
                 {filtered.map((p) => (
                   <a
                     key={p.id}
-                    href={`/projecten/bekijken/${p.id}`}
+                    href={`/klant/projecten/bekijken/${p.id}`}
                     className="group bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:border-p/20 transition-all duration-200 overflow-hidden"
                   >
                     <div className="h-1 bg-p/20 group-hover:bg-p transition-colors duration-300" />

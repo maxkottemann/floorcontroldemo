@@ -7,4 +7,5 @@ export interface melding {
   beschrijving: string;
   afgehandeld: boolean;
   aangemaakt_op: string;
+  uitleg?: string;
 }
