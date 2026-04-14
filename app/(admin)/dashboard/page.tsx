@@ -4,10 +4,15 @@ import Topbar from "@/components/layout/topbar";
 import Card from "@/components/layout/card";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import SidebarClient from "@/components/layout/sidebarclient";
-import { bus } from "@/types/bus";
 import Sidebar from "@/components/layout/sidebar";
 import { TruckIcon } from "@heroicons/react/24/outline";
+
+interface TypePlanning {
+  type: string;
+  totaal: number;
+  gepland: number;
+  afgerond: number;
+}
 
 interface PerceelPlanning {
   perceel_id: string;
@@ -15,6 +20,7 @@ interface PerceelPlanning {
   totaal: number;
   gepland: number;
   afgerond: number;
+  perType: TypePlanning[];
 }
 
 interface DashboardData {
@@ -23,7 +29,6 @@ interface DashboardData {
   totaalAfgerond: number;
   perPerceel: PerceelPlanning[];
   openMeldingen: number;
-  wasJaar: string;
 }
 
 interface ActiveProject {
@@ -31,7 +36,7 @@ interface ActiveProject {
   projectnaam: string;
   totalm2: number;
   finishedm2: number;
-  bussen: bus[];
+  bussen: any[];
 }
 
 function getWasJaar() {
@@ -40,53 +45,22 @@ function getWasJaar() {
   return `${year}-09-01`;
 }
 
-function PlanBar({
-  gepland,
-  afgerond,
-  totaal,
+function MiniBar({
+  value,
+  total,
+  color,
 }: {
-  gepland: number;
-  afgerond: number;
-  totaal: number;
+  value: number;
+  total: number;
+  color: string;
 }) {
-  const geplPct = totaal > 0 ? Math.round((gepland / totaal) * 100) : 0;
-  const afrPct = totaal > 0 ? Math.round((afgerond / totaal) * 100) : 0;
+  const pct = total > 0 ? Math.round((value / total) * 100) : 0;
   return (
-    <div className="space-y-2.5">
-      <div>
-        <div className="flex items-center justify-between mb-1.5">
-          <span className="flex items-center gap-1.5 text-xs text-slate-500">
-            <span className="w-2 h-2 rounded-full bg-p inline-block" />
-            Gepland
-          </span>
-          <span className="text-xs font-bold text-slate-700">
-            {gepland}/{totaal}
-          </span>
-        </div>
-        <div className="h-2.5 rounded-full bg-slate-100 overflow-hidden">
-          <div
-            className="h-full bg-p rounded-full transition-all duration-700"
-            style={{ width: `${geplPct}%` }}
-          />
-        </div>
-      </div>
-      <div>
-        <div className="flex items-center justify-between mb-1.5">
-          <span className="flex items-center gap-1.5 text-xs text-slate-500">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
-            Afgerond
-          </span>
-          <span className="text-xs font-bold text-slate-700">
-            {afgerond}/{totaal}
-          </span>
-        </div>
-        <div className="h-2.5 rounded-full bg-slate-100 overflow-hidden">
-          <div
-            className="h-full bg-emerald-500 rounded-full transition-all duration-700"
-            style={{ width: `${afrPct}%` }}
-          />
-        </div>
-      </div>
+    <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
+      <div
+        className={`h-full rounded-full transition-all duration-700 ${color}`}
+        style={{ width: `${pct}%` }}
+      />
     </div>
   );
 }
@@ -115,7 +89,7 @@ export default function DashboardPage() {
 
       const { data: locaties } = await supabase
         .from("locaties")
-        .select("id, perceel_id, per_jaar, percelen(naam)");
+        .select("id, perceel_id, per_jaar, type, percelen(naam)");
 
       if (!locaties) {
         setLoading(false);
@@ -146,21 +120,50 @@ export default function DashboardPage() {
           .map((l) => l.id),
       );
 
-      const perceelMap: Record<string, PerceelPlanning> = {};
+      const perceelMap: Record<
+        string,
+        {
+          perceel_naam: string;
+          totaal: number;
+          gepland: number;
+          afgerond: number;
+          typeMap: Record<
+            string,
+            { totaal: number; gepland: number; afgerond: number }
+          >;
+        }
+      > = {};
+
       for (const l of locaties) {
         const pid = l.perceel_id ?? "onbekend";
         const pnaam = (l.percelen as any)?.naam ?? "Onbekend";
+        const type = (l.type as string) ?? "Onbekend";
+
         if (!perceelMap[pid])
           perceelMap[pid] = {
-            perceel_id: pid,
             perceel_naam: pnaam,
             totaal: 0,
             gepland: 0,
             afgerond: 0,
+            typeMap: {},
           };
+        if (!perceelMap[pid].typeMap[type])
+          perceelMap[pid].typeMap[type] = {
+            totaal: 0,
+            gepland: 0,
+            afgerond: 0,
+          };
+
         perceelMap[pid].totaal++;
-        if (geplandLocatieIds.has(l.id)) perceelMap[pid].gepland++;
-        if (afgerondLocatieIds.has(l.id)) perceelMap[pid].afgerond++;
+        perceelMap[pid].typeMap[type].totaal++;
+        if (geplandLocatieIds.has(l.id)) {
+          perceelMap[pid].gepland++;
+          perceelMap[pid].typeMap[type].gepland++;
+        }
+        if (afgerondLocatieIds.has(l.id)) {
+          perceelMap[pid].afgerond++;
+          perceelMap[pid].typeMap[type].afgerond++;
+        }
       }
 
       const { count: openMeldingen } = await supabase
@@ -172,11 +175,19 @@ export default function DashboardPage() {
         totaalLocaties: locaties.length,
         totaalGepland: geplandLocatieIds.size,
         totaalAfgerond: afgerondLocatieIds.size,
-        perPerceel: Object.values(perceelMap).sort(
-          (a, b) => b.totaal - a.totaal,
-        ),
+        perPerceel: Object.entries(perceelMap)
+          .map(([pid, val]) => ({
+            perceel_id: pid,
+            perceel_naam: val.perceel_naam,
+            totaal: val.totaal,
+            gepland: val.gepland,
+            afgerond: val.afgerond,
+            perType: Object.entries(val.typeMap)
+              .map(([type, t]) => ({ type, ...t }))
+              .sort((a, b) => a.type.localeCompare(b.type)),
+          }))
+          .sort((a, b) => b.totaal - a.totaal),
         openMeldingen: openMeldingen ?? 0,
-        wasJaar: wasJaarStart,
       });
       setLoading(false);
     }
@@ -192,7 +203,7 @@ export default function DashboardPage() {
           `id, naam, project_vloeren(kamer_vloeren(vierkante_meter)), gewassen_vloeren(vierkante_meter), project_bussen(bussen(id, naam, kenteken, type))`,
         )
         .eq("status", "bezig")
-        .limit(5);
+        .limit(3);
 
       if (error || !data) {
         setActiveProjecten([]);
@@ -206,14 +217,14 @@ export default function DashboardPage() {
           projectnaam: d.naam,
           totalm2: Array.isArray(d.project_vloeren)
             ? d.project_vloeren.reduce(
-                (total: number, pv: any) =>
-                  total + (pv.kamer_vloeren?.vierkante_meter ?? 0),
+                (t: number, pv: any) =>
+                  t + (pv.kamer_vloeren?.vierkante_meter ?? 0),
                 0,
               )
             : 0,
           finishedm2: Array.isArray(d.gewassen_vloeren)
             ? d.gewassen_vloeren.reduce(
-                (sum: number, gv: any) => sum + (gv.vierkante_meter ?? 0),
+                (s: number, gv: any) => s + (gv.vierkante_meter ?? 0),
                 0,
               )
             : 0,
@@ -243,6 +254,7 @@ export default function DashboardPage() {
       <div className="flex flex-col flex-1 h-screen">
         <Topbar title="Dashboard" />
         <main className="flex-1 overflow-auto p-6 bg-[#F5F6FA]">
+          {/* KPI cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-5">
             <Card>
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">
@@ -270,14 +282,14 @@ export default function DashboardPage() {
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">
                 Uitvoering op schema
               </p>
-              <p className="text-3xl font-bold text-p mb-2">87%</p>
+              <p className="text-3xl font-bold text-p mb-2">98%</p>
               <p className="text-slate-400 text-xs">
                 Binnen afgesproken venster
               </p>
               <div className="mt-3 h-1.5 rounded-full bg-slate-100 overflow-hidden">
                 <div
                   className="h-full bg-p rounded-full"
-                  style={{ width: "87%" }}
+                  style={{ width: "98%" }}
                 />
               </div>
             </Card>
@@ -311,68 +323,108 @@ export default function DashboardPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
+            {/* Planningsoverzicht */}
             <Card className="col-span-3">
               <div className="flex items-start justify-between mb-6">
                 <div>
                   <p className="text-lg font-bold">Planningsoverzicht</p>
                   <p className="text-sm text-slate-500">
-                    Wasjaar {wasJaarLabel} — ingeplande locaties per perceel
+                    Wasjaar {wasJaarLabel} — per perceel en locatietype
                   </p>
                 </div>
                 <span className="inline-flex items-center justify-center rounded-full bg-p/10 px-3 py-1 text-xs font-semibold text-p">
                   {wasJaarLabel}
                 </span>
               </div>
+
               {loading ? (
                 <div className="space-y-4">
                   {[1, 2, 3].map((i) => (
                     <div
                       key={i}
-                      className="h-20 bg-slate-100 rounded-2xl animate-pulse"
+                      className="h-24 bg-slate-100 rounded-2xl animate-pulse"
                     />
                   ))}
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {data?.perPerceel.map((p) => {
-                    const pct =
-                      p.totaal > 0
-                        ? Math.round((p.gepland / p.totaal) * 100)
-                        : 0;
-                    return (
-                      <div
-                        key={p.perceel_id}
-                        className="rounded-2xl border border-slate-200 p-4"
-                      >
-                        <div className="flex items-center justify-between mb-3">
-                          <div>
-                            <p className="font-medium text-slate-800">
-                              {p.perceel_naam}
-                            </p>
-                            <p className="text-xs text-slate-500">
-                              {p.totaal} locaties in scope
-                            </p>
-                          </div>
-                          <span className="text-sm font-bold text-slate-600">
-                            {pct}%
-                          </span>
+                  {data?.perPerceel.map((p) => (
+                    <div
+                      key={p.perceel_id}
+                      className="rounded-2xl border border-slate-200 overflow-hidden"
+                    >
+                      {/* Perceel header */}
+                      <div className="flex items-center justify-between px-4 py-3 bg-slate-50 border-b border-slate-100">
+                        <div>
+                          <p className="font-semibold text-slate-800 text-sm">
+                            {p.perceel_naam}
+                          </p>
+                          <p className="text-xs text-slate-400">
+                            {p.totaal} locaties · {p.gepland} gepland ·{" "}
+                            {p.afgerond} afgerond
+                          </p>
                         </div>
-                        <PlanBar
-                          gepland={p.gepland}
-                          afgerond={p.afgerond}
-                          totaal={p.totaal}
-                        />
+                        <span className="text-sm font-bold text-p">
+                          {p.totaal > 0
+                            ? Math.round((p.gepland / p.totaal) * 100)
+                            : 0}
+                          %
+                        </span>
                       </div>
-                    );
-                  })}
-                  {(data?.perPerceel.length ?? 0) === 1 && (
-                    <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-dashed border-slate-200 bg-slate-50/50">
-                      <div className="w-1.5 h-1.5 rounded-full bg-slate-300 shrink-0" />
-                      <p className="text-xs text-slate-400">
-                        Geen andere percelen zichtbaar voor uw account
-                      </p>
+
+                      <div className="grid grid-cols-3 divide-x divide-slate-100">
+                        {p.perType.map((t, i) => (
+                          <div
+                            key={t.type}
+                            className={`px-4 py-3 space-y-2 ${i >= 2 ? "border-t border-slate-100" : ""}`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <p className="text-xs font-bold text-slate-700">
+                                {t.type}
+                              </p>
+                              <p className="text-[10px] text-slate-400">
+                                {t.totaal} loc.
+                              </p>
+                            </div>
+                            <div className="space-y-1.5">
+                              <div>
+                                <div className="flex justify-between text-[10px] mb-1">
+                                  <span className="flex items-center gap-1 text-slate-400">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-p inline-block" />
+                                    Gepland
+                                  </span>
+                                  <span className="font-semibold text-slate-600">
+                                    {t.gepland}/{t.totaal}
+                                  </span>
+                                </div>
+                                <MiniBar
+                                  value={t.gepland}
+                                  total={t.totaal}
+                                  color="bg-p"
+                                />
+                              </div>
+                              <div>
+                                <div className="flex justify-between text-[10px] mb-1">
+                                  <span className="flex items-center gap-1 text-slate-400">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
+                                    Afgerond
+                                  </span>
+                                  <span className="font-semibold text-slate-600">
+                                    {t.afgerond}/{t.totaal}
+                                  </span>
+                                </div>
+                                <MiniBar
+                                  value={t.afgerond}
+                                  total={t.totaal}
+                                  color="bg-emerald-500"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  )}
+                  ))}
                 </div>
               )}
             </Card>
@@ -411,7 +463,6 @@ export default function DashboardPage() {
               </div>
             </Card>
 
-            {/* ── Actuele uitvoeringen ── */}
             <Card className="col-span-3">
               <div className="flex items-start justify-between mb-5">
                 <div>
@@ -437,7 +488,7 @@ export default function DashboardPage() {
                   ))}
                 </div>
               ) : activeProjecten.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-10 text-center">
+                <div className="flex items-center justify-center py-10">
                   <p className="text-sm text-slate-300">
                     Geen actieve projecten
                   </p>
@@ -460,17 +511,15 @@ export default function DashboardPage() {
                               {a.projectnaam}
                             </p>
                             <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                              {(a.bussen as any[])
-                                .filter(Boolean)
-                                .map((b: any) => (
-                                  <span
-                                    key={b.id}
-                                    className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-500 bg-white border border-slate-200 px-2 py-0.5 rounded-md"
-                                  >
-                                    <TruckIcon className="w-4"></TruckIcon>{" "}
-                                    {b.naam} · {b.kenteken}
-                                  </span>
-                                ))}
+                              {a.bussen.filter(Boolean).map((b: any) => (
+                                <span
+                                  key={b.id}
+                                  className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-500 bg-white border border-slate-200 px-2 py-0.5 rounded-md"
+                                >
+                                  <TruckIcon className="w-5"></TruckIcon>{" "}
+                                  {b.naam} · {b.kenteken}
+                                </span>
+                              ))}
                             </div>
                           </div>
                           <div className="text-right shrink-0">
@@ -495,7 +544,29 @@ export default function DashboardPage() {
               )}
             </Card>
 
-            <Card className="col-span-2" />
+            <Card className="col-span-2">
+              <div className="flex items-start justify-between mb-5">
+                <div>
+                  <p className="text-lg font-bold">Snelle acties</p>
+                  <p className="text-sm text-slate-500">Selecteer een actie</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-6">
+                {[
+                  "Project plannen",
+                  "Opmerking bekijken",
+                  "Rapportages",
+                  "Account aanmaken",
+                ].map((item, index) => (
+                  <div
+                    key={index}
+                    className="rounded-2xl border border-slate-200 bg-white p-6 text-center font-medium text-slate-700 shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-1 hover:border-slate-300 cursor-pointer"
+                  >
+                    {item}
+                  </div>
+                ))}
+              </div>
+            </Card>
           </div>
         </main>
       </div>

@@ -613,42 +613,6 @@ export default function ProjectBekijkenPage() {
                     </div>
                   </div>
                 )}
-
-                <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-                  <div className="flex items-center gap-3 px-5 py-5 border-b border-slate-50">
-                    <div className="w-9 h-9 rounded-xl bg-p/10 flex items-center justify-center">
-                      <ClipboardDocumentListIcon className="w-5 h-5 text-p" />
-                    </div>
-                    <h2 className="text-base font-bold text-slate-800">
-                      Planning
-                    </h2>
-                  </div>
-                  <div className="p-5 space-y-4">
-                    {[
-                      {
-                        label: "Startdatum",
-                        value: formatDate(project?.start_datum),
-                      },
-                      {
-                        label: "Einddatum",
-                        value: formatDate(project?.eind_datum),
-                      },
-                      { label: "Opmerking", value: project?.opmerkingen },
-                    ].map(({ label, value }) => (
-                      <div
-                        key={label}
-                        className="flex justify-between items-start gap-4"
-                      >
-                        <p className="text-sm font-semibold text-slate-400">
-                          {label}
-                        </p>
-                        <p className="text-sm font-bold text-slate-800 text-right max-w-[60%]">
-                          {value || "—"}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
               </div>
             </div>
           </div>

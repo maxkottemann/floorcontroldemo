@@ -5,7 +5,9 @@ import Topbar from "@/components/layout/topbar";
 import Sidebar from "@/components/layout/sidebar";
 import { useToast } from "@/components/hooks/usetoasts";
 import Inputfield from "@/components/layout/inputfield";
+import Datepicker from "@/components/layout/datepicker";
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Locatie } from "@/types/locatie";
 import { supabase } from "@/lib/supabase";
 import { bouwdeel } from "@/types/bouwdeel";
@@ -13,8 +15,6 @@ import { verdieping } from "@/types/verdieping";
 import { kamer } from "@/types/kamer";
 import { kamervloer } from "@/types/kamervloer";
 import LocatieSelector from "@/components/layout/locatieselector";
-import { useRouter } from "next/navigation";
-import Datepicker from "@/components/layout/datepicker";
 import BouwdeelTree from "@/components/layout/bouwdeeltree";
 import {
   ClipboardDocumentListIcon,
@@ -28,8 +28,8 @@ import {
   CheckIcon,
   UserGroupIcon,
   PencilSquareIcon,
+  SparklesIcon,
 } from "@heroicons/react/24/outline";
-import { routeModule } from "next/dist/build/templates/pages";
 
 interface SelectedState {
   bouwdeelIds: string[];
@@ -204,7 +204,7 @@ function BusCard({
 
   return (
     <>
-      <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-visible">
         <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-50">
           <div className="w-8 h-8 rounded-lg bg-p/10 flex items-center justify-center shrink-0">
             <TruckIcon className="w-4 h-4 text-p" />
@@ -359,10 +359,27 @@ export default function ProjectenAanmakenPage() {
   const [projectBussen, setProjectBussen] = useState<ProjectBus[]>([]);
   const [busZoek, setBusZoek] = useState("");
 
+  const router = useRouter();
+  // Step 4 — reinigmethodes per categorie
+  interface CategorieReinig {
+    categorie: string;
+    vloerIds: string[];
+    reinigmethodeId: string;
+    totalM2: number;
+  }
+  const [alleReinigmethodes, setAlleReinigmethodes] = useState<
+    { id: string; naam: string }[]
+  >([]);
+  const [categorieReinig, setCategorieReinig] = useState<CategorieReinig[]>([]);
+  const [loadingCat, setLoadingCat] = useState(false);
+
   const step1Done = !!(projectnaam && beschrijving);
   const step2Done = !!selectedLocatie;
   const step3Done = selected.bouwdeelIds.length > 0;
-  const step4Done = projectBussen.length > 0;
+  const step4Done =
+    categorieReinig.length > 0 &&
+    categorieReinig.every((c) => c.reinigmethodeId);
+  const step5Done = projectBussen.length > 0;
 
   useEffect(() => {
     async function loadBussenEnMedewerkers() {
@@ -399,6 +416,95 @@ export default function ProjectenAanmakenPage() {
         pb.bus.id === busId ? { ...pb, medewerkerIds: ids } : pb,
       ),
     );
+
+  // Load categories + standard methodes when floors change
+  useEffect(() => {
+    async function loadCategorieën() {
+      if (!step3Done) return;
+
+      const geselecteerd = [
+        ...new Set([
+          ...selected.vloerIds,
+          ...alleKamersvloeren
+            .filter((v) =>
+              alleKamers.find(
+                (k) =>
+                  k.id === v.kamer_id &&
+                  alleVerdiepingen.find(
+                    (verd) =>
+                      verd.id === k.verdieping_id &&
+                      selected.alleKamersPerBouwdeel[verd.bouwdeel_id],
+                  ),
+              ),
+            )
+            .map((v) => v.id),
+          ...alleKamersvloeren
+            .filter((v) =>
+              alleKamers.find(
+                (k) =>
+                  k.id === v.kamer_id &&
+                  selected.alleKamersPerVerdieping[k.verdieping_id],
+              ),
+            )
+            .map((v) => v.id),
+        ]),
+      ];
+
+      if (geselecteerd.length === 0) return;
+
+      setLoadingCat(true);
+
+      // Load reinigmethodes
+      const { data: methodes } = await supabase
+        .from("reinigings_methodes")
+        .select("id,naam")
+        .order("naam");
+      setAlleReinigmethodes(methodes ?? []);
+
+      // Load vloer_types with categorie and standaard reinigmethode for selected floors
+      const { data: vloerTypes } = await supabase
+        .from("kamer_vloeren")
+        .select(
+          "id, vierkante_meter, vloer_types(id, naam, catogorie, reinigmethode_id)",
+        )
+        .in("id", geselecteerd);
+
+      if (!vloerTypes) {
+        setLoadingCat(false);
+        return;
+      }
+
+      // Group by categorie
+      const catMap: Record<
+        string,
+        { vloerIds: string[]; standaardMethodeId: string; totalM2: number }
+      > = {};
+      for (const v of vloerTypes) {
+        const vt = v.vloer_types as any;
+        const cat = vt?.catogorie ?? "Overig";
+        const standaard = vt?.reinigmethode_id ?? "";
+        if (!catMap[cat])
+          catMap[cat] = {
+            vloerIds: [],
+            standaardMethodeId: standaard,
+            totalM2: 0,
+          };
+        catMap[cat].vloerIds.push(v.id);
+        catMap[cat].totalM2 += v.vierkante_meter ?? 0;
+      }
+
+      setCategorieReinig(
+        Object.entries(catMap).map(([categorie, val]) => ({
+          categorie,
+          vloerIds: val.vloerIds,
+          reinigmethodeId: val.standaardMethodeId,
+          totalM2: val.totalM2,
+        })),
+      );
+      setLoadingCat(false);
+    }
+    loadCategorieën();
+  }, [selected, alleKamersvloeren]);
 
   useEffect(() => {
     async function loadLocatieData() {
@@ -484,7 +590,7 @@ export default function ProjectenAanmakenPage() {
         vloeren.map((v) => ({
           id: v.id,
           kamer_id: v.kamer_id,
-          vloertype_naam: (v.vloer_types as any)?.naam,
+          vloertype_naam: (v.vloer_types as any)?.[0]?.naam,
           vierkante_meter: v.vierkante_meter,
           status: v.status,
         })),
@@ -522,8 +628,6 @@ export default function ProjectenAanmakenPage() {
     getAllLocaties();
   }, []);
 
-  const router = useRouter();
-
   const filteredLocatie = alleLocaties.filter((l) =>
     l.naam.toLowerCase().includes(locatieZoekterm.toLowerCase()),
   );
@@ -536,36 +640,36 @@ export default function ProjectenAanmakenPage() {
       .includes(busZoek.toLowerCase()),
   );
 
-  const geselecteerdeVloerIds = [
-    ...new Set([
-      ...selected.vloerIds,
-      ...alleKamersvloeren
-        .filter((v) =>
-          alleKamers.find(
-            (k) =>
-              k.id === v.kamer_id &&
-              alleVerdiepingen.find(
-                (verd) =>
-                  verd.id === k.verdieping_id &&
-                  selected.alleKamersPerBouwdeel[verd.bouwdeel_id],
-              ),
-          ),
-        )
-        .map((v) => v.id),
-      ...alleKamersvloeren
-        .filter((v) =>
-          alleKamers.find(
-            (k) =>
-              k.id === v.kamer_id &&
-              selected.alleKamersPerVerdieping[k.verdieping_id],
-          ),
-        )
-        .map((v) => v.id),
-    ]),
-  ];
-
   async function handleSubmit() {
-    if (!step1Done || !step2Done || !step3Done) return;
+    if (!step1Done || !step2Done || !step3Done || !step4Done) return;
+
+    const geselecteerdeVloerIds = [
+      ...new Set([
+        ...selected.vloerIds,
+        ...alleKamersvloeren
+          .filter((v) =>
+            alleKamers.find(
+              (k) =>
+                k.id === v.kamer_id &&
+                alleVerdiepingen.find(
+                  (verd) =>
+                    verd.id === k.verdieping_id &&
+                    selected.alleKamersPerBouwdeel[verd.bouwdeel_id],
+                ),
+            ),
+          )
+          .map((v) => v.id),
+        ...alleKamersvloeren
+          .filter((v) =>
+            alleKamers.find(
+              (k) =>
+                k.id === v.kamer_id &&
+                selected.alleKamersPerVerdieping[k.verdieping_id],
+            ),
+          )
+          .map((v) => v.id),
+      ]),
+    ];
 
     if (geselecteerdeVloerIds.length === 0) {
       showToast("Selecteer minimaal één vloer", "error");
@@ -590,10 +694,19 @@ export default function ProjectenAanmakenPage() {
       return;
     }
 
+    // Build a map of vloerId -> reinigmethodeId from categorieReinig
+    const vloerMethodeMap: Record<string, string> = {};
+    for (const cat of categorieReinig) {
+      for (const vid of cat.vloerIds) {
+        vloerMethodeMap[vid] = cat.reinigmethodeId;
+      }
+    }
+
     const { error: vloerError } = await supabase.from("project_vloeren").insert(
       geselecteerdeVloerIds.map((kamer_vloer_id) => ({
         project_id: project.id,
         kamervloer_id: kamer_vloer_id,
+        reinigmethode_id: vloerMethodeMap[kamer_vloer_id] || null,
       })),
     );
 
@@ -629,9 +742,7 @@ export default function ProjectenAanmakenPage() {
     }
 
     showToast("Project aangemaakt", "success");
-    setTimeout(() => {
-      router.back;
-    }, 1000);
+    setTimeout(() => router.back(), 1000);
   }
 
   return (
@@ -693,9 +804,16 @@ export default function ProjectenAanmakenPage() {
                 <div className="w-5 h-px bg-slate-200" />
                 <StepBadge
                   number={4}
-                  label="Wagens"
+                  label="Methodes"
                   active={step3Done && !step4Done}
                   done={step4Done}
+                />
+                <div className="w-5 h-px bg-slate-200" />
+                <StepBadge
+                  number={5}
+                  label="Wagens"
+                  active={step4Done && !step5Done}
+                  done={step5Done}
                 />
               </div>
             </div>
@@ -776,10 +894,76 @@ export default function ProjectenAanmakenPage() {
                 {step3Done && (
                   <SectionCard
                     step={4}
+                    icon={<SparklesIcon className="w-5 h-5" />}
+                    title="Reinigingsmethodes"
+                    subtitle="Kies per vloercategorie de reinigingsmethode"
+                  >
+                    {loadingCat ? (
+                      <div className="flex items-center justify-center py-8">
+                        <div className="w-5 h-5 rounded-full border-2 border-p border-t-transparent animate-spin" />
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {categorieReinig.map((cat, i) => (
+                          <div
+                            key={cat.categorie}
+                            className="flex items-center gap-4 px-4 py-3.5 bg-slate-50 border border-slate-100 rounded-xl"
+                          >
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-bold text-slate-800">
+                                {cat.categorie}
+                              </p>
+                              <p className="text-xs text-slate-400 mt-0.5">
+                                {cat.vloerIds.length} vloer
+                                {cat.vloerIds.length !== 1 ? "en" : ""} ·{" "}
+                                <span className="font-semibold text-slate-500">
+                                  {cat.totalM2}m²
+                                </span>
+                              </p>
+                            </div>
+                            <select
+                              value={cat.reinigmethodeId}
+                              onChange={(e) =>
+                                setCategorieReinig((prev) =>
+                                  prev.map((c, idx) =>
+                                    idx === i
+                                      ? {
+                                          ...c,
+                                          reinigmethodeId: e.target.value,
+                                        }
+                                      : c,
+                                  ),
+                                )
+                              }
+                              className="text-sm font-semibold text-slate-700 bg-white border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-p focus:ring-2 focus:ring-p/10 transition-all cursor-pointer"
+                            >
+                              <option value="">Kies methode...</option>
+                              {alleReinigmethodes.map((m) => (
+                                <option key={m.id} value={m.id}>
+                                  {m.naam}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        ))}
+                        {categorieReinig.length === 0 && (
+                          <p className="text-sm text-slate-300 text-center py-4">
+                            Selecteer eerst vloeren in stap 3
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </SectionCard>
+                )}
+
+                {step4Done && (
+                  <SectionCard
+                    step={5}
                     icon={<TruckIcon className="w-5 h-5" />}
                     title="Wagens toewijzen"
                     subtitle="Selecteer één of meerdere wagens en stel de bezetting in"
                   >
+                    {/* Bus picker */}
                     {beschikbareBussen.length > 0 && (
                       <div className="mb-5">
                         <div className="relative mb-2">
@@ -823,6 +1007,7 @@ export default function ProjectenAanmakenPage() {
                       </div>
                     )}
 
+                    {/* Assigned bussen */}
                     {projectBussen.length > 0 ? (
                       <div className="space-y-3">
                         {beschikbareBussen.length > 0 && (
@@ -855,6 +1040,7 @@ export default function ProjectenAanmakenPage() {
                 )}
               </div>
 
+              {/* Summary sidebar */}
               <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden sticky top-6">
                 <div className="px-5 py-4 border-b border-slate-50">
                   <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
@@ -926,10 +1112,7 @@ export default function ProjectenAanmakenPage() {
                           label: "Verdiepingen",
                           count: selected.verdiepingIds.length,
                         },
-                        {
-                          label: "Vloeren",
-                          count: geselecteerdeVloerIds.length,
-                        },
+                        { label: "Vloeren", count: selected.vloerIds.length },
                         { label: "Wagens", count: projectBussen.length },
                       ].map(({ label, count }) => (
                         <div
@@ -984,7 +1167,9 @@ export default function ProjectenAanmakenPage() {
 
                   <button
                     onClick={handleSubmit}
-                    disabled={!step1Done || !step2Done || !step3Done}
+                    disabled={
+                      !step1Done || !step2Done || !step3Done || !step4Done
+                    }
                     className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold transition-all duration-200
                       bg-p text-white shadow-sm hover:bg-p/90 hover:shadow-md
                       disabled:opacity-30 disabled:cursor-not-allowed disabled:shadow-none cursor-pointer"
@@ -993,13 +1178,15 @@ export default function ProjectenAanmakenPage() {
                     Project aanmaken
                   </button>
 
-                  {(!step1Done || !step2Done || !step3Done) && (
+                  {(!step1Done || !step2Done || !step3Done || !step4Done) && (
                     <p className="text-center text-[11px] text-slate-300">
                       {!step1Done
                         ? "Vul een naam en beschrijving in"
                         : !step2Done
                           ? "Kies een locatie"
-                          : "Selecteer minimaal één bouwdeel"}
+                          : !step3Done
+                            ? "Selecteer minimaal één bouwdeel"
+                            : "Kies een reinigingsmethode per categorie"}
                     </p>
                   )}
                 </div>
