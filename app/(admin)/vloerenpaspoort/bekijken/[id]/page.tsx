@@ -19,7 +19,6 @@ import {
   CheckCircleIcon,
   SparklesIcon,
 } from "@heroicons/react/24/outline";
-import SidebarClient from "@/components/layout/sidebarclient";
 
 interface VloerInfo {
   vloertype_naam: string;
@@ -61,7 +60,7 @@ function StatusBadge({ status }: { status: string }) {
   const config: Record<string, { bg: string; text: string; border: string }> = {
     Goed: {
       bg: "bg-emerald-50",
-      text: "text-emerald-700",
+      text: "text-emerald-700 w-fit",
       border: "border-emerald-100",
     },
     Matig: {
@@ -78,7 +77,7 @@ function StatusBadge({ status }: { status: string }) {
   };
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border ${s.bg} ${s.text} ${s.border}`}
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border mr-3 ${s.bg} ${s.text} ${s.border}`}
     >
       {status}
     </span>
@@ -245,7 +244,7 @@ export default function VloerPaspoortBekijkenPage() {
                     </div>
                     <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-5 py-4">
                       <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">
-                        Totaal gewassen
+                        Totaal onderhouden
                       </p>
                       <p className="text-3xl font-bold text-p">
                         {wasbeurten.reduce(
@@ -261,7 +260,6 @@ export default function VloerPaspoortBekijkenPage() {
                   </div>
                 )}
 
-                {/* Wasgeschiedenis */}
                 <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                   <div className="flex items-center gap-3 px-6 py-5 border-b border-slate-50">
                     <div className="w-9 h-9 rounded-xl bg-p/10 flex items-center justify-center">
@@ -269,7 +267,7 @@ export default function VloerPaspoortBekijkenPage() {
                     </div>
                     <div>
                       <h2 className="text-base font-bold text-slate-800">
-                        Wasgeschiedenis
+                        Onderhoudsgeschiedenis
                       </h2>
                       <p className="text-sm text-slate-400">
                         {wasbeurten.length} sessie
@@ -288,7 +286,7 @@ export default function VloerPaspoortBekijkenPage() {
                         <SparklesIcon className="w-6 h-6 text-slate-300" />
                       </div>
                       <p className="text-base font-semibold text-slate-400">
-                        Nog geen wasbeurten
+                        Nog geen onderhoud uitgevoerd
                       </p>
                       <p className="text-sm text-slate-300 mt-1">
                         Er zijn nog geen schoonmaaksessies geregistreerd voor
@@ -339,7 +337,7 @@ export default function VloerPaspoortBekijkenPage() {
                                 <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-lg">
                                   <SwatchIcon className="w-3.5 h-3.5 text-slate-400" />
                                   <span className="text-xs font-semibold text-slate-600">
-                                    {w.vierkante_meter}m² gewassen
+                                    {w.vierkante_meter}m² onderhouden
                                   </span>
                                 </div>
                               </div>
@@ -351,7 +349,6 @@ export default function VloerPaspoortBekijkenPage() {
                   )}
                 </div>
 
-                {/* Opmerkingen card */}
                 <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                   <div className="flex items-start gap-3 px-6 py-5 border-b border-slate-50">
                     <div className="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">

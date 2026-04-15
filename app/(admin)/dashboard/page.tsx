@@ -5,7 +5,14 @@ import Card from "@/components/layout/card";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import Sidebar from "@/components/layout/sidebar";
-import { TruckIcon } from "@heroicons/react/24/outline";
+import {
+  BellAlertIcon,
+  ClipboardDocumentListIcon,
+  DocumentChartBarIcon,
+  TruckIcon,
+  UserPlusIcon,
+} from "@heroicons/react/24/outline";
+import { useRouter } from "next/navigation";
 
 interface TypePlanning {
   type: string;
@@ -66,6 +73,7 @@ function MiniBar({
 }
 
 export default function DashboardPage() {
+  const router = useRouter();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeProjecten, setActiveProjecten] = useState<ActiveProject[]>([]);
@@ -203,7 +211,7 @@ export default function DashboardPage() {
           `id, naam, project_vloeren(kamer_vloeren(vierkante_meter)), gewassen_vloeren(vierkante_meter), project_bussen(bussen(id, naam, kenteken, type))`,
         )
         .eq("status", "bezig")
-        .limit(3);
+        .limit(5);
 
       if (error || !data) {
         setActiveProjecten([]);
@@ -254,7 +262,6 @@ export default function DashboardPage() {
       <div className="flex flex-col flex-1 h-screen">
         <Topbar title="Dashboard" />
         <main className="flex-1 overflow-auto p-6 bg-[#F5F6FA]">
-          {/* KPI cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-5">
             <Card>
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">
@@ -266,7 +273,7 @@ export default function DashboardPage() {
                 <p className="text-3xl font-bold text-p mb-2">{planningPct}%</p>
               )}
               <p className="text-slate-400 text-xs">
-                Wasjaar {wasJaarLabel} · {data?.totaalGepland ?? "—"}/
+                Onderhoudsjaar {wasJaarLabel} · {data?.totaalGepland ?? "—"}/
                 {data?.totaalLocaties ?? "—"} locaties
               </p>
               <div className="mt-3 h-1.5 rounded-full bg-slate-100 overflow-hidden">
@@ -282,14 +289,14 @@ export default function DashboardPage() {
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">
                 Uitvoering op schema
               </p>
-              <p className="text-3xl font-bold text-p mb-2">98%</p>
+              <p className="text-3xl font-bold text-p mb-2">87%</p>
               <p className="text-slate-400 text-xs">
                 Binnen afgesproken venster
               </p>
               <div className="mt-3 h-1.5 rounded-full bg-slate-100 overflow-hidden">
                 <div
                   className="h-full bg-p rounded-full"
-                  style={{ width: "98%" }}
+                  style={{ width: "87%" }}
                 />
               </div>
             </Card>
@@ -306,7 +313,7 @@ export default function DashboardPage() {
                 />
               </div>
             </Card>
-            <Card clickable>
+            <Card>
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">
                 Open meldingen
               </p>
@@ -323,13 +330,12 @@ export default function DashboardPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
-            {/* Planningsoverzicht */}
             <Card className="col-span-3">
               <div className="flex items-start justify-between mb-6">
                 <div>
                   <p className="text-lg font-bold">Planningsoverzicht</p>
                   <p className="text-sm text-slate-500">
-                    Wasjaar {wasJaarLabel} — per perceel en locatietype
+                    Onderhoudsjaar {wasJaarLabel} — per perceel en locatietype
                   </p>
                 </div>
                 <span className="inline-flex items-center justify-center rounded-full bg-p/10 px-3 py-1 text-xs font-semibold text-p">
@@ -353,7 +359,6 @@ export default function DashboardPage() {
                       key={p.perceel_id}
                       className="rounded-2xl border border-slate-200 overflow-hidden"
                     >
-                      {/* Perceel header */}
                       <div className="flex items-center justify-between px-4 py-3 bg-slate-50 border-b border-slate-100">
                         <div>
                           <p className="font-semibold text-slate-800 text-sm">
@@ -516,7 +521,7 @@ export default function DashboardPage() {
                                   key={b.id}
                                   className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-500 bg-white border border-slate-200 px-2 py-0.5 rounded-md"
                                 >
-                                  <TruckIcon className="w-5"></TruckIcon>{" "}
+                                  <TruckIcon className="w-4"></TruckIcon>{" "}
                                   {b.naam} · {b.kenteken}
                                 </span>
                               ))}
@@ -551,19 +556,51 @@ export default function DashboardPage() {
                   <p className="text-sm text-slate-500">Selecteer een actie</p>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-2 gap-3">
                 {[
-                  "Project plannen",
-                  "Opmerking bekijken",
-                  "Rapportages",
-                  "Account aanmaken",
-                ].map((item, index) => (
-                  <div
-                    key={index}
-                    className="rounded-2xl border border-slate-200 bg-white p-6 text-center font-medium text-slate-700 shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-1 hover:border-slate-300 cursor-pointer"
+                  {
+                    label: "Project plannen",
+                    icon: <ClipboardDocumentListIcon className="w-5 h-5" />,
+                    href: "/projecten/aanmaken",
+                    color:
+                      "bg-p/10 text-p group-hover:bg-p group-hover:text-white",
+                  },
+                  {
+                    label: "Meldingen bekijken",
+                    icon: <BellAlertIcon className="w-5 h-5" />,
+                    href: "/meldingen",
+                    color:
+                      "bg-amber-50 text-amber-600 group-hover:bg-amber-500 group-hover:text-white",
+                  },
+                  {
+                    label: "Rapportages",
+                    icon: <DocumentChartBarIcon className="w-5 h-5" />,
+                    href: "/rapporten",
+                    color:
+                      "bg-emerald-50 text-emerald-600 group-hover:bg-emerald-500 group-hover:text-white",
+                  },
+                  {
+                    label: "Account aanmaken",
+                    icon: <UserPlusIcon className="w-5 h-5" />,
+                    href: "/gebruikers",
+                    color:
+                      "bg-slate-100 text-slate-500 group-hover:bg-slate-700 group-hover:text-white",
+                  },
+                ].map((item) => (
+                  <button
+                    key={item.label}
+                    onClick={() => router.push(item.href)}
+                    className="group flex flex-col items-start gap-3 p-4 bg-white rounded-2xl border border-slate-100 hover:border-slate-200 hover:shadow-md transition-all duration-200 cursor-pointer text-left w-full"
                   >
-                    {item}
-                  </div>
+                    <div
+                      className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 ${item.color}`}
+                    >
+                      {item.icon}
+                    </div>
+                    <p className="text-sm font-semibold text-slate-700 group-hover:text-slate-900 leading-tight">
+                      {item.label}
+                    </p>
+                  </button>
                 ))}
               </div>
             </Card>

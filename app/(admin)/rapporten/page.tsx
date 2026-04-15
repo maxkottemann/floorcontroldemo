@@ -85,7 +85,6 @@ export default function RapportenPage() {
 
         <main className="flex-1 overflow-auto p-8">
           <div className="space-y-6">
-            {/* Header */}
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.14em] text-p/60 mb-1">
                 Overzicht
@@ -99,9 +98,7 @@ export default function RapportenPage() {
             </div>
 
             <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-6 items-start">
-              {/* Project list */}
               <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-                {/* Search */}
                 <div className="px-4 py-3 border-b border-slate-100">
                   <div className="relative">
                     <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
@@ -114,7 +111,6 @@ export default function RapportenPage() {
                   </div>
                 </div>
 
-                {/* Column headers */}
                 <div className="grid grid-cols-[1fr_160px_120px_40px] px-5 py-2.5 border-b border-slate-50 bg-slate-50/60">
                   {["Project", "Locatie", "Datum", ""].map((h) => (
                     <p
@@ -126,7 +122,6 @@ export default function RapportenPage() {
                   ))}
                 </div>
 
-                {/* Rows */}
                 <div className="divide-y divide-slate-50">
                   {filtered.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-14 text-center">
@@ -200,7 +195,6 @@ export default function RapportenPage() {
                 </div>
               </div>
 
-              {/* Action panel */}
               <div className="space-y-4">
                 {!selected ? (
                   <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8 flex flex-col items-center justify-center text-center">
@@ -216,7 +210,6 @@ export default function RapportenPage() {
                   </div>
                 ) : (
                   <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-                    {/* Selected project header */}
                     <div className="px-5 py-5 border-b border-slate-50 space-y-1">
                       <p className="text-[10px] font-bold uppercase tracking-widest text-p/60 mb-1">
                         Geselecteerd
@@ -271,21 +264,15 @@ export default function RapportenPage() {
                       </p>
                       {[
                         {
-                          label: "Vloerrapport",
+                          label: "Opleverbon",
                           sub: "Overzicht van alle vloeren en m²",
                         },
-                        {
-                          label: "Projectrapport",
-                          sub: "Volledig projectoverzicht",
-                        },
                       ].map(({ label, sub }) => (
-                        <button
+                        <a
                           key={label}
-                          onClick={() =>
-                            router.push(
-                              `/rapporten/${selected.id}?type=${label.toLowerCase()}`,
-                            )
-                          }
+                          href={`/api/rapport?project_id=${selected.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
                           className="w-full cursor-pointer flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-100 hover:border-p/30 hover:bg-p/5 transition-all duration-150 group text-left"
                         >
                           <div className="w-8 h-8 rounded-lg bg-slate-100 group-hover:bg-p/10 flex items-center justify-center shrink-0 transition-colors">
@@ -298,7 +285,7 @@ export default function RapportenPage() {
                             <p className="text-xs text-slate-400">{sub}</p>
                           </div>
                           <ChevronRightIcon className="w-4 h-4 text-slate-200 group-hover:text-p shrink-0 transition-colors" />
-                        </button>
+                        </a>
                       ))}
                     </div>
                   </div>

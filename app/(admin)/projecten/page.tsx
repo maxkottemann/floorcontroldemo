@@ -5,58 +5,94 @@ import Topbar from "@/components/layout/topbar";
 import Sidebar from "@/components/layout/sidebar";
 import { useToast } from "@/components/hooks/usetoasts";
 import { useState, useEffect } from "react";
-import { project } from "@/types/project";
 import { supabase } from "@/lib/supabase";
 import {
   ClipboardDocumentListIcon,
   MapPinIcon,
   ChevronRightIcon,
   PlusIcon,
-  ChatBubbleBottomCenterTextIcon,
+  MagnifyingGlassIcon,
   CalendarDaysIcon,
 } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 
-function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString("nl-NL", {
+interface ProjectRow {
+  id: string;
+  naam: string;
+  beschrijving: string | null;
+  locatie_naam: string | null;
+  start_datum: string | null;
+  eind_datum: string | null;
+  status: string | null;
+}
+
+function formatDate(d?: string | null) {
+  if (!d) return "—";
+  return new Date(d).toLocaleDateString("nl-NL", {
     day: "numeric",
     month: "short",
     year: "numeric",
   });
 }
 
+const STATUS_CONFIG: Record<
+  string,
+  { bg: string; text: string; border: string }
+> = {
+  gepland: {
+    bg: "bg-blue-50",
+    text: "text-blue-700",
+    border: "border-blue-100",
+  },
+  bezig: {
+    bg: "bg-amber-50",
+    text: "text-amber-700",
+    border: "border-amber-100",
+  },
+  afgerond: {
+    bg: "bg-emerald-50",
+    text: "text-emerald-700",
+    border: "border-emerald-100",
+  },
+};
+
 export default function ProjectenOverzichtPage() {
   const { toast, showToast, hideToast } = useToast();
   const router = useRouter();
 
-  const [projecten, setProjecten] = useState<project[]>([]);
+  const [projecten, setProjecten] = useState<ProjectRow[]>([]);
   const [zoekterm, setZoekterm] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function getProjecten() {
+      setLoading(true);
       const { error, data } = await supabase
         .from("projecten")
-        .select("id, naam, locaties!projecten_locatie_id_fkey(naam, plaats)")
-        .in("status", ["gepland", "bezig"])
-        .order("aangemaakt_op", { ascending: false })
-        .limit(20);
+        .select(
+          "id, naam, beschrijving, start_datum, eind_datum, status, locaties!projecten_locatie_id_fkey(naam)",
+        )
+        .order("start_datum", { ascending: false })
+        .limit(100);
 
       if (error || !data) {
-        console.log(error);
         showToast("Projecten niet geladen, probeer het opnieuw", "error");
+        setLoading(false);
         return;
       }
 
       setProjecten(
         data.map((d: any) => ({
           id: d.id,
-          locatie_naam: (d.locaties as any)?.naam,
           naam: d.naam,
-          beschrijving: d.beschrijving,
-          opmerkingen: d.opmerkingen,
-          aangemaakt_op: d.aangemaakt_op,
+          beschrijving: d.beschrijving ?? null,
+          locatie_naam: d.locaties?.naam ?? null,
+          start_datum: d.start_datum ?? null,
+          eind_datum: d.eind_datum ?? null,
+          status: d.status ?? null,
         })),
       );
+      setLoading(false);
     }
     getProjecten();
   }, []);
@@ -79,6 +115,7 @@ export default function ProjectenOverzichtPage() {
 
         <main className="flex-1 overflow-auto p-8">
           <div className="space-y-6">
+            {/* Header */}
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-p/60 mb-1">
@@ -91,13 +128,13 @@ export default function ProjectenOverzichtPage() {
                   {projecten.length} projecten gevonden
                 </p>
               </div>
-              <div className="flex flex-row gap-5">
+              <div className="flex items-center gap-3">
                 <button
                   onClick={() => router.push("/projecten/agenda")}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-p hover:bg-p/90 text-white text-sm font-semibold rounded-xl shadow-sm transition-all cursor-pointer"
+                  className="flex items-center gap-2 px-4 py-2.5 bg-white text-p text-sm font-bold rounded-xl shadow-sm border border-p/20 hover:bg-p/5 transition-colors cursor-pointer"
                 >
                   <CalendarDaysIcon className="w-4 h-4" />
-                  Agenda bekijken
+                  Agenda
                 </button>
                 <button
                   onClick={() => router.push("/projecten/aanmaken")}
@@ -109,17 +146,23 @@ export default function ProjectenOverzichtPage() {
               </div>
             </div>
 
+            {/* Search */}
             <div className="relative">
-              <ClipboardDocumentListIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
+              <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
               <input
                 value={zoekterm}
                 onChange={(e) => setZoekterm(e.target.value)}
-                placeholder="Zoek op projectnaam of locatie  "
-                className="w-full pl-11 pr-4 py-3 text-sm text-p bg-white rounded-2xl border border-slate-100 shadow-sm outline-none focus:border-p/30 focus:ring-2 focus:ring-p/10 placeholder:text-slate-300 transition-all"
+                placeholder="Zoek op projectnaam, locatie of beschrijving..."
+                className="w-full pl-11 pr-4 py-3 text-sm bg-white rounded-2xl border border-slate-100 shadow-sm outline-none focus:border-p/30 focus:ring-2 focus:ring-p/10 placeholder:text-slate-300 transition-all"
               />
             </div>
 
-            {filtered.length === 0 ? (
+            {/* Table */}
+            {loading ? (
+              <div className="flex items-center justify-center py-16">
+                <div className="w-6 h-6 rounded-full border-2 border-p border-t-transparent animate-spin" />
+              </div>
+            ) : filtered.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 text-center">
                 <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
                   <ClipboardDocumentListIcon className="w-6 h-6 text-slate-300" />
@@ -134,59 +177,98 @@ export default function ProjectenOverzichtPage() {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                {filtered.map((p) => (
-                  <a
-                    key={p.id}
-                    href={`/projecten/bekijken/${p.id}`}
-                    className="group bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:border-p/20 transition-all duration-200 overflow-hidden"
-                  >
-                    <div className="h-1 bg-p/20 group-hover:bg-p transition-colors duration-300" />
-
-                    <div className="p-5">
-                      <div className="flex items-start justify-between gap-3 mb-3">
-                        <div className="w-9 h-9 rounded-xl bg-p/10 flex items-center justify-center shrink-0 group-hover:bg-p/15 transition-colors">
-                          <ClipboardDocumentListIcon className="w-5 h-5 text-p" />
-                        </div>
-                        <ChevronRightIcon className="w-4 h-4 text-slate-200 group-hover:text-p shrink-0 mt-1 transition-colors" />
-                      </div>
-
-                      <h3 className="text-sm font-bold text-slate-800 leading-tight mb-1 group-hover:text-p transition-colors">
-                        {p.naam}
-                      </h3>
-
-                      {p.beschrijving && (
-                        <p className="text-xs text-slate-400 line-clamp-2 mb-3">
-                          {p.beschrijving}
-                        </p>
-                      )}
-
-                      <div className="flex flex-col gap-1.5 mt-3 pt-3 border-t border-slate-50">
-                        {p.locatie_naam && (
-                          <div className="flex items-center gap-1.5">
-                            <MapPinIcon className="w-3.5 h-3.5 text-slate-300 shrink-0" />
-                            <span className="text-xs text-slate-500 font-medium truncate">
-                              {p.locatie_naam}
+              <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b-2 border-slate-200 bg-slate-50">
+                      <th className="text-left text-[10px] font-bold uppercase tracking-widest text-slate-400 px-5 py-3 w-10" />
+                      <th className="text-left text-[10px] font-bold uppercase tracking-widest text-slate-400 px-5 py-3">
+                        Project
+                      </th>
+                      <th className="text-left text-[10px] font-bold uppercase tracking-widest text-slate-400 px-5 py-3 w-48">
+                        Locatie
+                      </th>
+                      <th className="text-left text-[10px] font-bold uppercase tracking-widest text-slate-400 px-5 py-3 w-32">
+                        Startdatum
+                      </th>
+                      <th className="text-left text-[10px] font-bold uppercase tracking-widest text-slate-400 px-5 py-3 w-32">
+                        Einddatum
+                      </th>
+                      <th className="text-left text-[10px] font-bold uppercase tracking-widest text-slate-400 px-5 py-3 w-28">
+                        Status
+                      </th>
+                      <th className="w-8 px-3 py-3" />
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y-2 divide-slate-100">
+                    {filtered.map((p, i) => {
+                      const sc = STATUS_CONFIG[p.status ?? ""] ?? {
+                        bg: "bg-slate-100",
+                        text: "text-slate-500",
+                        border: "border-slate-200",
+                      };
+                      return (
+                        <tr
+                          key={p.id}
+                          onClick={() =>
+                            router.push(`/projecten/bekijken/${p.id}`)
+                          }
+                          className="cursor-pointer transition-colors group hover:bg-blue-50/40 bg-white"
+                        >
+                          <td className="pl-5 py-4">
+                            <div className="w-8 ml-3 h-8 rounded-xl bg-p/10 group-hover:bg-p/20 flex items-center justify-center transition-colors shrink-0">
+                              <ClipboardDocumentListIcon className="w-4 h-4 text-p" />
+                            </div>
+                          </td>
+                          <td className="px-5 py-4">
+                            <p className="text-sm font-semibold text-slate-800 group-hover:text-p transition-colors">
+                              {p.naam}
+                            </p>
+                            {p.beschrijving && (
+                              <p className="text-xs text-slate-400 mt-0.5 truncate max-w-xs">
+                                {p.beschrijving}
+                              </p>
+                            )}
+                          </td>
+                          <td className="px-5 py-4">
+                            <div className="flex items-center gap-1.5">
+                              <MapPinIcon className="w-3.5 h-3.5 text-slate-300 shrink-0" />
+                              <p className="text-sm text-slate-500 truncate">
+                                {p.locatie_naam ?? "—"}
+                              </p>
+                            </div>
+                          </td>
+                          <td className="px-5 py-4">
+                            <p className="text-sm text-slate-500">
+                              {formatDate(p.start_datum)}
+                            </p>
+                          </td>
+                          <td className="px-5 py-4">
+                            <p className="text-sm text-slate-500">
+                              {formatDate(p.eind_datum)}
+                            </p>
+                          </td>
+                          <td className="px-5 py-4">
+                            <span
+                              className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold border ${sc.bg} ${sc.text} ${sc.border}`}
+                            >
+                              {p.status ?? "—"}
                             </span>
-                          </div>
-                        )}
-                        {p.opmerkingen && (
-                          <div className="flex items-center gap-1.5">
-                            <ChatBubbleBottomCenterTextIcon className="w-3.5 h-3.5 text-slate-300 shrink-0" />
-                            <span className="text-xs text-slate-400 truncate">
-                              {p.opmerkingen}
-                            </span>
-                          </div>
-                        )}
-                        {p.aangemaakt_op && (
-                          <p className="text-[10px] text-slate-300 mt-0.5">
-                            {formatDate(p.aangemaakt_op)}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </a>
-                ))}
+                          </td>
+                          <td className="px-3 py-4">
+                            <ChevronRightIcon className="w-4 h-4 text-slate-300 group-hover:text-p transition-colors" />
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+
+                <div className="px-5 py-3 border-t border-slate-50 bg-slate-50/40">
+                  <p className="text-xs text-slate-400">
+                    {filtered.length} project{filtered.length !== 1 ? "en" : ""}
+                  </p>
+                </div>
               </div>
             )}
           </div>

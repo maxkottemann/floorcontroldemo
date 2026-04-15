@@ -553,7 +553,7 @@ export default function StatusPage() {
                         <DonutChart
                           segments={vloertypeSegments}
                           centerLabel={`${washedM2}m²`}
-                          centerSub="gewassen"
+                          centerSub="totaal"
                           size={150}
                           strokeWidth={20}
                         />

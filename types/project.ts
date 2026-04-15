@@ -10,4 +10,5 @@ export interface project {
   start_datum?: string;
   eind_datum?: string;
   bus?: bus[];
+  status?: string;
 }
