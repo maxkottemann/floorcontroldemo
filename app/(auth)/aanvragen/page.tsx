@@ -78,7 +78,7 @@ export default function AccountAanvragenPage() {
                   value={naam}
                   onChange={(e) => setNaam(e.target.value)}
                   placeholder="Jan de Vries"
-                  className="w-full px-4 py-2.5 text-sm bg-slate-50 rounded-xl border border-slate-200 outline-none focus:border-p/50 focus:ring-2 focus:ring-p/10 transition-all placeholder:text-slate-300"
+                  className="w-full px-4 py-2.5 text-slate-700 text-sm bg-slate-50 rounded-xl border border-slate-200 outline-none focus:border-p/50 focus:ring-2 focus:ring-p/10 transition-all placeholder:text-slate-300"
                 />
               </div>
               <div>
@@ -90,7 +90,7 @@ export default function AccountAanvragenPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="jan@bedrijf.nl"
-                  className="w-full px-4 py-2.5 text-sm bg-slate-50 rounded-xl border border-slate-200 outline-none focus:border-p/50 focus:ring-2 focus:ring-p/10 transition-all placeholder:text-slate-300"
+                  className="w-full px-4 py-2.5 text-slate-700 text-sm bg-slate-50 rounded-xl border border-slate-200 outline-none focus:border-p/50 focus:ring-2 focus:ring-p/10 transition-all placeholder:text-slate-300"
                 />
               </div>
 

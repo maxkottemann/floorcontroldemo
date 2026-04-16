@@ -69,7 +69,7 @@ export default function SetupPaswoordPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Minimaal 8 tekens"
-              className="w-full px-4 py-2.5 text-sm bg-slate-50 rounded-xl border border-slate-200 outline-none focus:border-p/50 focus:ring-2 focus:ring-p/10 transition-all"
+              className="w-full px-4 text-slate-700 py-2.5 text-sm bg-slate-50 rounded-xl border border-slate-200 outline-none focus:border-p/50 focus:ring-2 focus:ring-p/10 transition-all"
             />
           </div>
           <div>
@@ -81,7 +81,7 @@ export default function SetupPaswoordPage() {
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
               placeholder="Herhaal wachtwoord"
-              className="w-full px-4 py-2.5 text-sm bg-slate-50 rounded-xl border border-slate-200 outline-none focus:border-p/50 focus:ring-2 focus:ring-p/10 transition-all"
+              className="w-full px-4 py-2.5 text-sm text-slate-700 bg-slate-50 rounded-xl border border-slate-200 outline-none focus:border-p/50 focus:ring-2 focus:ring-p/10 transition-all"
             />
           </div>
           {error && <p className="text-xs text-red-500 font-medium">{error}</p>}
