@@ -251,7 +251,7 @@ export default function MilieuPage() {
       <div className="flex flex-col flex-1 h-screen">
         <Topbar title="Milieu & Duurzaamheid" />
 
-        <main className="flex-1 overflow-auto p-8 ml-64">
+        <main className="flex-1 overflow-auto p-8">
           <div className="space-y-6">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.14em] text-p/60 mb-1">
