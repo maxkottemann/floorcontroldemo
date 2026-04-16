@@ -79,6 +79,26 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [activeProjecten, setActiveProjecten] = useState<ActiveProject[]>([]);
   const [loadingProjects, setLoadingProjects] = useState(true);
+  const [steekproefPercentage, setSteekproefPercentage] = useState<number>(0);
+
+  useEffect(() => {
+    async function getSteekproef() {
+      const { data, error } = await supabase
+        .from("steekproeven")
+        .select("goedgekeurd");
+
+      if (error || !data) {
+        setSteekproefPercentage(0);
+        return;
+      }
+      const approved = (data || []).map((d) => d.goedgekeurd === true).length;
+
+      const goedgekeurd =
+        data?.length > 0 ? (approved / data?.length) * 100 : 0;
+      setSteekproefPercentage(goedgekeurd);
+    }
+    getSteekproef();
+  }, []);
 
   const sustainability = [
     { label: "CO₂-reductie mobiliteit", value: 18, target: 25, suffix: "%" },
@@ -305,12 +325,22 @@ export default function DashboardPage() {
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">
                 Kwaliteit oplevering
               </p>
-              <p className="text-3xl font-bold text-p mb-2">96,4%</p>
-              <p className="text-slate-400 text-xs">Boven KPI-norm 95%</p>
+              <p
+                className={`text-3xl font-bold mb-2 ${steekproefPercentage >= 95 ? "text-emerald-600" : "text-red-500"}`}
+              >
+                {steekproefPercentage.toFixed(1)}%
+              </p>
+              <p
+                className={`text-xs ${steekproefPercentage >= 95 ? "text-emerald-500" : "text-red-400"}`}
+              >
+                {steekproefPercentage >= 95
+                  ? "Boven KPI-norm 95%"
+                  : "Onder KPI-norm 95%"}
+              </p>
               <div className="mt-3 h-1.5 rounded-full bg-slate-100 overflow-hidden">
                 <div
-                  className="h-full bg-emerald-500 rounded-full"
-                  style={{ width: "96.4%" }}
+                  className={`h-full rounded-full ${steekproefPercentage >= 95 ? "bg-emerald-500" : "bg-red-500"}`}
+                  style={{ width: `${steekproefPercentage}%` }}
                 />
               </div>
             </Card>
