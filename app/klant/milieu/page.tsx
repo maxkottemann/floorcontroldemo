@@ -76,7 +76,7 @@ function AfvalRow({ value, oldValue }: { value: number; oldValue?: number }) {
   return (
     <div className="flex items-center justify-between py-2.5 border-b border-slate-50 last:border-0">
       <div className="flex items-center gap-2.5">
-        <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-cyan-100 shrink-0">
+        <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-green-100 shrink-0">
           <GiWaterRecycling className="w-4 h-4 text-green-600" />
         </div>
         <div>
@@ -291,7 +291,7 @@ export default function MilieuPage() {
               </div>
 
               <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-cyan-100 mb-4">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-green-100 mb-4">
                   <GiWaterRecycling className="w-5 h-5 text-green-600" />
                 </div>
                 <p className="text-2xl font-bold text-green-600 tracking-tight">
