@@ -93,6 +93,13 @@ export default function ProjectenOverzichtPage() {
               </div>
               <div className="flex flex-row gap-5">
                 <button
+                  onClick={() => router.push("/klant/projecten/afgerond")}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-white text-slate-600 text-sm font-bold rounded-xl shadow-sm border border-slate-200 hover:bg-slate-50 transition-colors cursor-pointer"
+                >
+                  <ClipboardDocumentListIcon className="w-4 h-4" />
+                  Afgerond
+                </button>
+                <button
                   onClick={() => router.push("/klant/projecten/agenda")}
                   className="inline-flex items-center gap-2 px-4 py-2.5 bg-p hover:bg-p/90 text-white text-sm font-semibold rounded-xl shadow-sm transition-all cursor-pointer"
                 >

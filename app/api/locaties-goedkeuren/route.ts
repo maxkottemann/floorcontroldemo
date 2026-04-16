@@ -57,15 +57,9 @@ export async function POST(req: NextRequest) {
   }
 
   const { data: linkData, error: linkError } =
-    await supabaseAdmin.auth.admin.generateLink({
-      type: "recovery",
-      email,
-      options: {
-        redirectTo: "http://localhost:3000/wachtwoordveranderen",
-      },
+    await supabaseAdmin.auth.resetPasswordForEmail(email, {
+      redirectTo: "http://localhost:3000/wachtwoordveranderen",
     });
-
-  console.log("Password setup link:", linkData?.properties?.action_link);
 
   if (linkError) {
     console.error("Link failed:", linkError.message);

@@ -4,17 +4,17 @@ import Toast from "@/components/layout/toast";
 import Topbar from "@/components/layout/topbar";
 import Sidebar from "@/components/layout/sidebar";
 import { useToast } from "@/components/hooks/usetoasts";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import {
-  ClipboardDocumentListIcon,
-  MapPinIcon,
-  ChevronRightIcon,
-  PlusIcon,
-  MagnifyingGlassIcon,
   CalendarDaysIcon,
+  ChevronRightIcon,
+  ClipboardDocumentListIcon,
+  MagnifyingGlassIcon,
+  MapPinIcon,
+  PlusIcon,
 } from "@heroicons/react/24/outline";
-import { useRouter } from "next/navigation";
 
 interface ProjectRow {
   id: string;
@@ -56,7 +56,7 @@ const STATUS_CONFIG: Record<
   },
 };
 
-export default function ProjectenOverzichtPage() {
+export default function FinishedProjectsPage() {
   const { toast, showToast, hideToast } = useToast();
   const router = useRouter();
 
@@ -72,7 +72,7 @@ export default function ProjectenOverzichtPage() {
         .select(
           "id, naam, beschrijving, start_datum, eind_datum, status, locaties!projecten_locatie_id_fkey(naam)",
         )
-        .in("status", ["bezig", "gepland"])
+        .eq("status", "afgerond")
         .order("start_datum", { ascending: false })
         .limit(100);
 
@@ -129,13 +129,6 @@ export default function ProjectenOverzichtPage() {
                 </p>
               </div>
               <div className="flex items-center gap-3">
-                <button
-                  onClick={() => router.push("/projecten/afgerond")}
-                  className="flex items-center gap-2 px-4 py-2.5 bg-white text-slate-600 text-sm font-bold rounded-xl shadow-sm border border-slate-200 hover:bg-slate-50 transition-colors cursor-pointer"
-                >
-                  <ClipboardDocumentListIcon className="w-4 h-4" />
-                  Afgerond
-                </button>
                 <button
                   onClick={() => router.push("/projecten/agenda")}
                   className="flex items-center gap-2 px-4 py-2.5 bg-white text-p text-sm font-bold rounded-xl shadow-sm border border-p/20 hover:bg-p/5 transition-colors cursor-pointer"
@@ -216,7 +209,7 @@ export default function ProjectenOverzichtPage() {
                         <tr
                           key={p.id}
                           onClick={() =>
-                            router.push(`/projecten/bekijken/${p.id}`)
+                            router.push(`/projecten/afgerond/bekijken/${p.id}`)
                           }
                           className="cursor-pointer transition-colors group hover:bg-blue-50/40 bg-white"
                         >
