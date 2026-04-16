@@ -11,8 +11,9 @@ import {
   BuildingOffice2Icon,
   UserCircleIcon,
   BellAlertIcon,
+  MagnifyingGlassIcon,
 } from "@heroicons/react/24/outline";
-import { BsPassport } from "react-icons/bs";
+import { BsLeaf, BsPassport } from "react-icons/bs";
 import { DocumentArrowUpIcon } from "@heroicons/react/24/outline";
 
 interface SidebarProps {
@@ -102,8 +103,15 @@ export default function SidebarClient({ className }: SidebarProps) {
           Rapporten
         </Link>
         <Link href="/klant/milieu" className={linkClass("/klant/milieu")}>
-          <GlobeAltIcon className="w-5 h-5" />
+          <BsLeaf className="w-5 h-5" />
           Milieu
+        </Link>
+        <Link
+          href="/klant/steekproeven"
+          className={linkClass("/klant/steekproeven")}
+        >
+          <MagnifyingGlassIcon className="w-5 h-5" />
+          Steekproeven
         </Link>
         <Link href="/klant/meldingen" className={linkClass("/klant/meldingen")}>
           <BellAlertIcon className="w-5 h-5" />

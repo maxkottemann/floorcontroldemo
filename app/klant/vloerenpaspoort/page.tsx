@@ -21,6 +21,7 @@ import {
   ArrowLeftIcon,
   BuildingOfficeIcon,
 } from "@heroicons/react/24/outline";
+import SidebarClient from "@/components/layout/sidebarclient";
 
 interface VloerRij {
   id: string;
@@ -687,7 +688,7 @@ export default function VloerenPaspoortPage() {
 
   return (
     <div className="min-h-screen flex bg-[#F5F6FA]">
-      <Sidebar className="fixed top-0 left-0 h-screen" />
+      <SidebarClient className="fixed top-0 left-0 h-screen" />
       {toast && (
         <Toast message={toast.message} type={toast.type} onClose={hideToast} />
       )}
