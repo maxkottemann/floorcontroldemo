@@ -28,6 +28,18 @@ export default function LocatiesKiezenPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    async function checkSession() {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) {
+        setError("Niet ingelogd — open de link uit uw e-mail opnieuw");
+      }
+    }
+    checkSession();
+  }, []);
+
+  useEffect(() => {
     async function load() {
       const res = await fetch("/api/locaties-publiek");
       const data = await res.json();
@@ -59,11 +71,13 @@ export default function LocatiesKiezenPage() {
     setSaving(true);
     setError("");
 
+    // Refresh session first to make sure it's loaded
     const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      setError("Niet ingelogd");
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session?.user) {
+      setError("Sessie verlopen, probeer de link opnieuw te openen");
       setSaving(false);
       return;
     }
@@ -71,7 +85,7 @@ export default function LocatiesKiezenPage() {
     const { error: err } = await supabase
       .from("account_aanvraag")
       .update({ locaties_geselecteerd: selected, stap: "locaties_aangevraagd" })
-      .eq("email", user.email);
+      .eq("email", session.user.email);
 
     setSaving(false);
     if (err) {
