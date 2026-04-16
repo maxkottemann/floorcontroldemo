@@ -83,19 +83,33 @@ export default function DashboardPage() {
 
   useEffect(() => {
     async function getSteekproef() {
-      const { data, error } = await supabase
+      // First get all afgeronde steekproeven IDs
+      const { data: steekproeven } = await supabase
         .from("steekproeven")
-        .select("goedgekeurd");
+        .select("id")
+        .eq("status", "afgerond");
+
+      if (!steekproeven?.length) {
+        setSteekproefPercentage(0);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("steekproef_vloeren")
+        .select("goedgekeurd")
+        .in(
+          "steekproef_id",
+          steekproeven.map((s) => s.id),
+        );
 
       if (error || !data) {
         setSteekproefPercentage(0);
         return;
       }
-      const approved = (data || []).map((d) => d.goedgekeurd === true).length;
 
-      const goedgekeurd =
-        data?.length > 0 ? (approved / data?.length) * 100 : 0;
-      setSteekproefPercentage(goedgekeurd);
+      const approved = data.filter((d) => d.goedgekeurd === true).length;
+      const pct = data.length > 0 ? (approved / data.length) * 100 : 0;
+      setSteekproefPercentage(pct);
     }
     getSteekproef();
   }, []);

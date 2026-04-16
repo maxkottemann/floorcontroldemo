@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
+    "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.101.1",
     "geist": "^1.7.0",
     "heroicons": "^2.2.0",

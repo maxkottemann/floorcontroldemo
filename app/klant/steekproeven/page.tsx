@@ -5,7 +5,6 @@ import Topbar from "@/components/layout/topbar";
 import { useToast } from "@/components/hooks/usetoasts";
 import SidebarClient from "@/components/layout/sidebarclient";
 import { useEffect, useState } from "react";
-import { project } from "@/types/project";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import {
@@ -15,7 +14,7 @@ import {
   ChevronRightIcon,
   MagnifyingGlassIcon,
   CheckCircleIcon,
-  BeakerIcon,
+  ClockIcon,
 } from "@heroicons/react/24/outline";
 
 function formatDate(d?: string) {
@@ -27,55 +26,77 @@ function formatDate(d?: string) {
   });
 }
 
+type Tab = "lopend" | "afgerond";
+
+interface ProjectRow {
+  id: string;
+  naam: string;
+  locatie_naam?: string;
+  eind_datum?: string;
+  steekproef_id?: string;
+  steekproef_status?: string;
+}
+
 export default function SteekproevenPage() {
   const { toast, showToast, hideToast } = useToast();
   const router = useRouter();
 
-  const [projects, setProjects] = useState<project[]>([]);
+  const [projects, setProjects] = useState<ProjectRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [zoek, setZoek] = useState("");
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [tab, setTab] = useState<Tab>("lopend");
 
   useEffect(() => {
-    async function getProjects() {
-      const { data, error } = await supabase
+    async function load() {
+      // Fetch all finished projects
+      const { data: projecten, error } = await supabase
         .from("projecten")
-        .select(
-          "id, locaties(naam), naam, beschrijving, aangemaakt_op, start_datum, eind_datum, status",
-        )
+        .select("id, naam, locaties(naam), eind_datum")
         .eq("status", "afgerond")
         .order("eind_datum", { ascending: false });
 
       if (error) {
-        showToast("Er ging iets mis, probeer het opnieuw", "error");
+        showToast("Laden mislukt", "error");
         setLoading(false);
         return;
       }
 
+      // Fetch steekproeven for these projects
+      const projectIds = (projecten || []).map((p) => p.id);
+      const { data: steekproeven } = projectIds.length
+        ? await supabase
+            .from("steekproeven")
+            .select("id, project_id, status")
+            .in("project_id", projectIds)
+        : { data: [] };
+
+      const steekproefMap = Object.fromEntries(
+        (steekproeven || []).map((s) => [s.project_id, s]),
+      );
+
       setProjects(
-        (data || []).map((d: any) => ({
-          id: d.id,
-          locatie_naam: d.locaties?.naam,
-          naam: d.naam,
-          beschrijving: d.beschrijving,
-          aangemaakt_op: d.aangemaakt_op,
-          start_datum: d.start_datum,
-          eind_datum: d.eind_datum,
-          status: d.status,
+        (projecten || []).map((p: any) => ({
+          id: p.id,
+          naam: p.naam,
+          locatie_naam: p.locaties?.naam,
+          eind_datum: p.eind_datum,
+          steekproef_id: steekproefMap[p.id]?.id,
+          steekproef_status: steekproefMap[p.id]?.status,
         })),
       );
       setLoading(false);
     }
-    getProjects();
+    load();
   }, []);
 
-  const filtered = projects.filter((p) =>
+  const lopend = projects.filter((p) => p.steekproef_status !== "afgerond");
+  const afgerond = projects.filter((p) => p.steekproef_status === "afgerond");
+  const tabProjects = tab === "lopend" ? lopend : afgerond;
+  const filtered = tabProjects.filter((p) =>
     [p.naam, p.locatie_naam].some((f) =>
       f?.toLowerCase().includes(zoek.toLowerCase()),
     ),
   );
-
-  const selected = projects.find((p) => p.id === selectedId);
 
   return (
     <div className="min-h-screen flex bg-[#F5F6FA]">
@@ -97,10 +118,52 @@ export default function SteekproevenPage() {
                 Steekproeven
               </h1>
               <p className="text-sm text-slate-400 mt-0.5">
-                Selecteer een afgerond project om een steekproef te starten
+                Selecteer een project om een steekproef te starten of te
+                bekijken
               </p>
             </div>
 
+            {/* Tabs */}
+            <div className="flex items-center gap-1 bg-white rounded-2xl border border-slate-100 shadow-sm p-1.5 w-fit">
+              {(
+                [
+                  {
+                    key: "lopend",
+                    label: "Lopend",
+                    icon: <ClockIcon className="w-3.5 h-3.5" />,
+                    count: lopend.length,
+                  },
+                  {
+                    key: "afgerond",
+                    label: "Afgerond",
+                    icon: <CheckCircleIcon className="w-3.5 h-3.5" />,
+                    count: afgerond.length,
+                  },
+                ] as {
+                  key: Tab;
+                  label: string;
+                  icon: React.ReactNode;
+                  count: number;
+                }[]
+              ).map((t) => (
+                <button
+                  key={t.key}
+                  onClick={() => setTab(t.key)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer
+                    ${tab === t.key ? "bg-p text-white shadow-sm" : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"}`}
+                >
+                  {t.icon}
+                  {t.label}
+                  <span
+                    className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${tab === t.key ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500"}`}
+                  >
+                    {t.count}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            {/* Search */}
             <div className="relative">
               <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
               <input
@@ -111,7 +174,6 @@ export default function SteekproevenPage() {
               />
             </div>
 
-            {/* Project cards */}
             {loading ? (
               <div className="flex items-center justify-center py-20">
                 <div className="w-5 h-5 rounded-full border-2 border-p border-t-transparent animate-spin" />
@@ -125,47 +187,51 @@ export default function SteekproevenPage() {
                 <p className="text-xs text-slate-300 mt-0.5">
                   {zoek
                     ? "Probeer een andere zoekterm"
-                    : "Er zijn nog geen afgeronde projecten"}
+                    : tab === "lopend"
+                      ? "Alle steekproeven zijn afgerond"
+                      : "Nog geen afgeronde steekproeven"}
                 </p>
               </div>
             ) : (
               <div className="space-y-3">
                 {filtered.map((p) => {
-                  const isSelected = selectedId === p.id;
+                  const isDone = p.steekproef_status === "afgerond";
+                  const isInProgress = p.steekproef_status === "in_progress";
                   return (
                     <div
                       key={p.id}
-                      className={`bg-white rounded-2xl border shadow-sm overflow-hidden transition-all duration-150
-                        ${isSelected ? "border-p/30 ring-2 ring-p/10" : "border-slate-100 hover:border-slate-200 hover:shadow-md"}`}
+                      className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden hover:shadow-md transition-all"
                     >
                       <div className="flex items-center gap-4 px-5 py-4">
-                        {/* Icon */}
                         <div
-                          onClick={() =>
-                            setSelectedId(isSelected ? null : p.id)
-                          }
-                          className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors cursor-pointer
-                          ${isSelected ? "bg-p text-white" : "bg-slate-100 text-slate-400"}`}
+                          className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0
+                          ${isDone ? "bg-emerald-100 text-emerald-600" : isInProgress ? "bg-amber-100 text-amber-600" : "bg-slate-100 text-slate-400"}`}
                         >
-                          {isSelected ? (
+                          {isDone ? (
                             <CheckCircleIcon className="w-5 h-5" />
+                          ) : isInProgress ? (
+                            <ClockIcon className="w-5 h-5" />
                           ) : (
                             <ClipboardDocumentCheckIcon className="w-5 h-5" />
                           )}
                         </div>
 
-                        {/* Info */}
-                        <div
-                          onClick={() =>
-                            setSelectedId(isSelected ? null : p.id)
-                          }
-                          className="flex-1 min-w-0 cursor-pointer"
-                        >
-                          <p
-                            className={`text-sm font-bold truncate ${isSelected ? "text-p" : "text-slate-800"}`}
-                          >
-                            {p.naam}
-                          </p>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="text-sm font-bold text-slate-800 truncate">
+                              {p.naam}
+                            </p>
+                            {isDone && (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100 shrink-0">
+                                Afgerond
+                              </span>
+                            )}
+                            {isInProgress && (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 border border-amber-100 shrink-0">
+                                In uitvoering
+                              </span>
+                            )}
+                          </div>
                           <div className="flex items-center gap-3 mt-0.5 flex-wrap">
                             {p.locatie_naam && (
                               <span className="flex items-center gap-1 text-xs text-slate-400">
@@ -182,21 +248,36 @@ export default function SteekproevenPage() {
                           </div>
                         </div>
 
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            router.push(
-                              `/klant/steekproeven/uitvoeren/${p.id}`,
-                            );
-                          }}
-                          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-p text-white hover:bg-p/90 transition-all cursor-pointer shadow-sm shrink-0"
-                        >
-                          <ClipboardDocumentCheckIcon className="w-4 h-4 shrink-0" />
-                          <span className="text-sm font-bold hidden sm:block">
-                            Starten
-                          </span>
-                          <ChevronRightIcon className="w-3.5 h-3.5 opacity-70" />
-                        </button>
+                        {!isDone ? (
+                          <button
+                            onClick={() =>
+                              router.push(
+                                `/klant/steekproeven/uitvoeren/${p.id}`,
+                              )
+                            }
+                            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-p text-white hover:bg-p/90 transition-all cursor-pointer shadow-sm shrink-0"
+                          >
+                            <ClipboardDocumentCheckIcon className="w-4 h-4 shrink-0" />
+                            <span className="text-sm font-bold hidden sm:block">
+                              {isInProgress ? "Verdergaan" : "Starten"}
+                            </span>
+                            <ChevronRightIcon className="w-3.5 h-3.5 opacity-70" />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() =>
+                              router.push(
+                                `/klant/steekproeven/uitvoeren/${p.id}`,
+                              )
+                            }
+                            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 text-slate-500 hover:bg-slate-200 transition-all cursor-pointer shrink-0"
+                          >
+                            <span className="text-sm font-semibold hidden sm:block">
+                              Bekijken
+                            </span>
+                            <ChevronRightIcon className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                       </div>
                     </div>
                   );
