@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
 
   const { data: linkData, error: linkError } =
     await supabaseAdmin.auth.resetPasswordForEmail(email, {
-      redirectTo: "http://localhost:3000/wachtwoordveranderen",
+      redirectTo: "https://floor-control.vercel.app/wachtwoordveranderen",
     });
 
   if (linkError) {
