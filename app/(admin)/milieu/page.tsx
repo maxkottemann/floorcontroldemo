@@ -14,9 +14,12 @@ import {
   ArrowTrendingDownIcon,
   CheckBadgeIcon,
   FireIcon,
+  PlusIcon,
 } from "@heroicons/react/24/outline";
 import { GiWaterDrop, GiWaterRecycling } from "react-icons/gi";
 import { BsLightning } from "react-icons/bs";
+import MainButton from "@/components/layout/mainbutton";
+import { useRouter } from "next/navigation";
 
 function safenumber(v: any): number {
   return v ?? 0;
@@ -241,6 +244,8 @@ export default function MilieuPage() {
   const chemieSaving = calcPercentageSave(totalChemieOld, totalChemie);
   const stroomSaving = calcPercentageSave(totalStroomOld, totalStroom);
 
+  const router = useRouter();
+
   return (
     <div className="min-h-screen flex bg-[#F5F6FA]">
       <Sidebar className="fixed top-0 left-0 h-screen" />
@@ -253,20 +258,26 @@ export default function MilieuPage() {
 
         <main className="flex-1 overflow-auto p-8">
           <div className="space-y-6">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-p/60 mb-1">
-                Overzicht
-              </p>
-              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-                Milieu & Duurzaamheid
-              </h1>
-              <p className="text-sm text-slate-400 mt-0.5">
-                Verbruik en besparing per reinigingsmethode ·{" "}
-                {totalM2.toFixed(0)}m² totaal onderhouden
-              </p>
+            \
+            <div className="flex flex-row justify-between">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-p/60 mb-1">
+                  Overzicht
+                </p>
+                <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+                  Milieu & Duurzaamheid
+                </h1>
+                <p className="text-sm text-slate-400 mt-0.5">
+                  Verbruik en besparing per reinigingsmethode ·{" "}
+                  {totalM2.toFixed(0)}m² totaal onderhouden
+                </p>
+              </div>
+              <MainButton
+                onClick={() => router.push("/milieu/kernwaardes")}
+                label="Reinigmethode toevoegen"
+                icon={<PlusIcon></PlusIcon>}
+              ></MainButton>
             </div>
-
-            {/* KPI row */}
             <div className="grid grid-cols-1 md:grid-cols-4 xl:grid-cols-4 gap-4">
               <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-100 mb-4">
@@ -352,7 +363,6 @@ export default function MilieuPage() {
                 )}
               </div>
             </div>
-
             {/* Per methode cards */}
             {loading ? (
               <div className="flex items-center justify-center py-20">

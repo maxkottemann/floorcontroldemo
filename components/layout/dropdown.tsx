@@ -104,8 +104,8 @@ export default function Dropdown<T extends object>({
       </div>
 
       {open && (
-        <div className="absolute mt-2 w-full bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden">
-          <ul className="max-h-60 overflow-auto">
+        <div className="absolute mt-2 w-full bg-white border border-gray-200 rounded-xl shadow-lg z-100 overflow-visible">
+          <ul className="max-h-100 overflow-auto">
             {options.map((option, index) => (
               <li
                 key={index}

@@ -4,10 +4,12 @@ export interface reinigmethode {
   waterverbruik: number;
   afvalwater: number;
   chemieverbruik: number;
+  verpakking?: number;
   stroomverbruik: number;
   waterverbruik_old: number;
   afvalwater_old: number;
   chemievebruik_old: number;
   stroom_old: number;
-  vierkante_meter: number;
+  vierkante_meter?: number;
+  verpakking_old?: number;
 }
