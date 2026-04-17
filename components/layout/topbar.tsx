@@ -59,13 +59,13 @@ export default function Topbar({ title }: TopbarProps) {
     .slice(0, 2);
 
   return (
-    <div className="flex flex-row w-full bg-p h-16 justify-between items-center px-6 shrink-0 z-100">
+    <div className="flex flex-row w-full bg-p h-16 justify-between items-center px-6 shrink-0 z-40">
       <h2 className="text-white font-bold text-lg tracking-tight">{title}</h2>
 
       <div className="relative" ref={menuRef}>
         <button
           onClick={() => setMenuOpen((p) => !p)}
-          className="flex items-center gap-2.5 bg-white/10 hover:bg-white/20 transition-colors rounded-xl px-3 py-2 cursor-pointer"
+          className="flex items-center gap-2.5  hover:bg-white/20 transition-colors rounded-xl px-3 py-2 cursor-pointer"
         >
           <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center shrink-0">
             <span className="text-xs font-bold text-white">{initials}</span>

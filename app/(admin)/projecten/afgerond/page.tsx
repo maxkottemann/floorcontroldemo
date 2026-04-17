@@ -130,6 +130,13 @@ export default function FinishedProjectsPage() {
               </div>
               <div className="flex items-center gap-3">
                 <button
+                  onClick={() => router.push("/projecten")}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-white text-slate-600 text-sm font-bold rounded-xl shadow-sm border border-slate-200 hover:bg-slate-50 transition-colors cursor-pointer"
+                >
+                  <ClipboardDocumentListIcon className="w-4 h-4" />
+                  Actieve
+                </button>
+                <button
                   onClick={() => router.push("/projecten/agenda")}
                   className="flex items-center gap-2 px-4 py-2.5 bg-white text-p text-sm font-bold rounded-xl shadow-sm border border-p/20 hover:bg-p/5 transition-colors cursor-pointer"
                 >

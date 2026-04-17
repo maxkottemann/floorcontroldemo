@@ -11,14 +11,13 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
 );
 
-// Duofort brand colors
-const PRIMARY = rgb(0.42, 0.18, 0.58); // purple
-const PRIMARY2 = rgb(0.32, 0.12, 0.46); // darker purple for group headers
-const ACCENT = rgb(0.23, 0.72, 0.75); // teal from shield
-const LIGHT = rgb(0.97, 0.95, 0.99); // light purple tint bg
-const DARK = rgb(0.1, 0.06, 0.16); // deep text
-const MUTED = rgb(0.45, 0.4, 0.52); // muted purple-grey
-const BORDER = rgb(0.86, 0.82, 0.91); // light purple border
+const PRIMARY = rgb(0.42, 0.18, 0.58);
+const PRIMARY2 = rgb(0.32, 0.12, 0.46);
+const ACCENT = rgb(0.23, 0.72, 0.75);
+const LIGHT = rgb(0.97, 0.95, 0.99);
+const DARK = rgb(0.1, 0.06, 0.16);
+const MUTED = rgb(0.45, 0.4, 0.52);
+const BORDER = rgb(0.86, 0.82, 0.91);
 const WHITE = rgb(1, 1, 1);
 
 function formatDate(d?: string | null) {
@@ -35,7 +34,6 @@ export async function GET(req: NextRequest) {
   if (!projectId)
     return NextResponse.json({ error: "missing project_id" }, { status: 400 });
 
-  // Fetch project
   const { data: project } = await supabase
     .from("projecten")
     .select(
@@ -49,7 +47,6 @@ export async function GET(req: NextRequest) {
 
   const locatie = project.locaties as any;
 
-  // Fetch gewassen vloeren
   const { data: gewassen } = await supabase
     .from("gewassen_vloeren")
     .select(
@@ -58,16 +55,10 @@ export async function GET(req: NextRequest) {
     .eq("project_id", projectId)
     .order("aangemaakt_op", { ascending: true });
 
-  // Group by vloertype → methode → sum m2
   const groepMap: Record<
     string,
-    {
-      vloertype: string;
-      totaal_m2: number;
-      methodes: Record<string, number>;
-    }
+    { vloertype: string; totaal_m2: number; methodes: Record<string, number> }
   > = {};
-
   for (const g of gewassen ?? []) {
     const kv = g.kamer_vloeren as any;
     const vloertype = kv?.vloer_types?.naam ?? "Onbekend";
@@ -83,50 +74,53 @@ export async function GET(req: NextRequest) {
   const groepen = Object.values(groepMap);
   const totaal_m2 = groepen.reduce((s, g) => s + g.totaal_m2, 0);
 
-  // Fetch signature
-  let handtekeningBytes: Uint8Array | null = null;
-  const { data: ht } = await supabase
+  const { data: handtekeningen } = await supabase
     .from("handtekeningen")
-    .select("url")
-    .eq("project_id", projectId)
-    .single();
-  if (ht?.url) {
+    .select("url, type")
+    .eq("project_id", projectId);
+
+  const werknemerHt = handtekeningen?.find((h) => h.type === "werknemer");
+  const klantHt = handtekeningen?.find((h) => h.type === "klant");
+
+  async function fetchSignatureBytes(url: string): Promise<Uint8Array | null> {
     const { data: signed } = await supabase.storage
       .from("handtekeningen")
-      .createSignedUrl(ht.url, 60);
-    if (signed?.signedUrl) {
-      const res = await fetch(signed.signedUrl);
-      if (res.ok) handtekeningBytes = new Uint8Array(await res.arrayBuffer());
-    }
+      .createSignedUrl(url, 60);
+    if (!signed?.signedUrl) return null;
+    const res = await fetch(signed.signedUrl);
+    if (!res.ok) return null;
+    return new Uint8Array(await res.arrayBuffer());
   }
 
-  // ── Build PDF ─────────────────────────────────────────────────────────────
+  const werknemerBytes = werknemerHt?.url
+    ? await fetchSignatureBytes(werknemerHt.url)
+    : null;
+  const klantBytes = klantHt?.url
+    ? await fetchSignatureBytes(klantHt.url)
+    : null;
+
   const pdfDoc = await PDFDocument.create();
   const fontR = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const fontB = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-  // Embed logo
   let logoImage: Awaited<ReturnType<typeof pdfDoc.embedPng>> | null = null;
   let logoDims = { width: 0, height: 0 };
   try {
-    const logoPath = path.join(process.cwd(), "public", "duofortlogo.png");
-    const logoBytes = fs.readFileSync(logoPath);
+    const logoBytes = fs.readFileSync(
+      path.join(process.cwd(), "public", "duofortlogo.png"),
+    );
     logoImage = await pdfDoc.embedPng(logoBytes);
     logoDims = logoImage.scaleToFit(120, 36);
-  } catch {
-    /* logo optional */
-  }
+  } catch {}
 
   const margin = 44;
-  const pageW = PageSizes.A4[0]; // 595
-  const pageH = PageSizes.A4[1]; // 842
+  const pageW = PageSizes.A4[0];
+  const pageH = PageSizes.A4[1];
   const usable = pageW - margin * 2;
-  const HEADER_H = 64;
 
   let page = pdfDoc.addPage(PageSizes.A4);
   let y = pageH - margin;
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
   function newPage() {
     page = pdfDoc.addPage(PageSizes.A4);
     y = pageH - margin;
@@ -152,7 +146,6 @@ export async function GET(req: NextRequest) {
       font: fontR,
       color: MUTED,
     });
-    // accent line at bottom
     page.drawRectangle({ x: 0, y: 0, width: pageW, height: 6, color: ACCENT });
   }
 
@@ -201,6 +194,36 @@ export async function GET(req: NextRequest) {
     });
   }
 
+  function drawWrapped(
+    text: string,
+    x: number,
+    startY: number,
+    maxWidth: number,
+    size: number,
+    font: typeof fontR,
+    color: ReturnType<typeof rgb>,
+    lineHeight = size + 3,
+  ): number {
+    const words = String(text ?? "").split(" ");
+    let currentLine = "";
+    let currentY = startY;
+    for (const word of words) {
+      const test = currentLine ? `${currentLine} ${word}` : word;
+      if (font.widthOfTextAtSize(test, size) > maxWidth && currentLine) {
+        page.drawText(currentLine, { x, y: currentY, size, font, color });
+        currentY -= lineHeight;
+        currentLine = word;
+      } else {
+        currentLine = test;
+      }
+    }
+    if (currentLine) {
+      page.drawText(currentLine, { x, y: currentY, size, font, color });
+      currentY -= lineHeight;
+    }
+    return currentY;
+  }
+
   if (logoImage) {
     page.drawImage(logoImage, {
       x: margin,
@@ -214,7 +237,7 @@ export async function GET(req: NextRequest) {
 
   txt(
     "OPLEVERBON",
-    pageW - margin - 115,
+    pageW - margin - 92,
     pageH - margin - 16,
     16,
     fontB,
@@ -222,7 +245,7 @@ export async function GET(req: NextRequest) {
   );
   txt(
     `#${project.id.slice(0, 8).toUpperCase()}`,
-    pageW - margin - 75,
+    pageW - margin - 56,
     pageH - margin - 28,
     8,
     fontR,
@@ -231,13 +254,11 @@ export async function GET(req: NextRequest) {
 
   const headerBottom = pageH - margin - logoDims.height - 12;
   line(margin, headerBottom, margin + usable, headerBottom, PRIMARY, 2);
-
   y = headerBottom - 18;
   drawFooter();
 
-  // ── Info boxes ────────────────────────────────────────────────────────────
   const boxW = (usable - 9) / 4;
-  const boxH = 52;
+  const boxH = 64;
   const boxes = [
     { label: "PROJECT", value: project.naam, sub: "" },
     {
@@ -262,72 +283,99 @@ export async function GET(req: NextRequest) {
   boxes.forEach((box, i) => {
     const bx = margin + i * (boxW + 3);
     rect(bx, y - boxH, boxW, boxH, LIGHT, BORDER);
-    // top accent bar per box
     rect(bx, y - 3, boxW, 3, ACCENT);
     txt(box.label, bx + 8, y - 16, 6, fontB, MUTED);
-    const maxC = Math.floor(boxW / 5.2);
-    const val =
-      box.value.length > maxC ? box.value.slice(0, maxC - 2) + "…" : box.value;
-    txt(val, bx + 8, y - 28, 8.5, fontB, DARK);
-    if (box.sub) {
-      const sub =
-        box.sub.length > maxC ? box.sub.slice(0, maxC - 2) + "…" : box.sub;
-      txt(sub, bx + 8, y - 40, 7, fontR, MUTED);
-    }
+    const afterVal = drawWrapped(
+      box.value,
+      bx + 8,
+      y - 28,
+      boxW - 16,
+      8.5,
+      fontB,
+      DARK,
+      11,
+    );
+    if (box.sub)
+      drawWrapped(box.sub, bx + 8, afterVal, boxW - 16, 7, fontR, MUTED, 10);
   });
   y -= boxH + 20;
 
-  // ── Section heading ───────────────────────────────────────────────────────
   txt("UITGEVOERD ONDERHOUD", margin, y, 8, fontB, PRIMARY);
   y -= 8;
   line(margin, y, margin + usable, y, PRIMARY, 1.5);
   y -= 14;
 
-  // ── Tables per vloertype ──────────────────────────────────────────────────
   const colW = [usable * 0.7, usable * 0.3];
   const colX = [margin, margin + colW[0]];
-  const rowH = 18;
+  const rowH = 20;
 
   for (const groep of groepen) {
     const methodeRijen = Object.entries(groep.methodes);
     checkBreak(rowH * (methodeRijen.length + 2) + 20);
 
-    // Group header bar — vloertype + totaal m²
-    rect(margin, y - 24, usable, 24, PRIMARY2);
-    rect(margin, y - 24, 4, 24, ACCENT);
-    txt(groep.vloertype, margin + 12, y - 15, 10, fontB, WHITE);
-    txt(`${groep.totaal_m2}m²`, pageW - margin - 38, y - 15, 11, fontB, WHITE);
-    y -= 24;
+    rect(margin, y - 28, usable, 28, PRIMARY2);
+    rect(margin, y - 28, 4, 28, ACCENT);
+    drawWrapped(
+      groep.vloertype,
+      margin + 12,
+      y - 13,
+      colW[0] - 24,
+      10,
+      fontB,
+      WHITE,
+      12,
+    );
+    txt(`${groep.totaal_m2}m²`, pageW - margin - 40, y - 16, 11, fontB, WHITE);
+    y -= 28;
 
-    // Column headers
     rect(margin, y - rowH, usable, rowH, rgb(0.93, 0.9, 0.96));
-    txt("REINIGINGSMETHODE", colX[0] + 8, y - 12, 6.5, fontB, PRIMARY);
-    txt("TOTAAL M²", colX[1] + 8, y - 12, 6.5, fontB, PRIMARY);
+    txt("REINIGINGSMETHODE", colX[0] + 8, y - 13, 6.5, fontB, PRIMARY);
+    txt("TOTAAL M²", colX[1] + 8, y - 13, 6.5, fontB, PRIMARY);
     line(margin, y - rowH, margin + usable, y - rowH, BORDER);
     y -= rowH;
 
-    // Methode rows
     methodeRijen.forEach(([methode, m2], i) => {
-      checkBreak(rowH + 2);
-      if (i % 2 === 1) rect(margin, y - rowH, usable, rowH, LIGHT);
-      txt(methode, colX[0] + 8, y - 12, 9, fontR, DARK);
+      const words = methode.split(" ");
+      let testLine = "";
+      let lineCount = 1;
+      for (const word of words) {
+        const test = testLine ? `${testLine} ${word}` : word;
+        if (fontR.widthOfTextAtSize(test, 9) > colW[0] - 16 && testLine) {
+          lineCount++;
+          testLine = word;
+        } else {
+          testLine = test;
+        }
+      }
+      const dynamicRowH = rowH + (lineCount - 1) * 12;
+      checkBreak(dynamicRowH + 2);
+      if (i % 2 === 1)
+        rect(margin, y - dynamicRowH, usable, dynamicRowH, LIGHT);
+      drawWrapped(
+        methode,
+        colX[0] + 8,
+        y - 8,
+        colW[0] - 16,
+        9,
+        fontR,
+        DARK,
+        12,
+      );
       txt(`${m2}m²`, colX[1] + 8, y - 12, 9, fontB, PRIMARY);
-      line(margin, y - rowH, margin + usable, y - rowH, BORDER);
-      y -= rowH;
+      line(margin, y - dynamicRowH, margin + usable, y - dynamicRowH, BORDER);
+      y -= dynamicRowH;
     });
 
     y -= 14;
   }
 
-  // ── Totaal row ────────────────────────────────────────────────────────────
   checkBreak(28);
   rect(margin, y - 26, usable, 26, PRIMARY);
   rect(margin, y - 26, 6, 26, ACCENT);
   txt("TOTAAL ONDERHOUDEN OPPERVLAK", margin + 14, y - 16, 9, fontB, WHITE);
-  txt(`${totaal_m2}m²`, pageW - margin - 38, y - 16, 11, fontB, WHITE);
+  txt(`${totaal_m2}m²`, pageW - margin - 40, y - 16, 11, fontB, WHITE);
   y -= 42;
 
-  // ── Signatures ────────────────────────────────────────────────────────────
   checkBreak(140);
   y -= 8;
   txt("AKKOORDVERKLARING", margin, y, 8, fontB, PRIMARY);
@@ -347,40 +395,49 @@ export async function GET(req: NextRequest) {
   const sigW = (usable - 12) / 2;
   const sigH = 85;
 
-  // Uitvoerder
   rect(margin, y - sigH, sigW, sigH, WHITE, BORDER);
   rect(margin, y - sigH, sigW, 3, ACCENT);
   txt("UITVOERDER (DUOFORT)", margin + 8, y - 14, 6, fontB, MUTED);
-  if (handtekeningBytes) {
+  if (werknemerBytes) {
     try {
-      const img = await pdfDoc.embedPng(handtekeningBytes);
+      const img = await pdfDoc.embedPng(werknemerBytes);
       const scaled = img.scaleToFit(sigW - 24, sigH - 32);
       page.drawImage(img, {
         x: margin + 12,
-        y: y - sigH + 20,
+        y: y - sigH + 22,
         width: scaled.width,
         height: scaled.height,
       });
-    } catch {
-      /* skip */
-    }
+    } catch {}
   }
   line(margin + 8, y - sigH + 20, margin + sigW - 8, y - sigH + 20, BORDER);
   txt("Handtekening uitvoerder", margin + 8, y - sigH + 10, 7, fontR, MUTED);
-
-  // Opdrachtgever
   const rx = margin + sigW + 12;
   rect(rx, y - sigH, sigW, sigH, WHITE, BORDER);
   rect(rx, y - sigH, sigW, 3, ACCENT);
   txt("OPDRACHTGEVER", rx + 8, y - 14, 6, fontB, MUTED);
+  if (klantBytes) {
+    try {
+      const img = await pdfDoc.embedPng(klantBytes);
+      const scaled = img.scaleToFit(sigW - 24, sigH - 32);
+      page.drawImage(img, {
+        x: rx + 12,
+        y: y - sigH + 22,
+        width: scaled.width,
+        height: scaled.height,
+      });
+    } catch {}
+  }
   line(rx + 8, y - sigH + 20, rx + sigW - 8, y - sigH + 20, BORDER);
-  txt(
+  drawWrapped(
     locatie?.contact_persoon ?? "Handtekening opdrachtgever",
     rx + 8,
     y - sigH + 10,
+    sigW - 16,
     7,
     fontR,
     MUTED,
+    9,
   );
 
   const pdfBytes = await pdfDoc.save();

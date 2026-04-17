@@ -11,12 +11,12 @@ export default function Toast({ message, type, onClose }: ToastProps) {
     <div
       className={`
       fixed top-5 right-5 z-50 px-4 py-3 rounded-xl shadow-lg text-sm font-medium
-      flex items-center gap-3 transition-all duration-300 border
+      flex items-center gap-3 transition-all duration-300 border 
       ${
         type === "error"
           ? "bg-red-50 text-red-600 border-red-100"
           : type === "success"
-            ? "bg-green-50 text-green-500 border-green-100"
+            ? "bg-green-50 text-green-600 border-green-100"
             : "bg-[#0aaeff]/10 text-[#0aaeff] border-[#0aaeff]/20"
       }
     `}
