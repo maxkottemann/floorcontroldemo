@@ -168,6 +168,7 @@ export default function MilieuPage() {
   const { toast, showToast, hideToast } = useToast();
   const [reinigmethodes, setReinigMethodes] = useState<reinigmethode[]>([]);
   const [loading, setLoading] = useState(true);
+  const [kmDriven, setkmDriven] = useState(0);
 
   useEffect(() => {
     async function getReinigmethodes() {

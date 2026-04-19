@@ -246,7 +246,8 @@ function ProgressBar({
 export default function AfgerondProjectBekijkenPage() {
   const { id } = useParams();
   const projectId = Array.isArray(id) ? id[0] : (id as string);
-  const { toast, hideToast } = useToast();
+  const { toast, showToast, hideToast } = useToast();
+  const [kmDriven, setKmDriven] = useState(1);
 
   const [project, setProject] = useState<ProjectDetail | null>(null);
   const [vloerStats, setVloerStats] = useState<VloerStat[]>([]);
@@ -360,6 +361,38 @@ export default function AfgerondProjectBekijkenPage() {
     load();
   }, [projectId]);
 
+  useEffect(() => {
+    async function getKm() {
+      const { data, error } = await supabase
+        .from("projecten")
+        .select(
+          "locaties(afstand), start_datum, eind_datum, project_bussen(id)",
+        )
+        .eq("id", id)
+        .single();
+
+      if (!data || error) {
+        showToast("Kon afstand niet berekenen", "error");
+        console.log(error);
+        return;
+      }
+
+      const locatie = data.locaties as any;
+      const afstand = locatie?.afstand ?? 0;
+
+      const start = new Date(data.start_datum);
+      const end = new Date(data.eind_datum);
+      const days = Math.round(
+        (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24),
+      );
+
+      const aantalBussen = (data.project_bussen as any[]).length;
+      setKmDriven(days * afstand * 2 * aantalBussen);
+
+      getKm();
+    }
+  }, [id]);
+
   const totaalGepland = vloerStats.reduce((s, v) => s + v.totaal_m2, 0);
   const totaalGewassen = vloerStats.reduce((s, v) => s + v.gewassen_m2, 0);
   const pctGedaan =
@@ -438,7 +471,7 @@ export default function AfgerondProjectBekijkenPage() {
               </div>
 
               {/* KPI cards */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
                 <StatCard
                   label="Gepland oppervlak"
                   value={`${totaalGepland.toFixed(0)}m²`}
@@ -481,6 +514,13 @@ export default function AfgerondProjectBekijkenPage() {
                       className={`w-5 h-5 ${steekproefPct >= 95 ? "text-emerald-600" : steekproefPct > 0 ? "text-amber-600" : "text-slate-400"}`}
                     />
                   }
+                />
+                <StatCard
+                  label="Gereden km"
+                  value={`${Math.round(kmDriven)}km`}
+                  sub="totaal heen en terug"
+                  color="bg-blue-100"
+                  icon={<TruckIcon className="w-5 h-5 text-blue-600" />}
                 />
               </div>
 
@@ -825,6 +865,10 @@ export default function AfgerondProjectBekijkenPage() {
                       value: steekproef
                         ? `${steekproefPct.toFixed(0)}% goedgekeurd`
                         : "—",
+                    },
+                    {
+                      label: "Gereden km",
+                      value: `${Math.round(kmDriven)} km`,
                     },
                   ].map((row) => (
                     <div

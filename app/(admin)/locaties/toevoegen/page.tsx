@@ -145,6 +145,9 @@ export default function LocatiesToevoegen() {
   const [contactPersoon, setContactPersoon] = useState("");
   const [telefoonnummer, setTelefoonnummer] = useState("");
   const [perceel, setPerceel] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [opAfroep, setOpAfroep] = useState(false);
+  const [perJaar, setPerJaar] = useState("1");
 
   const { toast, showToast, hideToast } = useToast();
 
@@ -214,24 +217,36 @@ export default function LocatiesToevoegen() {
     if (!checkValues()) return;
     if (!checkValidValues()) return;
 
-    console.log("perceel value:", perceel);
+    setSubmitting(true);
 
-    const { data, error } = await supabase
+    let afstand: number | null = null;
+    try {
+      const res = await fetch("/api/afstand", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ adres: `${adres}, ${plaats}, Nederland` }),
+      });
+      const distData = await res.json();
+      if (distData.afstand_km) afstand = parseFloat(distData.afstand_km);
+    } catch (e) {
+      console.log("Afstand kon niet berekend worden", e);
+    }
+
+    const { data: percelen, error: perceelError } = await supabase
       .from("percelen")
       .select("id")
       .eq("naam", perceel)
       .single();
 
-    if (error) {
+    if (perceelError) {
       showToast("Er ging iets mis, probeer het opnieuw", "error");
-      console.log(error);
       return;
     }
 
-    const { data: data2, error: error2 } = await supabase
+    const { data: locatie, error: locatieError } = await supabase
       .from("locaties")
       .insert({
-        perceel_id: data.id,
+        perceel_id: percelen.id,
         naam,
         type,
         plaats,
@@ -239,26 +254,28 @@ export default function LocatiesToevoegen() {
         extra_checkin: extraCheckin === "Ja",
         contact_persoon: contactPersoon,
         telefoonnummer,
+        afstand,
+        op_afroep: opAfroep,
+        per_jaar: opAfroep ? null : parseInt(perJaar),
       })
       .select("id")
       .single();
 
-    if (error2) {
+    if (locatieError) {
       showToast("Er ging iets mis, probeer het opnieuw", "error");
-      console.log(error2);
+      console.log(locatieError);
       return;
     }
 
     for (const gebouw of gebouwen) {
-      const { data: bouwData, error: error3 } = await supabase
+      const { data: bouwData, error: bouwError } = await supabase
         .from("bouwdeel")
-        .insert({ locatie_id: data2?.id, naam: gebouw.naam })
+        .insert({ locatie_id: locatie.id, naam: gebouw.naam })
         .select("id")
         .single();
 
-      if (error3) {
+      if (bouwError) {
         showToast("Er ging iets mis, probeer het opnieuw", "error");
-        console.log(error3);
         return;
       }
 
@@ -267,20 +284,19 @@ export default function LocatiesToevoegen() {
         naam: SPECIAL_FLOORS.includes(v) ? v : `Verdieping ${v}`,
       }));
 
-      const { error: error4 } = await supabase
+      const { error: vError } = await supabase
         .from("verdiepingen")
         .insert(verdiepingRows);
-      if (error4) {
+
+      if (vError) {
         showToast("Er ging iets mis bij verdiepingen", "error");
-        console.log(error4);
         return;
       }
     }
-
+    setSubmitting(false);
     showToast("Locatie toegevoegd", "success");
     setTimeout(() => router.push("/locaties"), 1000);
   }
-
   return (
     <div className="min-h-screen flex bg-gray-100">
       <Sidebar className="fixed top-0 left-0 h-screen" />
@@ -347,6 +363,23 @@ export default function LocatiesToevoegen() {
                 value={telefoonnummer}
                 onChange={setTelefoonnummer}
               />
+              <DropdownBig
+                title="Op afroep"
+                options={["Ja", "Nee"]}
+                value={opAfroep ? "Ja" : "Nee"}
+                placeholder="Selecteer"
+                onChange={(v) => setOpAfroep(v === "Ja")}
+              />
+
+              {!opAfroep && (
+                <DropdownBig
+                  title="Per jaar"
+                  options={["1", "2", "3", "4", "6", "12"]}
+                  value={perJaar}
+                  placeholder="Selecteer"
+                  onChange={setPerJaar}
+                />
+              )}
             </form>
 
             <div className="flex flex-col gap-3 mt-6">
@@ -422,8 +455,9 @@ export default function LocatiesToevoegen() {
             <div className="mt-8 flex justify-end">
               <MainButton
                 icon={<PlusIcon />}
-                label="Toevoegen"
+                label={submitting ? "Bezig..." : "Toevoegen"}
                 onClick={handleSubmit}
+                disabled={submitting}
               />
             </div>
           </Card>

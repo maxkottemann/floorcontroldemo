@@ -694,7 +694,6 @@ export default function ProjectenAanmakenPage() {
       return;
     }
 
-    // Build a map of vloerId -> reinigmethodeId from categorieReinig
     const vloerMethodeMap: Record<string, string> = {};
     for (const cat of categorieReinig) {
       for (const vid of cat.vloerIds) {
@@ -740,6 +739,13 @@ export default function ProjectenAanmakenPage() {
         );
       }
     }
+console.log("projectId being sent:", project.id)
+
+    await fetch("/api/email-project-aangemaakt",{
+      method:"POST",
+      headers: {"Content-Type":"applications/json"},
+      body:JSON.stringify({projectId:project.id})
+    })
 
     showToast("Project aangemaakt", "success");
     setTimeout(() => router.back(), 1000);

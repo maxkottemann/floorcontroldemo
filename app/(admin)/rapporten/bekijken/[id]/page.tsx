@@ -21,6 +21,7 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { CgClose } from "react-icons/cg";
+import { error } from "console";
 
 function DonutChart({
   segments,
@@ -131,6 +132,39 @@ export default function RapportBekijkenPage() {
     [],
   );
   const [loading, setLoading] = useState(true);
+  const [kmDriven, setKmDriven] = useState(1);
+
+  useEffect(() => {
+    async function getKm() {
+      const { data, error } = await supabase
+        .from("projecten")
+        .select(
+          "locaties(afstand), start_datum, eind_datum, project_bussen(id)",
+        )
+        .eq("id", id)
+        .single();
+
+      if (!data || error) {
+        showToast("Kon afstand niet berekenen", "error");
+        console.log(error);
+        return;
+      }
+
+      const locatie = data.locaties as any;
+      const afstand = locatie?.afstand ?? 0;
+
+      const start = new Date(data.start_datum);
+      const end = new Date(data.eind_datum);
+      const days = Math.round(
+        (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24),
+      );
+
+      const aantalBussen = (data.project_bussen as any[]).length;
+      setKmDriven(days * afstand * 2 * aantalBussen);
+
+      getKm();
+    }
+  }, [id]);
 
   useEffect(() => {
     async function getProjectData() {
@@ -279,7 +313,7 @@ export default function RapportBekijkenPage() {
 
               <div className="grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-6 items-start">
                 <div className="space-y-5">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                     {[
                       {
                         label: "Totaal m² onderhouden",
@@ -301,6 +335,11 @@ export default function RapportBekijkenPage() {
                         label: "Niet onderhouden",
                         value: todoCount,
                         sub: "vloeren openstaand",
+                      },
+                      {
+                        label: "Gereden km",
+                        value: `${kmDriven}km`,
+                        sub: "totaal heen en terug",
                       },
                     ].map(({ label, value, sub, accent }: any) => (
                       <div
@@ -662,6 +701,21 @@ export default function RapportBekijkenPage() {
                         </button>
                       ))}
                     </div>
+                  </div>
+
+                  <div className="px-5 py-4 border-b border-slate-50">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">
+                      Kilometers
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm text-slate-600">Totaal gereden</p>
+                      <p className="text-sm font-bold text-p">
+                        {Math.round(kmDriven)} km
+                      </p>
+                    </div>
+                    <p className="text-xs text-slate-400 mt-1">
+                      Heen en terug · alle bussen
+                    </p>
                   </div>
 
                   {opmerkingen.length > 0 && (
