@@ -47,7 +47,7 @@ const totaalM2 = vloertypes.reduce((sum, vt) => sum + vt.m2, 0);
 
 try {
     const { data:data3, error:error3 } = await resend.emails.send({
-      from: "Duofort FloorControl <no-reply@rso-floorcontrol.nl>",
+      from: "Duofort <no-reply@rso-floorcontrol.nl>",
       to: ["maxkotteman@gmail.com"],
       subject: "Nieuw project ingepland door Duofort",
       react: ProjectAangemaaktEmail({
