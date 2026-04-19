@@ -45,10 +45,10 @@ export const ProjectAangemaaktEmail = ({
         <img
           src="https://floor-control.vercel.app/duofort.png"
           alt="Duofort"
-          height="64"
+          height="48"
           style={{ display: "block", marginBottom: "28px" }}
         />
-        <p style={{ fontSize: "11px", fontWeight: "700", letterSpacing: "0.14em", textTransform: "uppercase", color: "#3AB8BF", margin: "0 0 8px 0" }}>
+        <p style={{ fontSize: "11px", fontWeight: "700", letterSpacing: "0.14em", textTransform: "uppercase", color: "#81378e", margin: "0 0 8px 0" }}>
           Nieuw project ingepland
         </p>
         <h1 style={{ fontSize: "26px", fontWeight: "800", color: "#0f172a", margin: "0 0 8px 0", lineHeight: "1.2" }}>
@@ -59,7 +59,7 @@ export const ProjectAangemaaktEmail = ({
         </p>
       </div>
 
-      <div style={{ backgroundColor: "#ffffff", padding: "32px 40px", borderTop: "1px solid #f1f5f9" }}>
+      <div style={{ backgroundColor: "#ffffff", padding: "32px 40px", borderTop: "1px solid #81378e" }}>
 
         <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: "12px 0", marginBottom: "32px" }}>
           <tr>
