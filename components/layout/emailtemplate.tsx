@@ -41,9 +41,9 @@ export const ProjectAangemaaktEmail = ({
     <div style={{ maxWidth: "580px", margin: "0 auto" }}>
 
       {/* Header */}
-      <div style={{ backgroundColor: "#ffffff", borderRadius: "16px 16px 0 0", padding: "32px 40px 28px", borderBottom: "3px solid #3AB8BF" }}>
+      <div style={{ backgroundColor: "#ffffff", borderRadius: "16px 16px 0 0", padding: "32px 40px 28px", borderBottom: "3px solid #81378e" }}>
         <img
-          src="https://floor-control.vercel.app/duofort.png"
+          src="https://floor-control.vercel.app/duofortlogo.png"
           alt="Duofort"
           height="48"
           style={{ display: "block", marginBottom: "28px" }}
