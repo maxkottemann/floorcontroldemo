@@ -10,13 +10,14 @@ interface ProjectAangemaaktEmailProps {
   locatieNaam: string;
   locatieAdres?: string;
   startDatum: string;
-  locatieplaats:string;
+  locatieplaats: string;
   eindDatum?: string;
   contactPersoon?: string;
+  beschrijving?: string;
+  opmerking?: string;
   vloertypes: VloerType[];
   totaalM2: number;
 }
-
 function formatDate(d?: string) {
   if (!d) return "—";
   return new Date(d).toLocaleDateString("nl-NL", {
@@ -35,6 +36,8 @@ export const ProjectAangemaaktEmail = ({
   eindDatum,
   contactPersoon,
   vloertypes,
+  opmerking,
+  beschrijving,
   totaalM2,
 }: ProjectAangemaaktEmailProps) => (
   <div style={{ fontFamily: "'Helvetica Neue', Arial, sans-serif", backgroundColor: "#f4f6f9", padding: "48px 0" }}>
@@ -54,6 +57,11 @@ export const ProjectAangemaaktEmail = ({
         <h1 style={{ fontSize: "26px", fontWeight: "800", color: "#0f172a", margin: "0 0 8px 0", lineHeight: "1.2" }}>
           {projectNaam}
         </h1>
+        {beschrijving && (
+         <p style={{ fontSize: "14px", color: "#334155", margin: "0 0 8px 0", lineHeight: "1.5", fontWeight: "500" }}>
+         {beschrijving}
+         </p>
+        )}
         <p style={{ fontSize: "14px", color: "#94a3b8", margin: 0, lineHeight: "1.5" }}>
           Er is een nieuw project voor u ingepland. Hieronder vindt u alle details.
         </p>
@@ -117,16 +125,14 @@ export const ProjectAangemaaktEmail = ({
 
         {/* Divider */}
         <div style={{ height: "1px", backgroundColor: "#f1f5f9", margin: "0 0 28px 0" }} />
+        {opmerking && (
+     <div style={{ backgroundColor: "#fffbeb", borderRadius: "10px", padding: "14px 18px", border: "1px solid #fde68a", marginBottom: "28px" }}>
+    <p style={{ fontSize: "10px", fontWeight: "700", letterSpacing: "0.12em", textTransform: "uppercase", color: "#d97706", margin: "0 0 6px 0" }}>Opmerking</p>
+    <p style={{ fontSize: "13px", color: "#92400e", margin: 0, lineHeight: "1.6" }}>{opmerking}</p>
+   </div>
+    )}
 
-        {/* Contact */}
-        {contactPersoon && (
-          <div style={{ marginBottom: "28px" }}>
-            <p style={{ fontSize: "11px", fontWeight: "700", letterSpacing: "0.14em", textTransform: "uppercase", color: "#94a3b8", margin: "0 0 8px 0" }}>
-              Uw contactpersoon
-            </p>
-            <p style={{ fontSize: "15px", fontWeight: "700", color: "#0f172a", margin: 0 }}>{contactPersoon}</p>
-          </div>
-        )}
+        
 
         <p style={{ fontSize: "13px", color: "#94a3b8", lineHeight: "1.7", margin: 0 }}>
           Heeft u vragen over dit project? Neem dan contact op via{" "}

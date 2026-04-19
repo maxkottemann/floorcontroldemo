@@ -14,7 +14,7 @@ export async function POST(req: Request) {
 
     const { data,error  } = await supabaseAdmin
     .from("projecten")
-    .select("naam,locaties(naam,adres,contact_persoon,plaats),start_datum,eind_datum")
+    .select("naam,locaties(naam,adres,contact_persoon,plaats),start_datum,eind_datum,beschrijving,opmerkingen")
     .eq("id",projectId).single()
 
     if(!data|| error){
@@ -52,10 +52,12 @@ try {
       subject: "Nieuw project ingepland door Duofort",
       react: ProjectAangemaaktEmail({
         projectNaam: data?.naam,
+        opmerking: data?.opmerkingen,
+        beschrijving:data?.beschrijving,
         locatieNaam:(data as any )?.locaties?.naam,
         locatieAdres:(data as any)?.locaties?.adres,
         locatieplaats:(data as any)?.locaties?.plaats,
-        contactPersoon:(data as any)?.contact_persoon,
+        contactPersoon:(data as any)?.locaties?.contact_persoon,
         startDatum:data?.start_datum,
         eindDatum: data?.eind_datum,
         vloertypes:vloertypes,
