@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { useToast } from "@/components/hooks/usetoasts";
+import Toast from "@/components/layout/toast";
 
 export default function SetupPaswoordPage() {
   const router = useRouter();
@@ -11,6 +13,7 @@ export default function SetupPaswoordPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [ready, setReady] = useState(false);
+  const { toast, showToast, hideToast } = useToast();
 
   useEffect(() => {
     const { data: listener } = supabase.auth.onAuthStateChange(
@@ -43,7 +46,11 @@ export default function SetupPaswoordPage() {
       setError(error.message);
       return;
     }
-    router.push("/klant/dashboard");
+
+    showToast("Wachtwoord hersteld", "success");
+    setTimeout(() => {
+      router.push("/login");
+    }, 1000);
   }
 
   if (!ready)
@@ -55,6 +62,9 @@ export default function SetupPaswoordPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F6FA] flex items-center justify-center p-6">
+      {toast && (
+        <Toast message={toast.message} type={toast.type} onClose={hideToast} />
+      )}
       <div className="w-full max-w-md bg-white rounded-2xl border border-slate-100 shadow-sm px-8 py-8 space-y-5">
         <div className="text-center">
           <img

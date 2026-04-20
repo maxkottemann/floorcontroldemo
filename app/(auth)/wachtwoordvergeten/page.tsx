@@ -39,7 +39,29 @@ export default function AccountAanvragenPage() {
     setDone(true);
   }
 
-  return (
+  return done ? (
+    <div className="min-h-screen bg-gradient-to-br from-[#f5f6fa] to-[#eef1f7] flex items-center justify-center p-6">
+      <div className="w-full max-w-md text-center bg-white rounded-3xl shadow-sm border border-slate-100 px-8 py-10">
+        <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-emerald-50 flex items-center justify-center">
+          <KeyIcon className="w-6 h-6 text-emerald-600" />
+        </div>
+
+        <h1 className="text-xl font-bold text-slate-900">Check je e-mail</h1>
+
+        <p className="text-sm text-slate-500 mt-2 leading-relaxed">
+          We hebben een link gestuurd om je wachtwoord opnieuw in te stellen.
+          Controleer je inbox (en spamfolder).
+        </p>
+
+        <a
+          href="/login"
+          className="inline-flex mt-6 items-center justify-center px-5 py-2.5 rounded-xl bg-p text-white text-sm font-semibold hover:bg-p/90 transition"
+        >
+          Terug naar inloggen
+        </a>
+      </div>
+    </div>
+  ) : (
     <div className="min-h-screen bg-gradient-to-br from-[#f5f6fa] to-[#eef1f7] flex items-center justify-center p-6">
       <div className="w-full max-w-md">
         <div className="text-center mb-10">
