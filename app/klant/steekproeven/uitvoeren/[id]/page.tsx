@@ -172,6 +172,8 @@ export default function SteekproevenUitvoerenPage() {
   const [saving, setSaving] = useState(false);
   const [afgerond, setAfgerond] = useState(false);
 
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   useEffect(() => {
     async function load() {
       if (!projectId) return;
@@ -328,13 +330,20 @@ export default function SteekproevenUitvoerenPage() {
 
   return (
     <div className="min-h-screen flex bg-[#F5F6FA]">
-      <SidebarClient className="fixed top-0 left-0 h-screen" />
+      <SidebarClient
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        className="fixed top-0 left-0 h-screen"
+      />
       {toast && (
         <Toast message={toast.message} type={toast.type} onClose={hideToast} />
       )}
 
       <div className="flex flex-col flex-1 h-screen">
-        <Topbar title="Steekproef uitvoeren" />
+        <Topbar
+          title="Steekproef uitvoeren"
+          onMenuToggle={() => setSidebarOpen((p) => !p)}
+        />
 
         <main className="flex-1 overflow-auto p-8">
           <div className="space-y-5">

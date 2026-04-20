@@ -45,6 +45,7 @@ export default function SteekproevenPage() {
   const [loading, setLoading] = useState(true);
   const [zoek, setZoek] = useState("");
   const [tab, setTab] = useState<Tab>("lopend");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -100,13 +101,20 @@ export default function SteekproevenPage() {
 
   return (
     <div className="min-h-screen flex bg-[#F5F6FA]">
-      <SidebarClient className="fixed top-0 left-0 h-screen" />
+      <SidebarClient
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        className="fixed top-0 left-0 h-screen"
+      />
       {toast && (
         <Toast message={toast.message} type={toast.type} onClose={hideToast} />
       )}
 
       <div className="flex flex-col flex-1 h-screen">
-        <Topbar title="Steekproeven" />
+        <Topbar
+          title="Steekproeven"
+          onMenuToggle={() => setSidebarOpen((p) => !p)}
+        />
 
         <main className="flex-1 overflow-auto p-8">
           <div className="space-y-6 max-w-3xl mx-auto">
