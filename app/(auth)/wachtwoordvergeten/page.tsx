@@ -22,7 +22,7 @@ export default function AccountAanvragenPage() {
     setError("");
 
     const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: "/wachtwoordherstellen",
+      redirectTo: "https://floor-control.vercel.app/wachtwoordherstellen",
     });
 
     setLoading(false);

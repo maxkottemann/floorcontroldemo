@@ -13,6 +13,10 @@ export async function middleware(req: NextRequest) {
 
   const isPublic = PUBLIC_PATHS.some((p) => pathname.startsWith(p));
 
+  if (isPublic) {
+    return NextResponse.next();
+  }
+
   let res = NextResponse.next({ request: req });
 
   const supabase = createServerClient(
@@ -37,14 +41,6 @@ export async function middleware(req: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
-  if (isPublic) return res;
-
-  const isRecoveryPage = pathname.startsWith("/wachtwoordherstellen");
-
-  if (isRecoveryPage) {
-    return NextResponse.next();
-  }
 
   if (!user) {
     return NextResponse.redirect(new URL("/login", req.url));
