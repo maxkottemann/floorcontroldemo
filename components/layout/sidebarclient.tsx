@@ -84,7 +84,6 @@ export default function SidebarClient({
 
   return (
     <>
-      {/* Overlay */}
       {open && (
         <div
           className="fixed inset-0 z-40 bg-black/30 lg:hidden"
@@ -102,13 +101,13 @@ export default function SidebarClient({
           ${className ?? ""}
         `}
       >
-        <div className="px-4 pt-5 pb-2">
+        <div className="px-4  pb-2">
           <img src="/logo2.png" alt="Logo" className="w-full mx-auto" />
         </div>
 
         <div className="border-t border-gray-200 mx-4 my-3" />
 
-        <div className="flex-1 px-3 overflow-y-auto">
+        <div className="flex-1  overflow-y-auto">
           {links.map((l) => (
             <Link
               key={l.href}

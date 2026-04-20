@@ -16,9 +16,7 @@ import {
   ClipboardDocumentCheckIcon,
   ExclamationTriangleIcon,
   ArrowDownTrayIcon,
-  BuildingOffice2Icon,
   TruckIcon,
-  UserGroupIcon,
 } from "@heroicons/react/24/outline";
 import SidebarClient from "@/components/layout/sidebarclient";
 
@@ -32,21 +30,18 @@ interface ProjectDetail {
   locatie_naam: string;
   locatie_adres: string;
 }
-
 interface VloerStat {
   vloertype: string;
   totaal_m2: number;
   gewassen_m2: number;
   status: string;
 }
-
 interface Steekproef {
   status: string;
   afgerond_op: string;
   totaal: number;
   goed: number;
 }
-
 interface Bus {
   id: string;
   naam: string;
@@ -78,13 +73,13 @@ function StatCard({
   icon: React.ReactNode;
 }) {
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 md:p-5">
       <div
-        className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 ${color}`}
+        className={`w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center mb-3 md:mb-4 ${color}`}
       >
         {icon}
       </div>
-      <p className="text-2xl font-bold text-slate-900 tracking-tight">
+      <p className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
         {value}
       </p>
       <p className="text-xs font-semibold text-slate-500 mt-1">{label}</p>
@@ -106,7 +101,6 @@ const CHART_COLORS = [
   "#ec4899",
 ];
 
-// Fixed donut — center label uses absolute positioning relative to chart height
 function DonutChart({
   gewassen,
   totaal,
@@ -166,13 +160,11 @@ function DonutChart({
   );
 }
 
-// Fixed pie — legend below chart, no overlap
 function VloertypePieChart({ vloerStats }: { vloerStats: VloerStat[] }) {
   const data = vloerStats.map((v) => ({
     name: v.vloertype,
     value: Math.round(v.totaal_m2),
   }));
-
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload?.length) {
       return (
@@ -184,7 +176,6 @@ function VloertypePieChart({ vloerStats }: { vloerStats: VloerStat[] }) {
     }
     return null;
   };
-
   return (
     <div className="flex flex-col items-center gap-3">
       <ResponsiveContainer width="100%" height={180}>
@@ -205,7 +196,6 @@ function VloertypePieChart({ vloerStats }: { vloerStats: VloerStat[] }) {
           <Tooltip content={<CustomTooltip />} />
         </PieChart>
       </ResponsiveContainer>
-      {/* Legend below, no overlap */}
       <div className="w-full grid grid-cols-2 gap-x-4 gap-y-1.5">
         {data.map((d, i) => (
           <div key={d.name} className="flex items-center gap-1.5 min-w-0">
@@ -247,12 +237,12 @@ export default function AfgerondProjectBekijkenPage() {
   const { id } = useParams();
   const projectId = Array.isArray(id) ? id[0] : (id as string);
   const { toast, showToast, hideToast } = useToast();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [kmDriven, setKmDriven] = useState(1);
 
   const [project, setProject] = useState<ProjectDetail | null>(null);
   const [vloerStats, setVloerStats] = useState<VloerStat[]>([]);
   const [steekproef, setSteekproef] = useState<Steekproef | null>(null);
-  const [bussen, setBussen] = useState<Bus[]>([]);
   const [loading, setLoading] = useState(true);
   const [vloerOpmerkingen, setVloerOpmerkingen] = useState<
     { kamer: string; vloertype: string; opmerking: string }[]
@@ -261,7 +251,6 @@ export default function AfgerondProjectBekijkenPage() {
   useEffect(() => {
     async function load() {
       if (!projectId) return;
-
       const { data: p } = await supabase
         .from("projecten")
         .select(
@@ -269,7 +258,6 @@ export default function AfgerondProjectBekijkenPage() {
         )
         .eq("id", projectId)
         .single();
-
       if (p) {
         const loc = p.locaties as any;
         setProject({
@@ -283,14 +271,12 @@ export default function AfgerondProjectBekijkenPage() {
           locatie_adres: [loc?.adres, loc?.plaats].filter(Boolean).join(", "),
         });
       }
-
       const { data: gepland } = await supabase
         .from("project_vloeren")
         .select(
           "kamervloer_id, kamer_vloeren(vierkante_meter, vloer_types(naam), status)",
         )
         .eq("project_id", projectId);
-
       const { data: gewassen } = await supabase
         .from("gewassen_vloeren")
         .select(
@@ -312,7 +298,6 @@ export default function AfgerondProjectBekijkenPage() {
             status: kv?.status ?? "—",
           };
         typeMap[type].gepland_m2 += kv?.vierkante_meter ?? 0;
-
         setVloerOpmerkingen(
           (gewassen ?? [])
             .filter((g: any) => g.opmerking)
@@ -330,7 +315,6 @@ export default function AfgerondProjectBekijkenPage() {
           typeMap[type] = { gepland_m2: 0, gewassen_m2: 0, status: "—" };
         typeMap[type].gewassen_m2 += g.vierkante_meter ?? 0;
       }
-
       setVloerStats(
         Object.entries(typeMap).map(([vloertype, val]) => ({
           vloertype,
@@ -345,7 +329,6 @@ export default function AfgerondProjectBekijkenPage() {
         .select("status, afgerond_op, steekproef_vloeren(goedgekeurd)")
         .eq("project_id", projectId)
         .single();
-
       if (sp) {
         const vloeren = sp.steekproef_vloeren as any[];
         setSteekproef({
@@ -355,43 +338,10 @@ export default function AfgerondProjectBekijkenPage() {
           goed: vloeren?.filter((v) => v.goedgekeurd === true).length ?? 0,
         });
       }
-
       setLoading(false);
     }
     load();
   }, [projectId]);
-
-  useEffect(() => {
-    async function getKm() {
-      const { data, error } = await supabase
-        .from("projecten")
-        .select(
-          "locaties(afstand), start_datum, eind_datum, project_bussen(id)",
-        )
-        .eq("id", id)
-        .single();
-
-      if (!data || error) {
-        showToast("Kon afstand niet berekenen", "error");
-        console.log(error);
-        return;
-      }
-
-      const locatie = data.locaties as any;
-      const afstand = locatie?.afstand ?? 0;
-
-      const start = new Date(data.start_datum);
-      const end = new Date(data.eind_datum);
-      const days = Math.round(
-        (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24),
-      );
-
-      const aantalBussen = (data.project_bussen as any[]).length;
-      setKmDriven(days * afstand * 2 * aantalBussen);
-
-      getKm();
-    }
-  }, [id]);
 
   const totaalGepland = vloerStats.reduce((s, v) => s + v.totaal_m2, 0);
   const totaalGewassen = vloerStats.reduce((s, v) => s + v.gewassen_m2, 0);
@@ -401,7 +351,6 @@ export default function AfgerondProjectBekijkenPage() {
     steekproef && steekproef.totaal > 0
       ? (steekproef.goed / steekproef.totaal) * 100
       : 0;
-
   const duurDagen =
     project?.start_datum && project.eind_datum
       ? Math.max(
@@ -413,17 +362,25 @@ export default function AfgerondProjectBekijkenPage() {
           ),
         )
       : 0;
+
   return (
     <div className="min-h-screen flex bg-[#F5F6FA]">
-      <SidebarClient className="fixed top-0 left-0 h-screen" />
+      <SidebarClient
+        className="fixed top-0 left-0 h-screen"
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
       {toast && (
         <Toast message={toast.message} type={toast.type} onClose={hideToast} />
       )}
 
       <div className="flex flex-col flex-1 h-screen">
-        <Topbar title="Project overzicht" />
+        <Topbar
+          title="Project overzicht"
+          onMenuToggle={() => setSidebarOpen((p) => !p)}
+        />
 
-        <main className="flex-1 overflow-auto p-8">
+        <main className="flex-1 overflow-auto p-3 md:p-8">
           {loading ? (
             <div className="flex items-center justify-center py-32">
               <div className="w-6 h-6 rounded-full border-2 border-p border-t-transparent animate-spin" />
@@ -433,28 +390,31 @@ export default function AfgerondProjectBekijkenPage() {
               Project niet gevonden
             </p>
           ) : (
-            <div className="space-y-6">
-              <div className="flex items-start justify-between gap-4">
-                <div>
+            <div className="space-y-4 md:space-y-6">
+              {/* Header */}
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
                   <p className="text-xs font-bold uppercase tracking-[0.14em] text-p/60 mb-1">
                     Afgerond project
                   </p>
-                  <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+                  <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight truncate">
                     {project.naam}
                   </h1>
                   {project.beschrijving && (
-                    <p className="text-sm text-slate-400 mt-1">
+                    <p className="text-sm text-slate-400 mt-1 line-clamp-2">
                       {project.beschrijving}
                     </p>
                   )}
-                  <div className="flex items-center gap-4 mt-2 flex-wrap">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-4 mt-2">
                     <span className="flex items-center gap-1.5 text-xs text-slate-400">
-                      <MapPinIcon className="w-3.5 h-3.5" />
-                      {project.locatie_naam}
-                      {project.locatie_adres && ` · ${project.locatie_adres}`}
+                      <MapPinIcon className="w-3.5 h-3.5 shrink-0" />
+                      <span className="truncate">
+                        {project.locatie_naam}
+                        {project.locatie_adres && ` · ${project.locatie_adres}`}
+                      </span>
                     </span>
                     <span className="flex items-center gap-1.5 text-xs text-slate-400">
-                      <CalendarDaysIcon className="w-3.5 h-3.5" />
+                      <CalendarDaysIcon className="w-3.5 h-3.5 shrink-0" />
                       {formatDate(project.start_datum)} —{" "}
                       {formatDate(project.eind_datum)}
                     </span>
@@ -463,15 +423,15 @@ export default function AfgerondProjectBekijkenPage() {
                 <a
                   href={`/api/rapport?project_id=${projectId}`}
                   target="_blank"
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-p text-white text-sm font-bold hover:bg-p/90 transition-all shrink-0 shadow-sm"
+                  className="flex items-center gap-2 px-3 md:px-4 py-2.5 rounded-xl bg-p text-white text-sm font-bold hover:bg-p/90 transition-all shrink-0 shadow-sm"
                 >
                   <ArrowDownTrayIcon className="w-4 h-4" />
-                  Opleverbon
+                  <span className="hidden sm:inline">Opleverbon</span>
                 </a>
               </div>
 
-              {/* KPI cards */}
-              <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+              {/* KPI cards — 2 col mobile, 5 col lg */}
+              <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4">
                 <StatCard
                   label="Gepland oppervlak"
                   value={`${totaalGepland.toFixed(0)}m²`}
@@ -524,11 +484,10 @@ export default function AfgerondProjectBekijkenPage() {
                 />
               </div>
 
-              {/* Charts row */}
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                {/* Donut — gewassen vs gepland */}
+              {/* Charts — 1 col mobile, 2 col xl */}
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6">
                 <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-                  <div className="px-5 py-4 border-b border-slate-50">
+                  <div className="px-4 md:px-5 py-4 border-b border-slate-50">
                     <p className="text-sm font-bold text-slate-800">
                       Gewassen oppervlak
                     </p>
@@ -536,17 +495,15 @@ export default function AfgerondProjectBekijkenPage() {
                       Voortgang vs gepland
                     </p>
                   </div>
-                  <div className="px-5 py-4">
+                  <div className="px-4 md:px-5 py-4">
                     <DonutChart
                       gewassen={totaalGewassen}
                       totaal={totaalGepland}
                     />
                   </div>
                 </div>
-
-                {/* Pie — vloertype distribution */}
                 <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-                  <div className="px-5 py-4 border-b border-slate-50">
+                  <div className="px-4 md:px-5 py-4 border-b border-slate-50">
                     <p className="text-sm font-bold text-slate-800">
                       Vloertype verdeling
                     </p>
@@ -554,7 +511,7 @@ export default function AfgerondProjectBekijkenPage() {
                       Distributie per type in m²
                     </p>
                   </div>
-                  <div className="px-5 py-4">
+                  <div className="px-4 md:px-5 py-4">
                     {vloerStats.length === 0 ? (
                       <p className="text-sm text-slate-300 text-center py-8">
                         Geen vloerdata
@@ -566,11 +523,11 @@ export default function AfgerondProjectBekijkenPage() {
                 </div>
               </div>
 
-              {/* Bottom row */}
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+              {/* Bottom row — 1 col mobile, 2 col xl */}
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6">
                 {/* Vloertypes table */}
                 <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-                  <div className="px-5 py-4 border-b border-slate-50">
+                  <div className="px-4 md:px-5 py-4 border-b border-slate-50">
                     <p className="text-sm font-bold text-slate-800">
                       Vloertypes detail
                     </p>
@@ -578,11 +535,11 @@ export default function AfgerondProjectBekijkenPage() {
                       Gepland vs gewassen per type
                     </p>
                   </div>
-                  <div className="px-5 py-4 space-y-4">
+                  <div className="px-4 md:px-5 py-4 space-y-4">
                     {vloerStats.map((v, i) => (
                       <div key={v.vloertype} className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 min-w-0">
                             <div
                               className="w-2.5 h-2.5 rounded-full shrink-0"
                               style={{
@@ -590,18 +547,17 @@ export default function AfgerondProjectBekijkenPage() {
                                   CHART_COLORS[i % CHART_COLORS.length],
                               }}
                             />
-                            <p className="text-sm font-semibold text-slate-700">
+                            <p className="text-sm font-semibold text-slate-700 truncate">
                               {v.vloertype}
                             </p>
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 shrink-0">
                             <span className="text-xs text-slate-400">
                               {v.gewassen_m2.toFixed(0)}/
                               {v.totaal_m2.toFixed(0)}m²
                             </span>
                             <span
-                              className={`text-[10px] font-bold px-2 py-0.5 rounded-full
-                              ${v.status === "Goed" ? "bg-emerald-50 text-emerald-600" : v.status === "Matig" ? "bg-amber-50 text-amber-600" : "bg-red-50 text-red-500"}`}
+                              className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${v.status === "Goed" ? "bg-emerald-50 text-emerald-600" : v.status === "Matig" ? "bg-amber-50 text-amber-600" : "bg-red-50 text-red-500"}`}
                             >
                               {v.status}
                             </span>
@@ -620,8 +576,8 @@ export default function AfgerondProjectBekijkenPage() {
                 {/* Steekproef + opmerkingen */}
                 <div className="space-y-4">
                   <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-                    <div className="px-5 py-4 border-b border-slate-50 flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-xl bg-p/10 flex items-center justify-center">
+                    <div className="px-4 md:px-5 py-4 border-b border-slate-50 flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-xl bg-p/10 flex items-center justify-center shrink-0">
                         <ClipboardDocumentCheckIcon className="w-4 h-4 text-p" />
                       </div>
                       <div>
@@ -633,7 +589,7 @@ export default function AfgerondProjectBekijkenPage() {
                         </p>
                       </div>
                     </div>
-                    <div className="px-5 py-4">
+                    <div className="px-4 md:px-5 py-4">
                       {!steekproef ? (
                         <p className="text-sm text-slate-300 text-center py-4">
                           Geen steekproef uitgevoerd
@@ -699,8 +655,8 @@ export default function AfgerondProjectBekijkenPage() {
 
                   {vloerOpmerkingen.length > 0 && (
                     <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-                      <div className="px-5 py-4 border-b border-slate-50 flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center">
+                      <div className="px-4 md:px-5 py-4 border-b border-slate-50 flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
                           <ExclamationTriangleIcon className="w-4 h-4 text-amber-600" />
                         </div>
                         <div>
@@ -718,13 +674,13 @@ export default function AfgerondProjectBekijkenPage() {
                         {vloerOpmerkingen.map((o, i) => (
                           <div
                             key={i}
-                            className="px-5 py-3.5 flex items-start gap-3"
+                            className="px-4 md:px-5 py-3.5 flex items-start gap-3"
                           >
                             <div className="w-7 h-7 rounded-lg bg-amber-50 flex items-center justify-center shrink-0 mt-0.5">
                               <ExclamationTriangleIcon className="w-3.5 h-3.5 text-amber-500" />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-0.5">
+                              <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                                 <span className="text-xs font-bold text-slate-700">
                                   {o.kamer}
                                 </span>
@@ -744,9 +700,9 @@ export default function AfgerondProjectBekijkenPage() {
                 </div>
               </div>
 
-              {/* Project tijdlijn */}
+              {/* Tijdlijn — scrollable on mobile */}
               <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-                <div className="px-5 py-4 border-b border-slate-50">
+                <div className="px-4 md:px-5 py-4 border-b border-slate-50">
                   <p className="text-sm font-bold text-slate-800">
                     Project tijdlijn
                   </p>
@@ -754,9 +710,8 @@ export default function AfgerondProjectBekijkenPage() {
                     Looptijd en mijlpalen
                   </p>
                 </div>
-                <div className="px-5 py-5">
-                  <div className="flex items-center gap-0">
-                    {/* Start */}
+                <div className="px-4 md:px-5 py-5 overflow-x-auto">
+                  <div className="flex items-center gap-0 min-w-max">
                     <div className="text-center shrink-0">
                       <div className="w-10 h-10 rounded-full bg-p flex items-center justify-center mx-auto mb-2">
                         <CalendarDaysIcon className="w-5 h-5 text-white" />
@@ -766,16 +721,9 @@ export default function AfgerondProjectBekijkenPage() {
                         {formatDate(project.start_datum)}
                       </p>
                     </div>
-
-                    {/* Line */}
-                    <div className="flex-1 h-0.5 bg-p/20 mx-4 relative">
-                      <div
-                        className="absolute inset-y-0 left-0 bg-p rounded-full"
-                        style={{ width: "100%" }}
-                      />
+                    <div className="flex-1 h-0.5 bg-p/20 mx-4 relative min-w-[60px]">
+                      <div className="absolute inset-y-0 left-0 bg-p rounded-full w-full" />
                     </div>
-
-                    {/* Steekproef if done */}
                     {steekproef?.afgerond_op && (
                       <>
                         <div className="text-center shrink-0">
@@ -789,16 +737,11 @@ export default function AfgerondProjectBekijkenPage() {
                             {formatDate(steekproef.afgerond_op)}
                           </p>
                         </div>
-                        <div className="flex-1 h-0.5 bg-p/20 mx-4 relative">
-                          <div
-                            className="absolute inset-y-0 left-0 bg-p rounded-full"
-                            style={{ width: "100%" }}
-                          />
+                        <div className="flex-1 h-0.5 bg-p/20 mx-4 relative min-w-[60px]">
+                          <div className="absolute inset-y-0 left-0 bg-p rounded-full w-full" />
                         </div>
                       </>
                     )}
-
-                    {/* Eind */}
                     <div className="text-center shrink-0">
                       <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center mx-auto mb-2">
                         <CheckCircleIcon className="w-5 h-5 text-white" />
@@ -814,9 +757,9 @@ export default function AfgerondProjectBekijkenPage() {
                 </div>
               </div>
 
-              {/* Samenvatting tabel */}
+              {/* Samenvatting */}
               <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-                <div className="px-5 py-4 border-b border-slate-50">
+                <div className="px-4 md:px-5 py-4 border-b border-slate-50">
                   <p className="text-sm font-bold text-slate-800">
                     Samenvatting
                   </p>
@@ -873,7 +816,7 @@ export default function AfgerondProjectBekijkenPage() {
                   ].map((row) => (
                     <div
                       key={row.label}
-                      className="flex items-center justify-between px-5 py-3"
+                      className="flex items-center justify-between px-4 md:px-5 py-3"
                     >
                       <p className="text-xs font-semibold text-slate-500">
                         {row.label}

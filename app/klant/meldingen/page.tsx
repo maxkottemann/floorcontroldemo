@@ -32,6 +32,7 @@ function formatDate(d?: string) {
 export default function MeldingenPage() {
   const { toast, showToast, hideToast } = useToast();
   const router = useRouter();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [openMeldingen, setOpenMeldingen] = useState<melding[]>([]);
   const [afgehandeldMeldingen, setAfgehandeldMeldingen] = useState<melding[]>(
     [],
@@ -78,13 +79,13 @@ export default function MeldingenPage() {
     return (
       <div
         onClick={() => router.push(`/klant/meldingen/bekijken/${m.id}`)}
-        className={`bg-white rounded-2xl border shadow-sm hover:shadow-md transition-all cursor-pointer overflow-hidden ${
+        className={`bg-white rounded-2xl border shadow-sm hover:shadow-md transition-all cursor-pointer overflow-hidden active:bg-slate-50 ${
           open
             ? "border-slate-100 hover:border-p/20"
             : "border-slate-100 hover:border-p/20 opacity-80 hover:opacity-100"
         }`}
       >
-        <div className="flex items-start gap-4 px-5 py-4">
+        <div className="flex items-start gap-3 md:gap-4 px-4 md:px-5 py-4">
           <div
             className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${open ? "bg-amber-50" : "bg-emerald-50"}`}
           >
@@ -111,12 +112,9 @@ export default function MeldingenPage() {
                 {open ? "Openstaand" : "Afgehandeld"}
               </span>
             </div>
-
             <p className="text-xs text-slate-500 mt-1 line-clamp-2">
               {m.beschrijving}
             </p>
-
-            {/* Uitleg — show on both open (if any) and afgehandeld */}
             {m.uitleg && (
               <div className="flex items-start gap-2 mt-3 px-3 py-2.5 bg-slate-50 rounded-xl border border-slate-100">
                 <ChatBubbleBottomCenterTextIcon className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
@@ -130,8 +128,7 @@ export default function MeldingenPage() {
                 </div>
               </div>
             )}
-
-            <div className="flex items-center gap-3 mt-2.5">
+            <div className="flex items-center gap-3 mt-2.5 flex-wrap">
               {m.kamervloer_naam && (
                 <div className="flex items-center gap-1.5">
                   <SwatchIcon className="w-3.5 h-3.5 text-slate-300" />
@@ -154,43 +151,52 @@ export default function MeldingenPage() {
 
   return (
     <div className="min-h-screen flex bg-[#F5F6FA]">
-      <SidebarClient className="fixed top-0 left-0 h-screen" />
+      <SidebarClient
+        className="fixed top-0 left-0 h-screen"
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
       {toast && (
         <Toast message={toast.message} type={toast.type} onClose={hideToast} />
       )}
 
       <div className="flex flex-col flex-1 h-screen">
-        <Topbar title="Meldingen" />
+        <Topbar
+          title="Meldingen"
+          onMenuToggle={() => setSidebarOpen((p) => !p)}
+        />
 
-        <main className="flex-1 overflow-auto p-8">
-          <div className="space-y-8 max-w-3xl">
+        <main className="flex-1 overflow-auto p-3 md:p-8">
+          <div className="space-y-6 md:space-y-8 ">
             {/* Header */}
-            <div className="flex items-end justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-p/60 mb-1">
                   Overzicht
                 </p>
-                <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+                <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
                   Meldingen
                 </h1>
                 <p className="text-sm text-slate-400 mt-0.5">
                   Bekijk en volg uw ingediende meldingen
                 </p>
               </div>
-              <div className="flex flex-row gap-3">
+              <div className="flex flex-row gap-2 md:gap-3">
                 <button
                   onClick={() => router.push("/klant/meldingen/maken")}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-p hover:bg-p/90 text-white text-sm font-bold rounded-xl shadow-sm transition-all cursor-pointer"
+                  className="inline-flex items-center gap-2 px-3 md:px-4 py-2.5 bg-p hover:bg-p/90 text-white text-sm font-bold rounded-xl shadow-sm transition-all cursor-pointer whitespace-nowrap"
                 >
                   <PlusIcon className="w-4 h-4" />
-                  Melding maken
+                  <span className="hidden sm:inline">Melding maken</span>
+                  <span className="sm:hidden">Melding</span>
                 </button>
                 <button
                   onClick={() => router.push("/klant/onderhoud/aanvragen")}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-slate-50 text-p text-sm font-bold rounded-xl border border-p/20 shadow-sm transition-all cursor-pointer"
+                  className="inline-flex items-center gap-2 px-3 md:px-4 py-2.5 bg-white hover:bg-slate-50 text-p text-sm font-bold rounded-xl border border-p/20 shadow-sm transition-all cursor-pointer whitespace-nowrap"
                 >
                   <CalendarDaysIcon className="w-4 h-4" />
-                  Onderhoud aanvragen
+                  <span className="hidden sm:inline">Onderhoud aanvragen</span>
+                  <span className="sm:hidden">Onderhoud</span>
                 </button>
               </div>
             </div>
@@ -202,7 +208,7 @@ export default function MeldingenPage() {
             ) : (
               <>
                 {/* Openstaand */}
-                <div className="space-y-3 mt-3">
+                <div className="space-y-3">
                   <div className="flex items-center gap-3">
                     <div className="w-2 h-2 rounded-full bg-amber-400" />
                     <h2 className="text-sm font-bold text-slate-700">
@@ -212,7 +218,6 @@ export default function MeldingenPage() {
                       {openMeldingen.length}
                     </span>
                   </div>
-
                   {openMeldingen.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-10 bg-white rounded-2xl border border-slate-100 text-center">
                       <CheckCircleIcon className="w-8 h-8 text-emerald-300 mb-2" />
@@ -234,7 +239,7 @@ export default function MeldingenPage() {
 
                 {/* Afgehandeld */}
                 {afgehandeldMeldingen.length > 0 && (
-                  <div className="space-y-3 mt-4">
+                  <div className="space-y-3">
                     <div className="flex items-center gap-3">
                       <div className="w-2 h-2 rounded-full bg-emerald-400" />
                       <h2 className="text-sm font-bold text-slate-700">

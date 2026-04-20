@@ -1,7 +1,6 @@
 "use client";
 
 import Card from "@/components/layout/card";
-import Dropdown from "@/components/layout/dropdown";
 import Topbar from "@/components/layout/topbar";
 import { supabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
@@ -18,7 +17,6 @@ interface locatie {
   perceel: string;
   extra_checkin: boolean;
 }
-
 interface Perceel {
   id: string;
   naam: string;
@@ -45,51 +43,53 @@ export default function locatiePage() {
         .from("percelen")
         .select("id, naam")
         .order("naam", { ascending: true });
-
       if (error) {
         console.error(error);
         return;
       }
-
       setAllePercelen(data || []);
-
-      if (data && data.length > 0) {
-        setActivePerceelid(data[0].id);
-      }
+      if (data && data.length > 0) setActivePerceelid(data[0].id);
     }
-
     getPercelen();
   }, []);
 
   useEffect(() => {
     if (!active_perceelid) return;
-
     async function getAllLocaties() {
       const { data, error } = await supabase
         .from("locaties")
         .select("id, naam, type, percelen!inner(naam), extra_checkin")
         .eq("perceel_id", active_perceelid);
-
       if (error) {
         console.error(error);
         return;
       }
-
       setTotalLocaties(data.length || 0);
-
-      const formatted = (data || []).map((item: any) => ({
-        id: item.id,
-        naam: item.naam,
-        type: item.type,
-        extra_checkin: item.extra_checkin,
-        perceel: item.percelen.naam || "",
-      }));
-
-      setAlleLocaties(formatted);
+      setAlleLocaties(
+        (data || []).map((item: any) => ({
+          id: item.id,
+          naam: item.naam,
+          type: item.type,
+          extra_checkin: item.extra_checkin,
+          perceel: item.percelen.naam || "",
+        })),
+      );
     }
-
     getAllLocaties();
   }, [active_perceelid]);
+
+  const locationIcon = (
+    <svg
+      className="w-4 h-4 text-gray-500"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      viewBox="0 0 24 24"
+    >
+      <path d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+      <path d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+    </svg>
+  );
 
   return (
     <div className="min-h-screen flex">
@@ -104,56 +104,176 @@ export default function locatiePage() {
           title="Locaties"
           onMenuToggle={() => setSidebarOpen((p) => !p)}
         />
-        <main className="flex-1 overflow-auto p-6 bg-bg">
-          <Card>
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900">
-                  Alle locaties
-                </h2>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="text-xs text-gray-400">Totaal</span>
-                  <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gray-100 text-xs font-semibold text-gray-600">
-                    {totalLocaties}
-                  </span>
+
+        <main className="flex-1 overflow-auto p-3 md:p-6 bg-bg">
+          {/* ── Desktop layout (md+) — unchanged ── */}
+          <div className="hidden md:block">
+            <Card>
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    Alle locaties
+                  </h2>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-xs text-gray-400">Totaal</span>
+                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gray-100 text-xs font-semibold text-gray-600">
+                      {totalLocaties}
+                    </span>
+                  </div>
                 </div>
+                <MainButton
+                  icon={<PlusIcon />}
+                  href="/locaties/toevoegen"
+                  label="Locatie toevoegen"
+                />
+              </div>
+
+              <div className="border-t border-gray-100 mb-5" />
+
+              <div className="flex flex-row items-center gap-3 mb-4">
+                <div className="relative flex-1">
+                  <svg
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle cx="11" cy="11" r="8" />
+                    <path d="M21 21l-4.35-4.35" />
+                  </svg>
+                  <input
+                    value={zoekterm || ""}
+                    onChange={(e) => setZoekTerm(e.target.value)}
+                    type="text"
+                    placeholder="Zoeken op naam..."
+                    className="w-full h-9 pl-9 pr-3 text-sm bg-white border border-gray-200 rounded-lg outline-none focus:border-gray-400 focus:ring-2 focus:ring-gray-100 placeholder:text-gray-400 transition-all duration-150"
+                  />
+                </div>
+                <DropdownString
+                  className="w-52"
+                  placeholder="Selecteer een perceel"
+                  options={allePercelen.map((p) => p.naam)}
+                  onChange={(naam) => {
+                    const p = allePercelen.find((p) => p.naam === naam);
+                    if (p) setActivePerceelid(p.id);
+                  }}
+                  value={
+                    allePercelen.find((p) => p.id === active_perceelid)?.naam ??
+                    ""
+                  }
+                />
+                <DropdownString
+                  placeholder="Locatie type"
+                  className="w-40"
+                  options={["Type 1", "Type 2", "Type 3"]}
+                  value={locatieType}
+                  onChange={(val) => setLocatieType(val)}
+                />
+              </div>
+
+              {filtered.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center mb-3">
+                    {locationIcon}
+                  </div>
+                  <p className="text-sm font-medium text-gray-600">
+                    Geen locaties gevonden
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Pas je zoekopdracht aan of voeg een locatie toe
+                  </p>
+                </div>
+              ) : (
+                <ul className="space-y-2">
+                  {filtered.map((l) => (
+                    <li
+                      key={l.id}
+                      className="flex items-center justify-between px-4 py-3 bg-white border border-gray-100 rounded-xl hover:border-gray-200 hover:bg-gray-50 transition-all duration-150 group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+                          {locationIcon}
+                        </div>
+                        <div>
+                          <span className="text-sm font-medium text-gray-900">
+                            {l.naam}
+                          </span>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <span className="text-xs text-gray-400">
+                              {l.type}
+                            </span>
+                            <span className="text-xs text-gray-300">•</span>
+                            <span className="text-xs text-gray-400">
+                              {l.perceel}
+                            </span>
+                          </div>
+                        </div>
+                        {l.extra_checkin && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-orange-50 text-orange-500 text-xs font-medium border border-orange-100">
+                            Extra check-in
+                          </span>
+                        )}
+                      </div>
+                      <a href={`/klant/locaties/bekijken/${l.id}`}>
+                        <button className="text-xs font-medium text-gray-400 border border-gray-200 rounded-md px-3 py-1 opacity-0 group-hover:opacity-100 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50 active:scale-95 transition-all duration-150 cursor-pointer">
+                          Bekijk
+                        </button>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Card>
+          </div>
+
+          {/* ── Mobile layout (below md) ── */}
+          <div className="md:hidden space-y-3">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-base font-bold text-gray-900">Locaties</h2>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  {totalLocaties} locaties
+                </p>
               </div>
               <MainButton
                 icon={<PlusIcon />}
                 href="/locaties/toevoegen"
-                label="Locatie toevoegen"
+                label="Toevoegen"
               />
             </div>
 
-            <div className="border-t border-gray-100 mb-5" />
+            {/* Search */}
+            <div className="relative">
+              <svg
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <circle cx="11" cy="11" r="8" />
+                <path d="M21 21l-4.35-4.35" />
+              </svg>
+              <input
+                value={zoekterm || ""}
+                onChange={(e) => setZoekTerm(e.target.value)}
+                type="text"
+                placeholder="Zoeken op naam..."
+                className="w-full h-10 pl-9 pr-3 text-sm bg-white border border-gray-200 rounded-xl outline-none focus:border-gray-400 focus:ring-2 focus:ring-gray-100 placeholder:text-gray-400 transition-all"
+              />
+            </div>
 
-            <div className="flex flex-row items-center gap-3 mb-4">
-              <div className="relative flex-1">
-                <svg
-                  className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  viewBox="0 0 24 24"
-                >
-                  <circle cx="11" cy="11" r="8" />
-                  <path d="M21 21l-4.35-4.35" />
-                </svg>
-                <input
-                  value={zoekterm || ""}
-                  onChange={(e) => setZoekTerm(e.target.value)}
-                  type="text"
-                  placeholder="Zoeken op naam..."
-                  className="w-full h-9 pl-9 pr-3 text-sm bg-white border border-gray-200 rounded-lg outline-none focus:border-gray-400 focus:ring-2 focus:ring-gray-100 placeholder:text-gray-400 transition-all duration-150"
-                />
-              </div>
+            {/* Filters */}
+            <div className="flex flex-wrap gap-2">
               <DropdownString
-                className="w-52"
-                placeholder="Selecteer een perceel"
+                className="flex-1 min-w-[140px]"
+                placeholder="Perceel"
                 options={allePercelen.map((p) => p.naam)}
                 onChange={(naam) => {
-                  const perceel = allePercelen.find((p) => p.naam === naam);
-                  if (perceel) setActivePerceelid(perceel.id);
+                  const p = allePercelen.find((p) => p.naam === naam);
+                  if (p) setActivePerceelid(p.id);
                 }}
                 value={
                   allePercelen.find((p) => p.id === active_perceelid)?.naam ??
@@ -161,27 +281,19 @@ export default function locatiePage() {
                 }
               />
               <DropdownString
-                placeholder="Locatie type"
-                className="w-40"
+                className="flex-1 min-w-[120px]"
+                placeholder="Type"
                 options={["Type 1", "Type 2", "Type 3"]}
                 value={locatieType}
                 onChange={(val) => setLocatieType(val)}
               />
             </div>
 
+            {/* List */}
             {filtered.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 text-center">
                 <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center mb-3">
-                  <svg
-                    className="w-5 h-5 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-                  </svg>
+                  {locationIcon}
                 </div>
                 <p className="text-sm font-medium text-gray-600">
                   Geen locaties gevonden
@@ -193,28 +305,19 @@ export default function locatiePage() {
             ) : (
               <ul className="space-y-2">
                 {filtered.map((l) => (
-                  <li
-                    key={l.id}
-                    className="flex items-center justify-between px-4 py-3 bg-white border border-gray-100 rounded-xl hover:border-gray-200 hover:bg-gray-50 transition-all duration-150 group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
-                        <svg
-                          className="w-4 h-4 text-gray-500"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
-                          viewBox="0 0 24 24"
-                        >
-                          <path d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-                          <path d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-                        </svg>
+                  <li key={l.id}>
+                    <a
+                      href={`/klant/locaties/bekijken/${l.id}`}
+                      className="flex items-center gap-3 px-4 py-3.5 bg-white border border-gray-100 rounded-xl active:bg-gray-50 transition-colors"
+                    >
+                      <div className="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center shrink-0">
+                        {locationIcon}
                       </div>
-                      <div>
-                        <span className="text-sm font-medium text-gray-900">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-gray-900 truncate">
                           {l.naam}
-                        </span>
-                        <div className="flex items-center gap-1.5 mt-0.5">
+                        </p>
+                        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                           <span className="text-xs text-gray-400">
                             {l.type}
                           </span>
@@ -222,25 +325,28 @@ export default function locatiePage() {
                           <span className="text-xs text-gray-400">
                             {l.perceel}
                           </span>
+                          {l.extra_checkin && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-orange-50 text-orange-500 text-[10px] font-medium border border-orange-100">
+                              Extra check-in
+                            </span>
+                          )}
                         </div>
                       </div>
-                      {l.extra_checkin && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-orange-50 text-orange-500 text-xs font-medium border border-orange-100">
-                          Extra check-in
-                        </span>
-                      )}
-                    </div>
-
-                    <a href={`/klant/locaties/bekijken/${l.id}`}>
-                      <button className="text-xs font-medium text-gray-400 border border-gray-200 rounded-md px-3 py-1 opacity-0 group-hover:opacity-100 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50 active:scale-95 transition-all duration-150 cursor-pointer">
-                        Bekijk
-                      </button>
+                      <svg
+                        className="w-4 h-4 text-gray-300 shrink-0"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        viewBox="0 0 24 24"
+                      >
+                        <path d="M9 18l6-6-6-6" />
+                      </svg>
                     </a>
                   </li>
                 ))}
               </ul>
             )}
-          </Card>
+          </div>
         </main>
       </div>
     </div>

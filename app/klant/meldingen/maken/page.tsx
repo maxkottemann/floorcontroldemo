@@ -17,18 +17,7 @@ import {
   BuildingOfficeIcon,
   Square3Stack3DIcon,
   HomeModernIcon,
-  ArrowLeftIcon,
 } from "@heroicons/react/24/outline";
-
-const STAPPEN = [
-  "Locatie",
-  "Gebouw",
-  "Verdieping",
-  "Kamer",
-  "Vloer",
-  "Gegevens",
-  "Bevestigen",
-];
 
 function SearchInput({
   value,
@@ -71,7 +60,6 @@ function SelectList<T extends { id: string; naam: string; sub?: string }>({
   const filtered = items.filter((i) =>
     i.naam.toLowerCase().includes(zoek.toLowerCase()),
   );
-
   return (
     <div className="flex flex-col flex-1 min-h-0">
       <div className="mb-3 shrink-0">
@@ -93,7 +81,7 @@ function SelectList<T extends { id: string; naam: string; sub?: string }>({
               <div
                 key={item.id}
                 onClick={() => onSelect(item)}
-                className={`flex items-center gap-4 px-5 py-3.5 cursor-pointer transition-colors ${isSelected ? "bg-p/5" : "hover:bg-slate-50"}`}
+                className={`flex items-center gap-3 md:gap-4 px-4 md:px-5 py-3.5 cursor-pointer transition-colors active:bg-slate-100 ${isSelected ? "bg-p/5" : "hover:bg-slate-50"}`}
               >
                 <div
                   className={`w-5 h-5 rounded flex items-center justify-center shrink-0 border transition-all ${isSelected ? "bg-p border-p" : "border-slate-300 bg-white"}`}
@@ -130,10 +118,9 @@ function SelectList<T extends { id: string; naam: string; sub?: string }>({
 export default function MeldingAanmakenPage() {
   const { toast, showToast, hideToast } = useToast();
   const router = useRouter();
-
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [stap, setStap] = useState(0);
 
-  // Selection chain
   const [locaties, setLocaties] = useState<
     { id: string; naam: string; sub?: string }[]
   >([]);
@@ -183,7 +170,6 @@ export default function MeldingAanmakenPage() {
   const [beschrijving, setBeschrijving] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  // Load locaties on mount
   useEffect(() => {
     async function load() {
       setLoading(true);
@@ -219,7 +205,6 @@ export default function MeldingAanmakenPage() {
     setLoading(false);
     setStap(1);
   }
-
   async function selectBouwdeel(b: { id: string; naam: string }) {
     setSelectedBouwdeel(b);
     setSelectedVerdieping(null);
@@ -235,7 +220,6 @@ export default function MeldingAanmakenPage() {
     setLoading(false);
     setStap(2);
   }
-
   async function selectVerdieping(v: { id: string; naam: string }) {
     setSelectedVerdieping(v);
     setSelectedKamer(null);
@@ -250,7 +234,6 @@ export default function MeldingAanmakenPage() {
     setLoading(false);
     setStap(3);
   }
-
   async function selectKamer(k: { id: string; naam: string }) {
     setSelectedKamer(k);
     setSelectedVloer(null);
@@ -271,7 +254,6 @@ export default function MeldingAanmakenPage() {
     setLoading(false);
     setStap(4);
   }
-
   function selectVloer(v: { id: string; naam: string; status: string }) {
     setSelectedVloer(v);
     setStap(5);
@@ -282,7 +264,6 @@ export default function MeldingAanmakenPage() {
     if (!titel.trim()) return showToast("Vul een titel in", "error");
     if (!beschrijving.trim())
       return showToast("Vul een beschrijving in", "error");
-
     setSubmitting(true);
     const {
       data: { user },
@@ -292,23 +273,21 @@ export default function MeldingAanmakenPage() {
       .select("id")
       .eq("gebruiker_id", user?.id ?? "")
       .single();
-
-    const { error } = await supabase.from("meldingen").insert({
-      profiel_id: profiel?.id,
-      kamervloer_id: selectedVloer.id,
-      titel: titel.trim(),
-      beschrijving: beschrijving.trim(),
-    });
-
+    const { error } = await supabase
+      .from("meldingen")
+      .insert({
+        profiel_id: profiel?.id,
+        kamervloer_id: selectedVloer.id,
+        titel: titel.trim(),
+        beschrijving: beschrijving.trim(),
+      });
     if (error) {
       showToast("Kon melding niet opslaan", "error");
       setSubmitting(false);
       return;
     }
     showToast("Melding ingediend", "success");
-    setTimeout(() => {
-      router.back();
-    }, 1000);
+    setTimeout(() => router.back(), 1000);
   }
 
   const statusColor: Record<string, string> = {
@@ -316,7 +295,6 @@ export default function MeldingAanmakenPage() {
     matig: "bg-amber-100 text-amber-700",
     slecht: "bg-red-100 text-red-700",
   };
-
   const breadcrumb = [
     selectedLocatie?.naam,
     selectedBouwdeel?.naam,
@@ -326,7 +304,6 @@ export default function MeldingAanmakenPage() {
   ]
     .filter(Boolean)
     .join(" › ");
-
   const stapLabels = [
     "Locatie",
     "Gebouw",
@@ -339,30 +316,39 @@ export default function MeldingAanmakenPage() {
 
   return (
     <div className="min-h-screen flex bg-[#F5F6FA]">
-      <SidebarClient className="fixed top-0 left-0 h-screen" />
+      <SidebarClient
+        className="fixed top-0 left-0 h-screen"
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
       {toast && (
         <Toast message={toast.message} type={toast.type} onClose={hideToast} />
       )}
 
       <div className="flex flex-col flex-1 h-screen">
-        <Topbar title="Melding indienen" />
+        <Topbar
+          title="Melding indienen"
+          onMenuToggle={() => setSidebarOpen((p) => !p)}
+        />
 
-        <main className="flex-1 overflow-hidden flex flex-col p-6 gap-5">
+        <main className="flex-1 overflow-hidden flex flex-col p-3 md:p-6 gap-4 md:gap-5">
           {/* Header + stepper */}
-          <div className="shrink-0 space-y-4">
+          <div className="shrink-0 space-y-3 md:space-y-4">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.14em] text-p/60 mb-1">
                 Nieuw
               </p>
-              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+              <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
                 Melding indienen
               </h1>
               {breadcrumb && (
-                <p className="text-xs text-slate-400 mt-1">{breadcrumb}</p>
+                <p className="text-xs text-slate-400 mt-1 truncate">
+                  {breadcrumb}
+                </p>
               )}
             </div>
 
-            {/* Stepper */}
+            {/* Stepper — numbers only on mobile, labels on sm+ */}
             <div className="flex items-center gap-1">
               {stapLabels.map((label, i) => (
                 <div key={i} className="flex items-center gap-1 flex-1">
@@ -397,9 +383,8 @@ export default function MeldingAanmakenPage() {
             </div>
           </div>
 
-          {/* Main content — fills remaining height */}
+          {/* Step content */}
           <div className="flex-1 min-h-0 flex flex-col">
-            {/* Stappen 0-4: drill-down selectors */}
             {stap === 0 && (
               <SelectList
                 items={locaties}
@@ -440,6 +425,7 @@ export default function MeldingAanmakenPage() {
                 icon={HomeModernIcon}
               />
             )}
+
             {stap === 4 && (
               <div className="flex flex-col flex-1 min-h-0">
                 <div className="flex-1 overflow-y-auto divide-y divide-slate-50 rounded-xl border border-slate-100 bg-white">
@@ -460,7 +446,7 @@ export default function MeldingAanmakenPage() {
                         <div
                           key={v.id}
                           onClick={() => selectVloer(v)}
-                          className={`flex items-center gap-4 px-5 py-4 cursor-pointer transition-colors ${isSelected ? "bg-p/5" : "hover:bg-slate-50"}`}
+                          className={`flex items-center gap-3 md:gap-4 px-4 md:px-5 py-4 cursor-pointer transition-colors active:bg-slate-100 ${isSelected ? "bg-p/5" : "hover:bg-slate-50"}`}
                         >
                           <div
                             className={`w-5 h-5 rounded flex items-center justify-center shrink-0 border transition-all ${isSelected ? "bg-p border-p" : "border-slate-300 bg-white"}`}
@@ -488,7 +474,7 @@ export default function MeldingAanmakenPage() {
                             )}
                           </div>
                           <span
-                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${statusColor[v.status] ?? "bg-slate-100 text-slate-500"}`}
+                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${statusColor[v.status] ?? "bg-slate-100 text-slate-500"}`}
                           >
                             {v.status}
                           </span>
@@ -501,10 +487,8 @@ export default function MeldingAanmakenPage() {
               </div>
             )}
 
-            {/* Stap 5 — Gegevens */}
             {stap === 5 && (
-              <div className="flex flex-col flex-1 min-h-0 space-y-4">
-                {/* Vloer recap */}
+              <div className="flex flex-col flex-1 min-h-0 space-y-3 md:space-y-4">
                 <div className="flex items-center gap-3 px-4 py-3 bg-p/5 border border-p/15 rounded-xl shrink-0">
                   <SwatchIcon className="w-4 h-4 text-p shrink-0" />
                   <div className="flex-1 min-w-0">
@@ -520,9 +504,8 @@ export default function MeldingAanmakenPage() {
                     Wijzigen
                   </button>
                 </div>
-
                 <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden flex-1 flex flex-col">
-                  <div className="px-5 py-4 border-b border-slate-50 shrink-0">
+                  <div className="px-4 md:px-5 py-4 border-b border-slate-50 shrink-0">
                     <p className="text-sm font-bold text-slate-800">
                       Meldingsgegevens
                     </p>
@@ -530,7 +513,7 @@ export default function MeldingAanmakenPage() {
                       Beschrijf het probleem zo duidelijk mogelijk
                     </p>
                   </div>
-                  <div className="p-5 space-y-4 flex-1">
+                  <div className="p-4 md:p-5 space-y-4 flex-1">
                     <div>
                       <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-1.5">
                         Titel
@@ -549,13 +532,13 @@ export default function MeldingAanmakenPage() {
                       <textarea
                         value={beschrijving}
                         onChange={(e) => setBeschrijving(e.target.value)}
+                        rows={5}
                         placeholder="Beschrijf het probleem in detail — wat is er mis, hoe ernstig is het, wanneer is het opgevallen?"
-                        rows={6}
                         className="w-full px-4 py-3 text-sm text-slate-800 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-p focus:ring-2 focus:ring-p/10 focus:bg-white placeholder:text-slate-400 transition-all resize-none"
                       />
                     </div>
                   </div>
-                  <div className="px-5 py-4 border-t border-slate-50 flex justify-between shrink-0">
+                  <div className="px-4 md:px-5 py-4 border-t border-slate-50 flex justify-between shrink-0">
                     <button
                       onClick={() => setStap(4)}
                       className="px-4 py-2.5 text-sm font-semibold text-slate-500 hover:text-slate-700 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
@@ -567,7 +550,7 @@ export default function MeldingAanmakenPage() {
                         if (titel.trim() && beschrijving.trim()) setStap(6);
                         else showToast("Vul alle velden in", "error");
                       }}
-                      className="flex items-center gap-2 px-5 py-2.5 bg-p hover:bg-p/90 text-white text-sm font-bold rounded-xl transition-all cursor-pointer"
+                      className="flex items-center gap-2 px-4 md:px-5 py-2.5 bg-p hover:bg-p/90 text-white text-sm font-bold rounded-xl transition-all cursor-pointer"
                     >
                       Volgende <ChevronRightIcon className="w-4 h-4" />
                     </button>
@@ -576,10 +559,9 @@ export default function MeldingAanmakenPage() {
               </div>
             )}
 
-            {/* Stap 6 — Bevestigen */}
             {stap === 6 && (
               <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden flex flex-col flex-1 min-h-0">
-                <div className="px-5 py-4 border-b border-slate-50 shrink-0">
+                <div className="px-4 md:px-5 py-4 border-b border-slate-50 shrink-0">
                   <p className="text-sm font-bold text-slate-800">
                     Controleer uw melding
                   </p>
@@ -588,45 +570,54 @@ export default function MeldingAanmakenPage() {
                   </p>
                 </div>
                 <div className="flex-1 overflow-y-auto divide-y divide-slate-50">
-                  <div className="px-5 py-4">
-                    <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">
-                      Locatie
-                    </p>
-                    <p className="text-sm text-slate-600 leading-relaxed">
-                      {breadcrumb}
-                    </p>
-                  </div>
-                  <div className="px-5 py-4">
-                    <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">
-                      Vloer
-                    </p>
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-xl bg-p/10 flex items-center justify-center shrink-0">
-                        <SwatchIcon className="w-4 h-4 text-p" />
-                      </div>
-                      <p className="text-sm font-bold text-slate-800">
-                        {selectedVloer?.naam}
+                  {[
+                    {
+                      label: "Locatie",
+                      content: (
+                        <p className="text-sm text-slate-600 leading-relaxed">
+                          {breadcrumb}
+                        </p>
+                      ),
+                    },
+                    {
+                      label: "Vloer",
+                      content: (
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-xl bg-p/10 flex items-center justify-center shrink-0">
+                            <SwatchIcon className="w-4 h-4 text-p" />
+                          </div>
+                          <p className="text-sm font-bold text-slate-800">
+                            {selectedVloer?.naam}
+                          </p>
+                        </div>
+                      ),
+                    },
+                    {
+                      label: "Titel",
+                      content: (
+                        <p className="text-sm font-semibold text-slate-800">
+                          {titel}
+                        </p>
+                      ),
+                    },
+                    {
+                      label: "Beschrijving",
+                      content: (
+                        <p className="text-sm text-slate-600 leading-relaxed">
+                          {beschrijving}
+                        </p>
+                      ),
+                    },
+                  ].map(({ label, content }) => (
+                    <div key={label} className="px-4 md:px-5 py-4">
+                      <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">
+                        {label}
                       </p>
+                      {content}
                     </div>
-                  </div>
-                  <div className="px-5 py-4">
-                    <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">
-                      Titel
-                    </p>
-                    <p className="text-sm font-semibold text-slate-800">
-                      {titel}
-                    </p>
-                  </div>
-                  <div className="px-5 py-4">
-                    <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">
-                      Beschrijving
-                    </p>
-                    <p className="text-sm text-slate-600 leading-relaxed">
-                      {beschrijving}
-                    </p>
-                  </div>
+                  ))}
                 </div>
-                <div className="px-5 py-4 border-t border-slate-50 flex justify-between shrink-0">
+                <div className="px-4 md:px-5 py-4 border-t border-slate-50 flex justify-between shrink-0">
                   <button
                     onClick={() => setStap(5)}
                     className="px-4 py-2.5 text-sm font-semibold text-slate-500 hover:text-slate-700 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
@@ -636,7 +627,7 @@ export default function MeldingAanmakenPage() {
                   <button
                     onClick={handleSubmit}
                     disabled={submitting}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-p hover:bg-p/90 disabled:opacity-60 text-white text-sm font-bold rounded-xl transition-all cursor-pointer"
+                    className="flex items-center gap-2 px-4 md:px-5 py-2.5 bg-p hover:bg-p/90 disabled:opacity-60 text-white text-sm font-bold rounded-xl transition-all cursor-pointer"
                   >
                     <ExclamationTriangleIcon className="w-4 h-4" />
                     {submitting ? "Bezig..." : "Melding indienen"}

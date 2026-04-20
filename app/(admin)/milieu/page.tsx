@@ -100,10 +100,8 @@ export default function MilieuPage() {
         )
         .eq("status", "afgerond");
 
-      let total = 0;
-      let max = 0;
-      let elektrischRittenCount = 0;
-      let totalRittenCount = 0;
+      let total = 0; // actual emissions
+      let max = 0; // all diesel baseline
 
       (data || []).forEach((d: any) => {
         const start = new Date(d.start_datum);
@@ -114,25 +112,31 @@ export default function MilieuPage() {
         const diffDays =
           (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24) + 1;
 
-        totalRittenCount += diffDays * 2;
-
         const kmDriven = afstand * diffDays * 2;
 
-        (d.project_bussen || []).forEach((pb: any) => {
-          max += kmDriven * 0.02;
-          if (pb.bussen?.type === "Diesel") {
-            total += kmDriven * 0.01;
-          } else if (pb.bussen?.type === "Elektrisch") {
-            elektrischRittenCount += diffDays * 2;
+        const buses = d.project_bussen || [];
+
+        buses.forEach((pb: any) => {
+          const type = pb.bussen?.type;
+
+          max += kmDriven * 1;
+
+          if (type === "Diesel") {
+            total += kmDriven * 0.1;
+          }
+
+          if (type === "Elektrisch") {
             total += kmDriven * 0.00000003;
           }
-          console.log(max);
         });
       });
+
       setTotaalKGco2(total);
-      const co2Saving = (total / max) * 100;
-      setco2saved(co2Saving);
+
+      const co2saved = max > 0 ? ((max - total) / max) * 100 : 0;
+      setco2saved(co2saved);
     }
+
     getKMs();
   }, []);
 

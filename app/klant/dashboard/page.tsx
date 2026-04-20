@@ -4,7 +4,6 @@ import Topbar from "@/components/layout/topbar";
 import Card from "@/components/layout/card";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import Sidebar from "@/components/layout/sidebar";
 import {
   BellAlertIcon,
   ClipboardDocumentListIcon,
@@ -21,7 +20,6 @@ interface TypePlanning {
   gepland: number;
   afgerond: number;
 }
-
 interface PerceelPlanning {
   perceel_id: string;
   perceel_naam: string;
@@ -30,7 +28,6 @@ interface PerceelPlanning {
   afgerond: number;
   perType: TypePlanning[];
 }
-
 interface DashboardData {
   totaalLocaties: number;
   totaalGepland: number;
@@ -38,7 +35,6 @@ interface DashboardData {
   perPerceel: PerceelPlanning[];
   openMeldingen: number;
 }
-
 interface ActiveProject {
   id: string;
   projectnaam: string;
@@ -75,6 +71,7 @@ function MiniBar({
 
 export default function DashboardPage() {
   const router = useRouter();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeProjecten, setActiveProjecten] = useState<ActiveProject[]>([]);
@@ -83,17 +80,14 @@ export default function DashboardPage() {
 
   useEffect(() => {
     async function getSteekproef() {
-      // First get all afgeronde steekproeven IDs
       const { data: steekproeven } = await supabase
         .from("steekproeven")
         .select("id")
         .eq("status", "afgerond");
-
       if (!steekproeven?.length) {
         setSteekproefPercentage(0);
         return;
       }
-
       const { data, error } = await supabase
         .from("steekproef_vloeren")
         .select("goedgekeurd")
@@ -101,15 +95,14 @@ export default function DashboardPage() {
           "steekproef_id",
           steekproeven.map((s) => s.id),
         );
-
       if (error || !data) {
         setSteekproefPercentage(0);
         return;
       }
-
       const approved = data.filter((d) => d.goedgekeurd === true).length;
-      const pct = data.length > 0 ? (approved / data.length) * 100 : 0;
-      setSteekproefPercentage(pct);
+      setSteekproefPercentage(
+        data.length > 0 ? (approved / data.length) * 100 : 0,
+      );
     }
     getSteekproef();
   }, []);
@@ -120,7 +113,6 @@ export default function DashboardPage() {
     { label: "Chemiereductie", value: 61, target: 70, suffix: "%" },
     { label: "Elektrische ritten", value: 74, target: 80, suffix: "%" },
   ];
-
   const ring = (value: number) => ({
     background: `conic-gradient(#154273 0 ${value}%, #e5e7eb ${value}% 100%)`,
   });
@@ -129,21 +121,17 @@ export default function DashboardPage() {
     async function loadDashboard() {
       setLoading(true);
       const wasJaarStart = getWasJaar();
-
       const { data: locaties } = await supabase
         .from("locaties")
         .select("id, perceel_id, per_jaar, type, percelen(naam)");
-
       if (!locaties) {
         setLoading(false);
         return;
       }
-
       const { data: projecten } = await supabase
         .from("projecten")
         .select("locatie_id, status")
         .gte("start_datum", wasJaarStart);
-
       const geplandCount: Record<string, number> = {};
       const afgerondCount: Record<string, number> = {};
       for (const p of projecten ?? []) {
@@ -151,7 +139,6 @@ export default function DashboardPage() {
         if (p.status === "afgerond")
           afgerondCount[p.locatie_id] = (afgerondCount[p.locatie_id] ?? 0) + 1;
       }
-
       const geplandLocatieIds = new Set(
         locaties
           .filter((l) => (geplandCount[l.id] ?? 0) >= (l.per_jaar ?? 1))
@@ -162,7 +149,6 @@ export default function DashboardPage() {
           .filter((l) => (afgerondCount[l.id] ?? 0) >= (l.per_jaar ?? 1))
           .map((l) => l.id),
       );
-
       const perceelMap: Record<
         string,
         {
@@ -176,12 +162,10 @@ export default function DashboardPage() {
           >;
         }
       > = {};
-
       for (const l of locaties) {
-        const pid = l.perceel_id ?? "onbekend";
-        const pnaam = (l.percelen as any)?.naam ?? "Onbekend";
-        const type = (l.type as string) ?? "Onbekend";
-
+        const pid = l.perceel_id ?? "onbekend",
+          pnaam = (l.percelen as any)?.naam ?? "Onbekend",
+          type = (l.type as string) ?? "Onbekend";
         if (!perceelMap[pid])
           perceelMap[pid] = {
             perceel_naam: pnaam,
@@ -196,7 +180,6 @@ export default function DashboardPage() {
             gepland: 0,
             afgerond: 0,
           };
-
         perceelMap[pid].totaal++;
         perceelMap[pid].typeMap[type].totaal++;
         if (geplandLocatieIds.has(l.id)) {
@@ -208,12 +191,10 @@ export default function DashboardPage() {
           perceelMap[pid].typeMap[type].afgerond++;
         }
       }
-
       const { count: openMeldingen } = await supabase
         .from("meldingen")
         .select("id", { count: "exact", head: true })
         .eq("afgehandeld", false);
-
       setData({
         totaalLocaties: locaties.length,
         totaalGepland: geplandLocatieIds.size,
@@ -247,13 +228,11 @@ export default function DashboardPage() {
         )
         .eq("status", "bezig")
         .limit(5);
-
       if (error || !data) {
         setActiveProjecten([]);
         setLoadingProjects(false);
         return;
       }
-
       setActiveProjecten(
         data.map((d: any) => ({
           id: d.id,
@@ -293,11 +272,20 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen flex">
-      <SidebarClient className="fixed top-0 left-0 h-screen" />
+      <SidebarClient
+        className="fixed top-0 left-0 h-screen"
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
       <div className="flex flex-col flex-1 h-screen">
-        <Topbar title="Dashboard" />
-        <main className="flex-1 overflow-auto p-6 bg-[#F5F6FA]">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-5">
+        <Topbar
+          title="Dashboard"
+          onMenuToggle={() => setSidebarOpen((p) => !p)}
+        />
+
+        <main className="flex-1 overflow-auto p-3 md:p-6 bg-[#F5F6FA]">
+          {/* Stat cards — 2 col mobile, 4 col lg */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5 mb-4 md:mb-5">
             <Card>
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">
                 Jaarplanning gepland
@@ -374,16 +362,20 @@ export default function DashboardPage() {
             </Card>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
-            <Card className="col-span-3">
-              <div className="flex items-start justify-between mb-6">
+          {/* Main grid — stacks on mobile */}
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 md:gap-5">
+            {/* Planningsoverzicht — full width mobile, col-span-3 lg */}
+            <Card className="col-span-1 lg:col-span-3">
+              <div className="flex items-start justify-between mb-5 md:mb-6">
                 <div>
-                  <p className="text-lg font-bold">Planningsoverzicht</p>
+                  <p className="text-base md:text-lg font-bold">
+                    Planningsoverzicht
+                  </p>
                   <p className="text-sm text-slate-500">
                     Onderhoudsjaar {wasJaarLabel} — per perceel en locatietype
                   </p>
                 </div>
-                <span className="inline-flex items-center justify-center rounded-full bg-p/10 px-3 py-1 text-xs font-semibold text-p">
+                <span className="inline-flex items-center justify-center rounded-full bg-p/10 px-3 py-1 text-xs font-semibold text-p shrink-0">
                   {wasJaarLabel}
                 </span>
               </div>
@@ -421,13 +413,10 @@ export default function DashboardPage() {
                           %
                         </span>
                       </div>
-
-                      <div className="grid grid-cols-3 divide-x divide-slate-100">
-                        {p.perType.map((t, i) => (
-                          <div
-                            key={t.type}
-                            className={`px-4 py-3 space-y-2 ${i >= 2 ? "border-t border-slate-100" : ""}`}
-                          >
+                      {/* Type grid — 1 col mobile, 3 col md */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-slate-100">
+                        {p.perType.map((t) => (
+                          <div key={t.type} className="px-4 py-3 space-y-2">
                             <div className="flex items-center justify-between">
                               <p className="text-xs font-bold text-slate-700">
                                 {t.type}
@@ -479,29 +468,30 @@ export default function DashboardPage() {
               )}
             </Card>
 
-            <Card className="col-span-2">
+            {/* Duurzaamheid — full width mobile, col-span-2 lg */}
+            <Card className="col-span-1 lg:col-span-2">
               <div className="mb-4">
-                <h2 className="text-lg font-bold">Duurzaamheid</h2>
+                <h2 className="text-base md:text-lg font-bold">Duurzaamheid</h2>
                 <p className="text-sm text-slate-500">
                   Actuele contractprestaties t.o.v. doelstelling
                 </p>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3 md:gap-4">
                 {sustainability.map((item) => (
                   <div
                     key={item.label}
-                    className="rounded-2xl border border-slate-200 p-4 text-center"
+                    className="rounded-2xl border border-slate-200 p-3 md:p-4 text-center"
                   >
                     <div
-                      className="mx-auto flex h-20 w-20 items-center justify-center rounded-full p-1.5"
+                      className="mx-auto flex h-16 w-16 md:h-20 md:w-20 items-center justify-center rounded-full p-1.5"
                       style={ring(item.value)}
                     >
-                      <div className="flex h-full w-full items-center justify-center rounded-full bg-white text-lg font-bold text-p">
+                      <div className="flex h-full w-full items-center justify-center rounded-full bg-white text-base md:text-lg font-bold text-p">
                         {item.value}
                         {item.suffix}
                       </div>
                     </div>
-                    <p className="mt-2.5 text-xs font-medium text-slate-700">
+                    <p className="mt-2 text-xs font-medium text-slate-700">
                       {item.label}
                     </p>
                     <p className="mt-0.5 text-xs text-slate-400">
@@ -513,21 +503,23 @@ export default function DashboardPage() {
               </div>
             </Card>
 
-            <Card className="col-span-3">
-              <div className="flex items-start justify-between mb-5">
+            {/* Actuele uitvoeringen — full width mobile, col-span-3 lg */}
+            <Card className="col-span-1 lg:col-span-3">
+              <div className="flex items-start justify-between mb-4 md:mb-5">
                 <div>
-                  <p className="text-lg font-bold">Actuele uitvoeringen</p>
+                  <p className="text-base md:text-lg font-bold">
+                    Actuele uitvoeringen
+                  </p>
                   <p className="text-sm text-slate-500">
                     Lopende projecten en voortgang
                   </p>
                 </div>
                 {!loadingProjects && activeProjecten.length > 0 && (
-                  <span className="inline-flex items-center rounded-full bg-emerald-50 border border-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
+                  <span className="inline-flex items-center rounded-full bg-emerald-50 border border-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700 shrink-0">
                     {activeProjecten.length} actief
                   </span>
                 )}
               </div>
-
               {loadingProjects ? (
                 <div className="space-y-3">
                   {[1, 2].map((i) => (
@@ -566,8 +558,8 @@ export default function DashboardPage() {
                                   key={b.id}
                                   className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-500 bg-white border border-slate-200 px-2 py-0.5 rounded-md"
                                 >
-                                  <TruckIcon className="w-4"></TruckIcon>{" "}
-                                  {b.naam} · {b.kenteken}
+                                  <TruckIcon className="w-4" /> {b.naam} ·{" "}
+                                  {b.kenteken}
                                 </span>
                               ))}
                             </div>
@@ -594,10 +586,13 @@ export default function DashboardPage() {
               )}
             </Card>
 
-            <Card className="col-span-2">
-              <div className="flex items-start justify-between mb-5">
+            {/* Snelle acties — full width mobile, col-span-2 lg */}
+            <Card className="col-span-1 lg:col-span-2">
+              <div className="flex items-start justify-between mb-4 md:mb-5">
                 <div>
-                  <p className="text-lg font-bold">Snelle acties</p>
+                  <p className="text-base md:text-lg font-bold">
+                    Snelle acties
+                  </p>
                   <p className="text-sm text-slate-500">Selecteer een actie</p>
                 </div>
               </div>
@@ -635,14 +630,14 @@ export default function DashboardPage() {
                   <button
                     key={item.label}
                     onClick={() => router.push(item.href)}
-                    className="group flex flex-col items-start gap-3 p-4 bg-white rounded-2xl border border-slate-100 hover:border-slate-200 hover:shadow-md transition-all duration-200 cursor-pointer text-left w-full"
+                    className="group flex flex-col items-start gap-3 p-3 md:p-4 bg-white rounded-2xl border border-slate-100 hover:border-slate-200 hover:shadow-md transition-all duration-200 cursor-pointer text-left w-full"
                   >
                     <div
                       className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 ${item.color}`}
                     >
                       {item.icon}
                     </div>
-                    <p className="text-sm font-semibold text-slate-700 group-hover:text-slate-900 leading-tight">
+                    <p className="text-xs md:text-sm font-semibold text-slate-700 group-hover:text-slate-900 leading-tight">
                       {item.label}
                     </p>
                   </button>

@@ -74,7 +74,7 @@ function formatDate(d?: string | null) {
   });
 }
 
-// ── Step 1: Locatie picker ──────────────────────────────────────────────────
+// ── Step 1: Locatie picker ─────────────────────────────────────────────────
 
 function LocatiePicker({
   locaties,
@@ -107,24 +107,22 @@ function LocatiePicker({
     return matchZoek && matchType && matchPerceel;
   });
 
-  // Group by perceel
   const grouped: Record<string, Locatie[]> = {};
   for (const l of filtered) {
     const key = l.perceel ?? "Overig";
     if (!grouped[key]) grouped[key] = [];
     grouped[key].push(l);
   }
-
   const activeFilters = filterType.length + filterPerceel.length;
 
   return (
-    <div className="h-full flex flex-col gap-5">
+    <div className="h-full flex flex-col gap-4 md:gap-5">
       {/* Header */}
       <div>
         <p className="text-xs font-bold uppercase tracking-[0.14em] text-p/60 mb-1">
           Vloerpaspoort
         </p>
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+        <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
           Kies een locatie
         </h1>
         <p className="text-sm text-slate-400 mt-0.5">
@@ -133,8 +131,8 @@ function LocatiePicker({
       </div>
 
       {/* Search + filters */}
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-4 py-3 flex items-center gap-3 flex-wrap shrink-0">
-        <div className="relative flex-1 min-w-[220px]">
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-3 md:px-4 py-3 flex flex-col md:flex-row items-stretch md:items-center gap-2 md:gap-3 md:flex-wrap shrink-0">
+        <div className="relative flex-1 min-w-0 md:min-w-[220px]">
           <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
           <input
             value={zoek}
@@ -144,52 +142,50 @@ function LocatiePicker({
           />
         </div>
 
-        <div className="w-px h-6 bg-slate-100" />
-
-        {uniqueTypes.length > 1 && (
-          <div className="flex items-center gap-1.5">
-            {uniqueTypes.map((t) => (
-              <button
-                key={t}
-                onClick={() =>
-                  setFilterType((prev) =>
-                    prev.includes(t)
-                      ? prev.filter((x) => x !== t)
-                      : [...prev, t],
-                  )
-                }
-                className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition-all cursor-pointer ${filterType.includes(t) ? "bg-p text-white border-p" : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"}`}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {uniquePercelen.length > 1 && (
-          <MultiSelect
-            title="Perceel"
-            options={uniquePercelen}
-            selected={filterPerceel}
-            onChange={setFilterPerceel}
-          />
-        )}
-
-        {activeFilters > 0 && (
-          <button
-            onClick={() => {
-              setFilterType([]);
-              setFilterPerceel([]);
-            }}
-            className="flex items-center gap-1 text-xs font-semibold text-red-400 hover:text-red-600 transition-colors cursor-pointer"
-          >
-            <XMarkIcon className="w-3.5 h-3.5" /> Wissen
-          </button>
-        )}
+        <div className="flex items-center gap-2 flex-wrap">
+          {uniqueTypes.length > 1 && (
+            <div className="flex items-center gap-1.5">
+              {uniqueTypes.map((t) => (
+                <button
+                  key={t}
+                  onClick={() =>
+                    setFilterType((prev) =>
+                      prev.includes(t)
+                        ? prev.filter((x) => x !== t)
+                        : [...prev, t],
+                    )
+                  }
+                  className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition-all cursor-pointer ${filterType.includes(t) ? "bg-p text-white border-p" : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"}`}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+          )}
+          {uniquePercelen.length > 1 && (
+            <MultiSelect
+              title="Perceel"
+              options={uniquePercelen}
+              selected={filterPerceel}
+              onChange={setFilterPerceel}
+            />
+          )}
+          {activeFilters > 0 && (
+            <button
+              onClick={() => {
+                setFilterType([]);
+                setFilterPerceel([]);
+              }}
+              className="flex items-center gap-1 text-xs font-semibold text-red-400 hover:text-red-600 transition-colors cursor-pointer"
+            >
+              <XMarkIcon className="w-3.5 h-3.5" /> Wissen
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Locatie grid grouped by perceel */}
-      <div className="flex-1 overflow-y-auto space-y-6 pb-4">
+      {/* Locatie grid */}
+      <div className="flex-1 overflow-y-auto space-y-5 md:space-y-6 pb-4">
         {Object.entries(grouped)
           .sort(([a], [b]) => a.localeCompare(b))
           .map(([perceel, locs]) => (
@@ -197,12 +193,13 @@ function LocatiePicker({
               <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3 px-1">
                 {perceel}
               </p>
-              <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+              {/* Mobile: 1 col, tablet: 2 col, desktop: 3-4 col */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                 {locs.map((l) => (
                   <div
                     key={l.id}
                     onClick={() => onSelect(l)}
-                    className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:border-p/30 hover:shadow-md transition-all cursor-pointer p-4 group"
+                    className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:border-p/30 hover:shadow-md transition-all cursor-pointer p-4 group active:bg-slate-50"
                   >
                     <div className="w-9 h-9 rounded-xl bg-p/10 group-hover:bg-p/20 flex items-center justify-center mb-3 transition-colors">
                       <BuildingOfficeIcon className="w-5 h-5 text-p" />
@@ -326,136 +323,138 @@ function VloerTable({
     filterVerdiepingen.length;
 
   return (
-    <div className="h-full flex flex-col gap-5">
+    <div className="h-full flex flex-col gap-4 md:gap-5">
       {/* Header */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3 md:gap-4">
         <button
           onClick={onBack}
           className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-600 transition-colors cursor-pointer shrink-0"
         >
-          <ArrowLeftIcon className="w-4 h-4" /> Alle locaties
+          <ArrowLeftIcon className="w-4 h-4" />
+          <span className="hidden sm:inline">Alle locaties</span>
         </button>
-        <div className="w-px h-5 bg-slate-200" />
-        <div className="min-w-0">
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-p/60">
+        <div className="w-px h-5 bg-slate-200 hidden sm:block" />
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-p/60 hidden sm:block">
             Vloerpaspoort
           </p>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight truncate">
+          <h1 className="text-lg md:text-2xl font-bold text-slate-900 tracking-tight truncate">
             {locatie.naam}
           </h1>
           {locatie.plaats && (
-            <p className="text-sm text-slate-400">{locatie.plaats}</p>
+            <p className="text-sm text-slate-400 hidden sm:block">
+              {locatie.plaats}
+            </p>
           )}
         </div>
-        <span className="ml-auto text-xs text-slate-400 font-medium shrink-0">
+        <span className="text-xs text-slate-400 font-medium shrink-0">
           {filtered.length} vloeren
         </span>
       </div>
 
       {/* Filters toolbar */}
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-4 py-3 flex items-center gap-3 flex-wrap shrink-0">
-        <div className="relative flex-1 min-w-[180px]">
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-3 md:px-4 py-3 flex flex-col md:flex-row items-stretch md:items-center gap-2 md:gap-3 md:flex-wrap shrink-0">
+        <div className="relative flex-1 min-w-0 md:min-w-[180px]">
           <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
           <input
             value={zoekterm}
             onChange={(e) => setZoekterm(e.target.value)}
-            placeholder="Zoek op vloertype, kamer, gebouw..."
+            placeholder="Zoek op vloertype, kamer..."
             className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 rounded-xl border border-slate-100 outline-none focus:border-p/40 focus:ring-2 focus:ring-p/10 placeholder:text-slate-300 transition-all"
           />
         </div>
 
-        <div className="w-px h-6 bg-slate-100" />
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5">
+            {["Goed", "Matig", "Slecht"].map((s) => {
+              const active = filterStatussen.includes(s);
+              const colors: Record<string, string> = {
+                Goed: active
+                  ? "bg-emerald-500 text-white border-emerald-500"
+                  : "bg-white text-emerald-600 border-emerald-200 hover:bg-emerald-50",
+                Matig: active
+                  ? "bg-amber-500 text-white border-amber-500"
+                  : "bg-white text-amber-600 border-amber-200 hover:bg-amber-50",
+                Slecht: active
+                  ? "bg-red-500 text-white border-red-500"
+                  : "bg-white text-red-600 border-red-200 hover:bg-red-50",
+              };
+              return (
+                <button
+                  key={s}
+                  onClick={() =>
+                    setFilterStatussen((prev) =>
+                      prev.includes(s)
+                        ? prev.filter((x) => x !== s)
+                        : [...prev, s],
+                    )
+                  }
+                  className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition-all cursor-pointer ${colors[s]}`}
+                >
+                  {s}
+                </button>
+              );
+            })}
+          </div>
 
-        <div className="flex items-center gap-1.5">
-          {["Goed", "Matig", "Slecht"].map((s) => {
-            const active = filterStatussen.includes(s);
-            const colors: Record<string, string> = {
-              Goed: active
-                ? "bg-emerald-500 text-white border-emerald-500"
-                : "bg-white text-emerald-600 border-emerald-200 hover:bg-emerald-50",
-              Matig: active
-                ? "bg-amber-500 text-white border-amber-500"
-                : "bg-white text-amber-600 border-amber-200 hover:bg-amber-50",
-              Slecht: active
-                ? "bg-red-500 text-white border-red-500"
-                : "bg-white text-red-600 border-red-200 hover:bg-red-50",
-            };
-            return (
-              <button
-                key={s}
-                onClick={() =>
-                  setFilterStatussen((prev) =>
-                    prev.includes(s)
-                      ? prev.filter((x) => x !== s)
-                      : [...prev, s],
-                  )
-                }
-                className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition-all cursor-pointer ${colors[s]}`}
-              >
-                {s}
-              </button>
-            );
-          })}
-        </div>
+          {uniqueVloertypes.length > 0 && (
+            <MultiSelect
+              title="Vloertype"
+              options={uniqueVloertypes}
+              selected={filterVloertypes}
+              onChange={setFilterVloertypes}
+            />
+          )}
+          {uniqueGebouwen.length > 0 && (
+            <MultiSelect
+              title="Gebouw"
+              options={uniqueGebouwen}
+              selected={filterGebouwen}
+              onChange={setFilterGebouwen}
+            />
+          )}
+          {uniqueVerdiepingen.length > 0 && (
+            <MultiSelect
+              title="Verdieping"
+              options={uniqueVerdiepingen}
+              selected={filterVerdiepingen}
+              onChange={setFilterVerdiepingen}
+            />
+          )}
 
-        <div className="w-px h-6 bg-slate-100" />
-
-        {uniqueVloertypes.length > 0 && (
-          <MultiSelect
-            title="Vloertype"
-            options={uniqueVloertypes}
-            selected={filterVloertypes}
-            onChange={setFilterVloertypes}
-          />
-        )}
-        {uniqueGebouwen.length > 0 && (
-          <MultiSelect
-            title="Gebouw"
-            options={uniqueGebouwen}
-            selected={filterGebouwen}
-            onChange={setFilterGebouwen}
-          />
-        )}
-        {uniqueVerdiepingen.length > 0 && (
-          <MultiSelect
-            title="Verdieping"
-            options={uniqueVerdiepingen}
-            selected={filterVerdiepingen}
-            onChange={setFilterVerdiepingen}
-          />
-        )}
-
-        <select
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value as any)}
-          className="text-sm text-slate-600 bg-slate-50 border border-slate-100 rounded-lg px-3 py-1.5 outline-none cursor-pointer"
-        >
-          <option value="naam">Naam</option>
-          <option value="status">Status</option>
-          <option value="laatste_wasbeurt">Laatste wasbeurt</option>
-          <option value="gebouw">Gebouw</option>
-          <option value="verdieping">Verdieping</option>
-        </select>
-
-        {activeVloerFilters > 0 && (
-          <button
-            onClick={() => {
-              setFilterStatussen([]);
-              setFilterVloertypes([]);
-              setFilterGebouwen([]);
-              setFilterVerdiepingen([]);
-              setZoekterm("");
-            }}
-            className="flex items-center gap-1.5 text-xs font-semibold text-red-400 hover:text-red-600 transition-colors cursor-pointer"
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as any)}
+            className="text-sm text-slate-600 bg-slate-50 border border-slate-100 rounded-lg px-3 py-1.5 outline-none cursor-pointer"
           >
-            <XMarkIcon className="w-3.5 h-3.5" /> Wissen
-          </button>
-        )}
+            <option value="naam">Naam</option>
+            <option value="status">Status</option>
+            <option value="laatste_wasbeurt">Wasbeurt</option>
+            <option value="gebouw">Gebouw</option>
+            <option value="verdieping">Verdieping</option>
+          </select>
+
+          {activeVloerFilters > 0 && (
+            <button
+              onClick={() => {
+                setFilterStatussen([]);
+                setFilterVloertypes([]);
+                setFilterGebouwen([]);
+                setFilterVerdiepingen([]);
+                setZoekterm("");
+              }}
+              className="flex items-center gap-1.5 text-xs font-semibold text-red-400 hover:text-red-600 transition-colors cursor-pointer"
+            >
+              <XMarkIcon className="w-3.5 h-3.5" /> Wissen
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Table */}
+      {/* Table / List */}
       <div className="flex-1 bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden flex flex-col min-h-0">
-        <div className="grid grid-cols-[1fr_180px_100px_160px_40px] px-6 py-3 border-b border-slate-100 bg-slate-50 shrink-0">
+        {/* Desktop table header */}
+        <div className="hidden md:grid grid-cols-[1fr_180px_100px_160px_40px] px-6 py-3 border-b border-slate-100 bg-slate-50 shrink-0">
           {[
             "Vloer & kamer",
             "Gebouw · Verdieping",
@@ -492,54 +491,96 @@ function VloerTable({
               <div
                 key={v.id}
                 onClick={() => router.push(`/vloerenpaspoort/bekijken/${v.id}`)}
-                className="grid grid-cols-[1fr_180px_100px_160px_40px] items-center px-6 py-3.5 cursor-pointer hover:bg-slate-50 transition-colors group"
+                className="cursor-pointer hover:bg-slate-50 active:bg-slate-100 transition-colors group"
               >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-8 h-8 rounded-xl bg-p/10 flex items-center justify-center shrink-0 group-hover:bg-p/15 transition-colors">
-                    <SwatchIcon className="w-4 h-4 text-p" />
+                {/* Desktop row */}
+                <div className="hidden md:grid grid-cols-[1fr_180px_100px_160px_40px] items-center px-6 py-3.5">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-8 h-8 rounded-xl bg-p/10 flex items-center justify-center shrink-0 group-hover:bg-p/15 transition-colors">
+                      <SwatchIcon className="w-4 h-4 text-p" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-slate-800 truncate group-hover:text-p transition-colors">
+                        {v.vloertype_naam}
+                      </p>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <HomeModernIcon className="w-3 h-3 text-slate-300 shrink-0" />
+                        <p className="text-xs text-slate-400 truncate">
+                          {v.kamer_naam}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-bold text-slate-800 truncate group-hover:text-p transition-colors">
-                      {v.vloertype_naam}
+                    <p className="text-sm text-slate-600 font-medium truncate">
+                      {v.bouwdeel_naam}
                     </p>
-                    <div className="flex items-center gap-1.5 mt-0.5">
-                      <HomeModernIcon className="w-3 h-3 text-slate-300 shrink-0" />
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <Square3Stack3DIcon className="w-3 h-3 text-slate-300 shrink-0" />
                       <p className="text-xs text-slate-400 truncate">
-                        {v.kamer_naam}
+                        {v.verdieping_naam}
                       </p>
                     </div>
                   </div>
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm text-slate-600 font-medium truncate">
-                    {v.bouwdeel_naam}
-                  </p>
-                  <div className="flex items-center gap-1 mt-0.5">
-                    <Square3Stack3DIcon className="w-3 h-3 text-slate-300 shrink-0" />
-                    <p className="text-xs text-slate-400 truncate">
-                      {v.verdieping_naam}
-                    </p>
+                  <StatusBadge status={v.status} />
+                  <div className="flex items-center gap-1.5">
+                    {v.laatste_wasbeurt ? (
+                      <>
+                        <CheckCircleIcon className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                        <p className="text-xs font-semibold text-slate-600">
+                          {formatDate(v.laatste_wasbeurt)}
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <ClockIcon className="w-3.5 h-3.5 text-slate-300 shrink-0" />
+                        <p className="text-xs text-slate-300">
+                          Nog niet gewassen
+                        </p>
+                      </>
+                    )}
                   </div>
+                  <ChevronRightIcon className="w-4 h-4 text-slate-200 group-hover:text-p transition-colors" />
                 </div>
-                <StatusBadge status={v.status} />
-                <div className="flex items-center gap-1.5">
-                  {v.laatste_wasbeurt ? (
-                    <>
-                      <CheckCircleIcon className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                      <p className="text-xs font-semibold text-slate-600">
-                        {formatDate(v.laatste_wasbeurt)}
+
+                {/* Mobile card row */}
+                <div className="md:hidden flex items-start gap-3 px-4 py-3.5">
+                  <div className="w-8 h-8 rounded-xl bg-p/10 flex items-center justify-center shrink-0 mt-0.5">
+                    <SwatchIcon className="w-4 h-4 text-p" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-slate-800 truncate group-hover:text-p transition-colors">
+                      {v.vloertype_naam}
+                    </p>
+                    <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                      <div className="flex items-center gap-1">
+                        <HomeModernIcon className="w-3 h-3 text-slate-300 shrink-0" />
+                        <p className="text-xs text-slate-400">{v.kamer_naam}</p>
+                      </div>
+                      <span className="text-slate-200 text-xs">·</span>
+                      <p className="text-xs text-slate-400">
+                        {v.bouwdeel_naam}
                       </p>
-                    </>
-                  ) : (
-                    <>
-                      <ClockIcon className="w-3.5 h-3.5 text-slate-300 shrink-0" />
-                      <p className="text-xs text-slate-300">
-                        Nog niet gewassen
+                      <span className="text-slate-200 text-xs">·</span>
+                      <p className="text-xs text-slate-400">
+                        {v.verdieping_naam}
                       </p>
-                    </>
-                  )}
+                    </div>
+                    <div className="flex items-center gap-2 mt-1.5">
+                      <StatusBadge status={v.status} />
+                      {v.laatste_wasbeurt ? (
+                        <span className="text-xs text-emerald-600 font-medium">
+                          {formatDate(v.laatste_wasbeurt)}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-slate-300">
+                          Nog niet gewassen
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <ChevronRightIcon className="w-4 h-4 text-slate-200 group-hover:text-p shrink-0 mt-1 transition-colors" />
                 </div>
-                <ChevronRightIcon className="w-4 h-4 text-slate-200 group-hover:text-p transition-colors" />
               </div>
             ))
           )}
@@ -554,6 +595,7 @@ function VloerTable({
 export default function VloerenPaspoortPage() {
   const { toast, showToast, hideToast } = useToast();
   const router = useRouter();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const [locaties, setLocaties] = useState<Locatie[]>([]);
   const [selectedLocatie, setSelectedLocatie] = useState<Locatie | null>(null);
@@ -593,7 +635,6 @@ export default function VloerenPaspoortPage() {
       }
       setLoading(true);
       setVloeren([]);
-
       const { data: bouwdelen } = await supabase
         .from("bouwdeel")
         .select("id,naam")
@@ -602,7 +643,6 @@ export default function VloerenPaspoortPage() {
         setLoading(false);
         return;
       }
-
       const { data: verdiepingen } = await supabase
         .from("verdiepingen")
         .select("id,naam,bouwdeel_id")
@@ -614,7 +654,6 @@ export default function VloerenPaspoortPage() {
         setLoading(false);
         return;
       }
-
       const { data: kamers } = await supabase
         .from("kamers")
         .select("id,naam,verdieping_id")
@@ -626,7 +665,6 @@ export default function VloerenPaspoortPage() {
         setLoading(false);
         return;
       }
-
       const { data: kamerVloeren } = await supabase
         .from("kamer_vloeren")
         .select("id,kamer_id,vierkante_meter,status,vloer_types(naam)")
@@ -638,14 +676,12 @@ export default function VloerenPaspoortPage() {
         setLoading(false);
         return;
       }
-
       const vloerIds = kamerVloeren.map((v) => v.id);
       const { data: wasbeurten } = await supabase
         .from("gewassen_vloeren")
         .select("kamervloer_id,aangemaakt_op")
         .in("kamervloer_id", vloerIds)
         .order("aangemaakt_op", { ascending: false });
-
       const bouwdeelMap = Object.fromEntries(
         bouwdelen.map((b) => [b.id, b.naam]),
       );
@@ -666,7 +702,6 @@ export default function VloerenPaspoortPage() {
         if (!latestWasMap[w.kamervloer_id])
           latestWasMap[w.kamervloer_id] = w.aangemaakt_op;
       }
-
       setVloeren(
         kamerVloeren.map((v) => {
           const kamer = kamerMap[v.kamer_id];
@@ -691,15 +726,22 @@ export default function VloerenPaspoortPage() {
 
   return (
     <div className="min-h-screen flex bg-[#F5F6FA]">
-      <Sidebar className="fixed top-0 left-0 h-screen" />
+      <Sidebar
+        className="fixed top-0 left-0 h-screen"
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
       {toast && (
         <Toast message={toast.message} type={toast.type} onClose={hideToast} />
       )}
 
       <div className="flex flex-col flex-1 h-screen">
-        <Topbar title="Vloerpaspoort" />
+        <Topbar
+          title="Vloerpaspoort"
+          onMenuToggle={() => setSidebarOpen((p) => !p)}
+        />
 
-        <main className="flex-1 overflow-hidden p-8">
+        <main className="flex-1 overflow-hidden p-3 md:p-8">
           {selectedLocatie ? (
             <VloerTable
               locatie={selectedLocatie}
