@@ -95,6 +95,14 @@ export async function POST(req: Request) {
       .map((p: any) => p.email)
       .filter(Boolean) as string[];
 
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const start = new Date(data.start_datum);
+    start.setHours(0, 0, 0, 0);
+    const dagen = Math.ceil(
+      (start.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+    );
+
     try {
       const { data: email, error: emailerror } = await resend.emails.send({
         from: "Duofort <no-reply@rso-floorcontrol.nl>",
@@ -110,6 +118,7 @@ export async function POST(req: Request) {
           vloertypes: vloertypes,
           bussen: bussen,
           totaalM2: totaalM2,
+          dagen: dagen,
         }),
       });
 

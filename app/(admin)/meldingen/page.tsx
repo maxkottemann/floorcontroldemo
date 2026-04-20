@@ -11,7 +11,6 @@ import {
   BellAlertIcon,
   ChevronRightIcon,
   CheckCircleIcon,
-  ClockIcon,
   MagnifyingGlassIcon,
   ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
@@ -36,6 +35,7 @@ function formatTime(d?: string) {
 export default function MeldingenPage() {
   const { toast, showToast, hideToast } = useToast();
   const router = useRouter();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [tab, setTab] = useState<"open" | "all">("open");
   const [notHandledMeldingen, setNotHandledMeldingen] = useState<melding[]>([]);
   const [allMeldingen, setAllMeldingen] = useState<melding[]>([]);
@@ -74,10 +74,9 @@ export default function MeldingenPage() {
             )
             .order("aangemaakt_op", { ascending: false }),
         ]);
-
         setNotHandledMeldingen((open ?? []).map(mapMelding));
         setAllMeldingen((all ?? []).map(mapMelding));
-      } catch (err) {
+      } catch {
         showToast("Kon meldingen niet laden", "error");
       } finally {
         setLoading(false);
@@ -93,18 +92,51 @@ export default function MeldingenPage() {
     ),
   );
 
+  const tabs = [
+    { key: "open", label: "Openstaand", count: notHandledMeldingen.length },
+    { key: "all", label: "Alle", count: allMeldingen.length },
+  ];
+
+  const emptyState = (
+    <div className="flex flex-col items-center justify-center py-14 text-center">
+      <div className="w-10 h-10 rounded-2xl bg-slate-100 flex items-center justify-center mb-3">
+        <BellAlertIcon className="w-5 h-5 text-slate-300" />
+      </div>
+      <p className="text-sm text-slate-400 font-medium">
+        {tab === "open"
+          ? "Geen openstaande meldingen"
+          : "Geen meldingen gevonden"}
+      </p>
+      <p className="text-xs text-slate-300 mt-0.5">
+        {zoekterm
+          ? "Probeer een andere zoekterm"
+          : tab === "open"
+            ? "Alles is afgehandeld"
+            : "Er zijn nog geen meldingen"}
+      </p>
+    </div>
+  );
+
   return (
     <div className="min-h-screen flex bg-[#F5F6FA]">
-      <Sidebar className="fixed top-0 left-0 h-screen" />
+      <Sidebar
+        className="fixed top-0 left-0 h-screen"
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
       {toast && (
         <Toast message={toast.message} type={toast.type} onClose={hideToast} />
       )}
 
       <div className="flex flex-col flex-1 h-screen">
-        <Topbar title="Meldingen" />
+        <Topbar
+          title="Meldingen"
+          onMenuToggle={() => setSidebarOpen((p) => !p)}
+        />
 
-        <main className="flex-1 overflow-auto p-8">
-          <div className="space-y-6">
+        <main className="flex-1 overflow-auto p-3 md:p-8">
+          {/* ── Desktop (md+) — original layout unchanged ── */}
+          <div className="hidden md:block space-y-6">
             <div className="flex items-end justify-between">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-p/60 mb-1">
@@ -130,39 +162,21 @@ export default function MeldingenPage() {
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
               <div className="flex items-center gap-4 px-5 py-3.5 border-b border-slate-100">
                 <div className="flex items-center gap-1 bg-slate-100 rounded-xl p-1">
-                  {[
-                    {
-                      key: "open",
-                      label: "Openstaand",
-                      count: notHandledMeldingen.length,
-                    },
-                    { key: "all", label: "Alle", count: allMeldingen.length },
-                  ].map(({ key, label, count }) => (
+                  {tabs.map(({ key, label, count }) => (
                     <button
                       key={key}
                       onClick={() => setTab(key as "open" | "all")}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-all ${
-                        tab === key
-                          ? "bg-white text-slate-800 shadow-sm"
-                          : "text-slate-500 hover:text-slate-700"
-                      }`}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-all ${tab === key ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
                     >
                       {label}
                       <span
-                        className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${
-                          tab === key
-                            ? key === "open" && count > 0
-                              ? "bg-amber-100 text-amber-600"
-                              : "bg-slate-100 text-slate-500"
-                            : "bg-slate-200 text-slate-400"
-                        }`}
+                        className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${tab === key ? (key === "open" && count > 0 ? "bg-amber-100 text-amber-600" : "bg-slate-100 text-slate-500") : "bg-slate-200 text-slate-400"}`}
                       >
                         {count}
                       </span>
                     </button>
                   ))}
                 </div>
-
                 <div className="relative flex-1 max-w-xs ml-auto">
                   <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
                   <input
@@ -198,23 +212,7 @@ export default function MeldingenPage() {
                     <div className="w-6 h-6 rounded-full border-2 border-p border-t-transparent animate-spin" />
                   </div>
                 ) : filtered.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-14 text-center">
-                    <div className="w-10 h-10 rounded-2xl bg-slate-100 flex items-center justify-center mb-3">
-                      <BellAlertIcon className="w-5 h-5 text-slate-300" />
-                    </div>
-                    <p className="text-sm text-slate-400 font-medium">
-                      {tab === "open"
-                        ? "Geen openstaande meldingen"
-                        : "Geen meldingen gevonden"}
-                    </p>
-                    <p className="text-xs text-slate-300 mt-0.5">
-                      {zoekterm
-                        ? "Probeer een andere zoekterm"
-                        : tab === "open"
-                          ? "Alles is afgehandeld"
-                          : "Er zijn nog geen meldingen"}
-                    </p>
-                  </div>
+                  emptyState
                 ) : (
                   filtered.map((m) => (
                     <div
@@ -229,7 +227,6 @@ export default function MeldingenPage() {
                           <div className="w-2 h-2 rounded-full bg-amber-400" />
                         )}
                       </div>
-
                       <div className="min-w-0">
                         <p className="text-sm font-semibold text-slate-800 truncate group-hover:text-p transition-colors">
                           {m.titel}
@@ -238,7 +235,6 @@ export default function MeldingenPage() {
                           {m.beschrijving}
                         </p>
                       </div>
-
                       <div className="flex items-center gap-1.5 min-w-0">
                         <div className="w-5 h-5 rounded-md bg-p/10 flex items-center justify-center shrink-0">
                           <ExclamationTriangleIcon className="w-3 h-3 text-p" />
@@ -247,11 +243,9 @@ export default function MeldingenPage() {
                           {m.kamervloer_naam ?? "—"}
                         </p>
                       </div>
-
                       <p className="text-sm text-slate-400 truncate">
                         {m.profielnaam ?? "—"}
                       </p>
-
                       <div>
                         <p className="text-xs font-semibold text-slate-600">
                           {formatDate(m.aangemaakt_op)}
@@ -260,20 +254,140 @@ export default function MeldingenPage() {
                           {formatTime(m.aangemaakt_op)}
                         </p>
                       </div>
-
                       <ChevronRightIcon className="w-4 h-4 text-slate-200 group-hover:text-p transition-colors" />
                     </div>
                   ))
                 )}
               </div>
 
-              {/* Footer */}
               <div className="px-5 py-3 border-t border-slate-50 bg-slate-50/40">
                 <p className="text-xs text-slate-400">
                   {filtered.length} melding{filtered.length !== 1 ? "en" : ""}
                 </p>
               </div>
             </div>
+          </div>
+
+          {/* ── Mobile (below md) ── */}
+          <div className="md:hidden space-y-3">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-xl font-bold text-slate-900 tracking-tight">
+                  Meldingen
+                </h1>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Alle ingediende meldingen
+                </p>
+              </div>
+              {notHandledMeldingen.length > 0 && (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 border border-amber-100 rounded-xl">
+                  <BellAlertIcon className="w-3.5 h-3.5 text-amber-500" />
+                  <p className="text-xs font-bold text-amber-600">
+                    {notHandledMeldingen.length}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Tabs */}
+            <div className="flex items-center gap-1 bg-slate-100 rounded-xl p-1 self-start">
+              {tabs.map(({ key, label, count }) => (
+                <button
+                  key={key}
+                  onClick={() => setTab(key as "open" | "all")}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-all flex-1 justify-center ${tab === key ? "bg-white text-slate-800 shadow-sm" : "text-slate-500"}`}
+                >
+                  {label}
+                  <span
+                    className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${tab === key ? (key === "open" && count > 0 ? "bg-amber-100 text-amber-600" : "bg-slate-100 text-slate-500") : "bg-slate-200 text-slate-400"}`}
+                  >
+                    {count}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            {/* Search */}
+            <div className="relative">
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
+              <input
+                value={zoekterm}
+                onChange={(e) => setZoekterm(e.target.value)}
+                placeholder="Zoek op titel, vloer..."
+                className="w-full pl-9 pr-4 py-2.5 text-sm bg-white rounded-xl border border-slate-100 outline-none focus:border-p/40 focus:ring-2 focus:ring-p/10 placeholder:text-slate-300 transition-all shadow-sm"
+              />
+            </div>
+
+            {/* List */}
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="w-6 h-6 rounded-full border-2 border-p border-t-transparent animate-spin" />
+              </div>
+            ) : filtered.length === 0 ? (
+              emptyState
+            ) : (
+              <div className="space-y-2">
+                {filtered.map((m) => (
+                  <div
+                    key={m.id}
+                    onClick={() => router.push(`/meldingen/bekijken/${m.id}`)}
+                    className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 cursor-pointer active:bg-slate-50 transition-colors"
+                  >
+                    <div className="flex items-start gap-3">
+                      {/* Status dot */}
+                      <div className="mt-1 shrink-0">
+                        {m.afgehandeld ? (
+                          <CheckCircleIcon className="w-4 h-4 text-emerald-400" />
+                        ) : (
+                          <div className="w-2 h-2 rounded-full bg-amber-400 mt-1" />
+                        )}
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-slate-800 truncate">
+                          {m.titel}
+                        </p>
+                        {m.beschrijving && (
+                          <p className="text-xs text-slate-400 truncate mt-0.5">
+                            {m.beschrijving}
+                          </p>
+                        )}
+
+                        {/* Meta row */}
+                        <div className="flex items-center gap-2 mt-2 flex-wrap">
+                          {m.kamervloer_naam && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-p/8 rounded-md text-[11px] font-semibold text-p">
+                              <ExclamationTriangleIcon className="w-3 h-3" />
+                              {m.kamervloer_naam}
+                            </span>
+                          )}
+                          {m.profielnaam && (
+                            <span className="text-[11px] text-slate-400">
+                              {m.profielnaam}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Date + chevron */}
+                      <div className="shrink-0 text-right flex flex-col items-end gap-1">
+                        <p className="text-[11px] font-semibold text-slate-600">
+                          {formatDate(m.aangemaakt_op)}
+                        </p>
+                        <p className="text-[10px] text-slate-400">
+                          {formatTime(m.aangemaakt_op)}
+                        </p>
+                        <ChevronRightIcon className="w-4 h-4 text-slate-200 mt-1" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                <p className="text-xs text-slate-400 text-center pt-1">
+                  {filtered.length} melding{filtered.length !== 1 ? "en" : ""}
+                </p>
+              </div>
+            )}
           </div>
         </main>
       </div>

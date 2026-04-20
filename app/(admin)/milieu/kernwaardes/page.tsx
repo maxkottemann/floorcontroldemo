@@ -23,11 +23,11 @@ interface Reinigmethode {
 export default function NieuweReinigmethodePage() {
   const { toast, showToast, hideToast } = useToast();
   const router = useRouter();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const [bestaande, setBestaande] = useState<Reinigmethode[]>([]);
   const [saving, setSaving] = useState(false);
 
-  // Form state
   const [naam, setNaam] = useState("");
   const [beschrijving, setBeschrijving] = useState("");
   const [waterverbruik, setWaterverbruik] = useState("");
@@ -58,7 +58,6 @@ export default function NieuweReinigmethodePage() {
       return;
     }
     setSaving(true);
-
     const row: any = {
       naam,
       beschrijving,
@@ -67,22 +66,18 @@ export default function NieuweReinigmethodePage() {
       chemieverbruik: parseFloat(chemieverbruik) || 0,
       stroom: parseFloat(stroom) || 0,
       verpakking: parseFloat(verpakking) || 0,
-      // Old values from comparison method
       waterverbruik_old: vergelijkMet?.waterverbruik ?? null,
       afvalwater_old: vergelijkMet?.afvalwater ?? null,
       chemieverbruik_old: vergelijkMet?.chemieverbruik ?? null,
       stroom_old: vergelijkMet?.stroom ?? null,
       verpakking_old: vergelijkMet?.verpakking ?? null,
     };
-
     const { error } = await supabase.from("reinigings_methodes").insert(row);
     setSaving(false);
-
     if (error) {
       showToast("Opslaan mislukt: " + error.message, "error");
       return;
     }
-    console.log("calling showToast");
     showToast("Reinigingsmethode opgeslagen", "success");
     setTimeout(() => router.back(), 1000);
   }
@@ -127,20 +122,28 @@ export default function NieuweReinigmethodePage() {
 
   return (
     <div className="min-h-screen flex bg-[#F5F6FA]">
-      <Sidebar className="fixed top-0 left-0 h-screen" />
+      <Sidebar
+        className="fixed top-0 left-0 h-screen"
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
       {toast && (
         <Toast message={toast.message} type={toast.type} onClose={hideToast} />
       )}
 
       <div className="flex flex-col flex-1 h-screen">
-        <Topbar title="Milieu & Duurzaamheid" />
+        <Topbar
+          title="Milieu & Duurzaamheid"
+          onMenuToggle={() => setSidebarOpen((p) => !p)}
+        />
 
-        <main className="flex-1 overflow-auto p-8">
-          <div className="max-w-3xl mx-auto space-y-6">
-            <div className="flex items-center gap-4">
+        <main className="flex-1 overflow-auto p-3 md:p-8">
+          <div className=" mx-auto space-y-4 md:space-y-6">
+            {/* Back + header */}
+            <div className="flex items-center gap-3 md:gap-4">
               <button
                 onClick={() => router.back()}
-                className="w-9 h-9 rounded-xl bg-white border border-slate-100 shadow-sm flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all cursor-pointer"
+                className="w-9 h-9 rounded-xl bg-white border border-slate-100 shadow-sm flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all cursor-pointer shrink-0"
               >
                 <ArrowLeftIcon className="w-4 h-4" />
               </button>
@@ -148,19 +151,20 @@ export default function NieuweReinigmethodePage() {
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-p/60 mb-0.5">
                   Milieu & Duurzaamheid
                 </p>
-                <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+                <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
                   Nieuwe reinigingsmethode
                 </h1>
               </div>
             </div>
 
+            {/* Basisinformatie */}
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-              <div className="px-5 py-4 border-b border-slate-50">
+              <div className="px-4 md:px-5 py-4 border-b border-slate-50">
                 <p className="text-sm font-bold text-slate-800">
                   Basisinformatie
                 </p>
               </div>
-              <div className="px-5 py-5 space-y-4">
+              <div className="px-4 md:px-5 py-4 md:py-5 space-y-4">
                 <div>
                   <p className="text-xs font-semibold text-slate-600 mb-1.5">
                     Naam
@@ -187,16 +191,17 @@ export default function NieuweReinigmethodePage() {
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-visible min-w-screen">
-              <div className="px-5 py-4 border-b border-slate-50">
+            {/* Vergelijken met */}
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-visible">
+              <div className="px-4 md:px-5 py-4 border-b border-slate-50">
                 <p className="text-sm font-bold text-slate-800">
                   Vergelijken met
                 </p>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  Optioneel — waardesworden opgeslagen als referentie
+                  Optioneel — waarden worden opgeslagen als referentie
                 </p>
               </div>
-              <div className="px-5 py-5 w-screen">
+              <div className="px-4 md:px-5 py-4 md:py-5">
                 <Dropdown
                   options={[
                     { id: "", naam: "— Geen vergelijking —" } as any,
@@ -215,16 +220,20 @@ export default function NieuweReinigmethodePage() {
               </div>
             </div>
 
+            {/* Kernwaarden */}
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-visible">
-              <div className="px-5 py-4 border-b border-slate-50">
+              <div className="px-4 md:px-5 py-4 border-b border-slate-50">
                 <p className="text-sm font-bold text-slate-800">Kernwaarden</p>
                 <p className="text-xs text-slate-400 mt-0.5">
                   Milieu impact per m²
                 </p>
               </div>
-              <div className="px-5 py-5 space-y-4">
-                <div className="grid grid-cols-[1fr_140px_140px] gap-4">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400"></p>
+              <div className="px-4 md:px-5 py-4 md:py-5 space-y-4">
+                {/* Desktop header row */}
+                <div
+                  className={`hidden md:grid gap-4 ${vergelijkMet ? "grid-cols-[1fr_140px_140px]" : "grid-cols-[1fr_140px]"}`}
+                >
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400" />
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                     Nieuwe waarde
                   </p>
@@ -236,41 +245,77 @@ export default function NieuweReinigmethodePage() {
                 </div>
 
                 {fields.map((f) => (
-                  <div
-                    key={f.label}
-                    className={`grid gap-4 items-center ${vergelijkMet ? "grid-cols-[1fr_140px_140px]" : "grid-cols-[1fr_140px]"}`}
-                  >
-                    <p className="text-sm font-semibold text-slate-700">
-                      {f.label}
-                    </p>
-                    <div className="relative">
-                      <input
-                        value={f.value}
-                        onChange={(e) => f.set(e.target.value)}
-                        type="number"
-                        placeholder="0"
-                        className="w-full text-slate-700  px-3 pr-10 py-2 text-sm bg-slate-50 rounded-xl border border-slate-200 outline-none focus:border-p/40 focus:ring-2 focus:ring-p/10 transition-all"
-                      />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-medium">
-                        {f.unit}
-                      </span>
+                  <div key={f.label}>
+                    {/* Desktop row */}
+                    <div
+                      className={`hidden md:grid gap-4 items-center ${vergelijkMet ? "grid-cols-[1fr_140px_140px]" : "grid-cols-[1fr_140px]"}`}
+                    >
+                      <p className="text-sm font-semibold text-slate-700">
+                        {f.label}
+                      </p>
+                      <div className="relative">
+                        <input
+                          value={f.value}
+                          onChange={(e) => f.set(e.target.value)}
+                          type="number"
+                          placeholder="0"
+                          className="w-full text-slate-700 px-3 pr-10 py-2 text-sm bg-slate-50 rounded-xl border border-slate-200 outline-none focus:border-p/40 focus:ring-2 focus:ring-p/10 transition-all"
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-medium">
+                          {f.unit}
+                        </span>
+                      </div>
+                      {vergelijkMet && (
+                        <div className="px-3 py-2 bg-slate-50 rounded-xl border border-slate-100">
+                          <p className="text-sm text-amber-500 font-medium">
+                            {f.old ?? "—"}{" "}
+                            <span className="text-xs text-slate-400">
+                              {f.unit}
+                            </span>
+                          </p>
+                        </div>
+                      )}
                     </div>
-                    {vergelijkMet && (
-                      <div className="px-3 py-2 bg-slate-50 rounded-xl border border-slate-100">
-                        <p className="text-sm text-amber-500 font-medium">
-                          {f.old ?? "—"}{" "}
-                          <span className="text-xs text-slate-400">
+
+                    {/* Mobile row — label above, input + reference side by side */}
+                    <div className="md:hidden space-y-1.5">
+                      <p className="text-sm font-semibold text-slate-700">
+                        {f.label}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <div className="relative flex-1">
+                          <input
+                            value={f.value}
+                            onChange={(e) => f.set(e.target.value)}
+                            type="number"
+                            placeholder="0"
+                            className="w-full text-slate-700 px-3 pr-10 py-2.5 text-sm bg-slate-50 rounded-xl border border-slate-200 outline-none focus:border-p/40 focus:ring-2 focus:ring-p/10 transition-all"
+                          />
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-medium">
                             {f.unit}
                           </span>
-                        </p>
+                        </div>
+                        {vergelijkMet && (
+                          <div className="px-3 py-2.5 bg-slate-50 rounded-xl border border-slate-100 shrink-0">
+                            <p className="text-xs text-slate-400 mb-0.5">
+                              Ref.
+                            </p>
+                            <p className="text-sm text-amber-500 font-medium whitespace-nowrap">
+                              {f.old ?? "—"}{" "}
+                              <span className="text-xs text-slate-400">
+                                {f.unit}
+                              </span>
+                            </p>
+                          </div>
+                        )}
                       </div>
-                    )}
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Save */}
+            {/* Save button */}
             <button
               onClick={handleSave}
               disabled={saving || !naam}

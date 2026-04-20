@@ -1,122 +1,126 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   HomeIcon,
-  GlobeAltIcon,
   ChartBarIcon,
   ClipboardDocumentIcon,
   BuildingOffice2Icon,
-  UserCircleIcon,
   BellAlertIcon,
+  DocumentArrowUpIcon,
   MagnifyingGlassIcon,
 } from "@heroicons/react/24/outline";
 import { BsLeaf, BsPassport } from "react-icons/bs";
-import { DocumentArrowUpIcon } from "@heroicons/react/24/outline";
 
 interface SidebarProps {
   className?: string;
+  open: boolean;
+  onClose: () => void;
 }
 
-export default function SidebarClient({ className }: SidebarProps) {
-  const [open, setOpen] = useState(false);
+export default function SidebarClient({
+  className,
+  open,
+  onClose,
+}: SidebarProps) {
   const pathname = usePathname();
 
   const linkClass = (href: string) =>
-    `flex items-center gap-3 w-full font-medium px-4 py-3 rounded-lg mb-2 transition
+    `flex items-center gap-3 w-full font-medium px-4 py-3 rounded-lg mb-1 transition-all duration-150
      ${
        pathname.startsWith(href)
          ? "text-white bg-gradient-to-r from-[#00539f] to-[#0072e5] shadow-md"
-         : "text-gray-800 hover:bg-[#e6f0ff] hover:text-[#00539f]"
+         : "text-gray-700 hover:bg-[#e6f0ff] hover:text-[#00539f]"
      }`;
+
+  const links = [
+    {
+      href: "/klant/dashboard",
+      icon: <HomeIcon className="w-5 h-5" />,
+      label: "Dashboard",
+    },
+    {
+      href: "/klant/status",
+      icon: <ChartBarIcon className="w-5 h-5" />,
+      label: "Status",
+    },
+    {
+      href: "/klant/projecten",
+      icon: <ClipboardDocumentIcon className="w-5 h-5" />,
+      label: "Projecten",
+    },
+    {
+      href: "/klant/locaties",
+      icon: <BuildingOffice2Icon className="w-5 h-5" />,
+      label: "Locaties",
+    },
+    {
+      href: "/klant/vloerenpaspoort",
+      icon: <BsPassport className="w-5 h-5" />,
+      label: "Vloerpaspoort",
+    },
+    {
+      href: "/klant/rapporten",
+      icon: <DocumentArrowUpIcon className="w-5 h-5" />,
+      label: "Rapporten",
+    },
+    {
+      href: "/klant/milieu",
+      icon: <BsLeaf className="w-5 h-5" />,
+      label: "Milieu",
+    },
+    {
+      href: "/klant/steekproeven",
+      icon: <MagnifyingGlassIcon className="w-5 h-5" />,
+      label: "Steekproeven",
+    },
+    {
+      href: "/klant/meldingen",
+      icon: <BellAlertIcon className="w-5 h-5" />,
+      label: "Meldingen",
+    },
+  ];
 
   return (
     <>
-      <button
-        className="fixed p-3 text-gray-800 rounded-lg lg:hidden top-1.5 left-4 z-50 bg-white shadow"
-        onClick={() => setOpen(!open)}
-        aria-label="Toggle Sidebar"
-      >
-        <svg
-          width="28"
-          height="28"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-        >
-          <line x1="3" y1="6" x2="21" y2="6" />
-          <line x1="3" y1="12" x2="21" y2="12" />
-          <line x1="3" y1="18" x2="21" y2="18" />
-        </svg>
-      </button>
-
+      {/* Overlay */}
       {open && (
         <div
           className="fixed inset-0 z-40 bg-black/30 lg:hidden"
-          onClick={() => setOpen(false)}
+          onClick={onClose}
         />
       )}
 
       <nav
         className={`
-          fixed top-0 left-0 w-64 lg:w-45 xl:w-64 min-h-screen flex flex-col z-50
-          bg-[#f2f3f4] shadow-lg border-r border-gray-200
-          transition-transform duration-300 pr-1
+          fixed top-0 left-0 w-64 min-h-screen flex flex-col z-50
+          bg-[#f2f3f4] border-r border-gray-200 shadow-lg
+          transition-transform duration-300
           ${open ? "translate-x-0" : "-translate-x-full"}
-          lg:translate-x-0 lg:static
+          lg:translate-x-0 lg:static lg:shadow-none
           ${className ?? ""}
         `}
       >
-        <img src="/logo2.png" alt="Logo" className="px-1 mx-auto mb-1 w-53" />
+        <div className="px-4 pt-5 pb-2">
+          <img src="/logo2.png" alt="Logo" className="w-full mx-auto" />
+        </div>
 
-        <div className="border-t border-gray-200 my-4" />
+        <div className="border-t border-gray-200 mx-4 my-3" />
 
-        <Link href="/klant/dashboard" className={linkClass("/klant/dashboard")}>
-          <HomeIcon className="w-5 h-5" />
-          Dashboard
-        </Link>
-        <Link href="/klant/status" className={linkClass("/klant/status")}>
-          <ChartBarIcon className="w-5 h-5" />
-          Status
-        </Link>
-        <Link href="/klant/projecten" className={linkClass("/klant/projecten")}>
-          <ClipboardDocumentIcon className="w-5 h-5" />
-          Projecten
-        </Link>
-        <Link href="/klant/locaties" className={linkClass("/klant/locaties")}>
-          <BuildingOffice2Icon className="w-5 h-5" />
-          Locaties
-        </Link>
-        <Link
-          href="/klant/vloerenpaspoort"
-          className={linkClass("/klant/vloerenpaspoort")}
-        >
-          <BsPassport className="w-5 h-5" />
-          Vloerpaspoort
-        </Link>
-        <Link href="/klant/rapporten" className={linkClass("/klant/rapporten")}>
-          <DocumentArrowUpIcon className="w-5 h-5" />
-          Rapporten
-        </Link>
-        <Link href="/klant/milieu" className={linkClass("/klant/milieu")}>
-          <BsLeaf className="w-5 h-5" />
-          Milieu
-        </Link>
-        <Link
-          href="/klant/steekproeven"
-          className={linkClass("/klant/steekproeven")}
-        >
-          <MagnifyingGlassIcon className="w-5 h-5" />
-          Steekproeven
-        </Link>
-        <Link href="/klant/meldingen" className={linkClass("/klant/meldingen")}>
-          <BellAlertIcon className="w-5 h-5" />
-          Meldingen
-        </Link>
+        <div className="flex-1 px-3 overflow-y-auto">
+          {links.map((l) => (
+            <Link
+              key={l.href}
+              href={l.href}
+              className={linkClass(l.href)}
+              onClick={onClose}
+            >
+              {l.icon}
+              {l.label}
+            </Link>
+          ))}
+        </div>
       </nav>
     </>
   );

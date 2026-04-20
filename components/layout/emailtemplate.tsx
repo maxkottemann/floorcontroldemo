@@ -302,7 +302,7 @@ export const ProjectAangemaaktEmail = ({
                   <span
                     style={{
                       fontSize: "14px",
-                      color: "#3AB8BF",
+                      color: "#81378e",
                       marginRight: "8px",
                     }}
                   >

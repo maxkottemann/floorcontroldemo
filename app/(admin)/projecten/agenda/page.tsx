@@ -67,13 +67,11 @@ function getMondayOf(date: Date) {
   d.setHours(0, 0, 0, 0);
   return d;
 }
-
 function addDays(date: Date, days: number) {
   const d = new Date(date);
   d.setDate(d.getDate() + days);
   return d;
 }
-
 function isSameDay(a: Date, b: Date) {
   return (
     a.getFullYear() === b.getFullYear() &&
@@ -81,21 +79,15 @@ function isSameDay(a: Date, b: Date) {
     a.getDate() === b.getDate()
   );
 }
-
 function toDateStr(date: Date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
-
-function parseLocalDate(str: string) {
-  const [y, m, d] = str.split("T")[0].split("-").map(Number);
-  return new Date(y, m - 1, d);
-}
-
 function projectOnDay(project: AgendaProject, day: Date) {
   const dayStr = toDateStr(day);
-  const startStr = project.start_datum.split("T")[0];
-  const endStr = project.eind_datum.split("T")[0];
-  return dayStr >= startStr && dayStr <= endStr;
+  return (
+    dayStr >= project.start_datum.split("T")[0] &&
+    dayStr <= project.eind_datum.split("T")[0]
+  );
 }
 
 function StatusPill({ status }: { status: string }) {
@@ -125,7 +117,7 @@ function ProjectCard({
   return (
     <div
       onClick={onClick}
-      className={`bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden ${onClick ? "cursor-pointer hover:border-p/30 hover:shadow-md transition-all" : ""}`}
+      className={`bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden ${onClick ? "cursor-pointer hover:border-p/30 hover:shadow-md transition-all active:bg-slate-50" : ""}`}
     >
       <div className="px-3 py-2.5 border-b border-slate-50 flex items-start justify-between gap-2">
         <div className="min-w-0">
@@ -141,7 +133,6 @@ function ProjectCard({
         </div>
         <StatusPill status={project.status} />
       </div>
-
       {!compact && (
         <div className="px-3 py-2 space-y-1.5">
           {project.bussen.map((b) => (
@@ -175,6 +166,7 @@ function ProjectCard({
 export default function AgendaPage() {
   const { toast, showToast, hideToast } = useToast();
   const router = useRouter();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [view, setView] = useState<"week" | "dag">("week");
   const [weekStart, setWeekStart] = useState(() => getMondayOf(new Date()));
   const [selectedDay, setSelectedDay] = useState(() => {
@@ -191,45 +183,33 @@ export default function AgendaPage() {
   function navigateDay(newDay: Date) {
     setSelectedDay(newDay);
     const windowEnd = addDays(dayWindowStart, 13);
-    if (newDay > windowEnd || newDay < dayWindowStart) {
+    if (newDay > windowEnd || newDay < dayWindowStart)
       setDayWindowStart(addDays(newDay, -6));
-    }
   }
 
-  // Fetch projects for visible range
   useEffect(() => {
     async function load() {
       setLoading(true);
       const from = view === "week" ? weekStart : dayWindowStart;
       const to =
         view === "week" ? addDays(weekStart, 6) : addDays(dayWindowStart, 13);
-
-      const fromStr = toDateStr(from);
-      const toStr = toDateStr(to);
-
-      // Fetch projects overlapping the range
       const { data, error } = await supabase
         .from("projecten")
         .select(
           `
-          id, naam, start_datum, eind_datum, status,
-          locaties!projecten_locatie_id_fkey(naam, plaats),
-          project_bussen(
-            bussen(id, naam, kenteken),
-            project_bus_medewerkers(medewerkers(voornaam, achternaam))
-          )
-        `,
+        id, naam, start_datum, eind_datum, status,
+        locaties!projecten_locatie_id_fkey(naam, plaats),
+        project_bussen(bussen(id, naam, kenteken), project_bus_medewerkers(medewerkers(voornaam, achternaam)))
+      `,
         )
-        .lte("start_datum", toStr + "T23:59:59")
-        .gte("eind_datum", fromStr)
+        .lte("start_datum", toDateStr(to) + "T23:59:59")
+        .gte("eind_datum", toDateStr(from))
         .order("start_datum");
-
       if (error) {
         showToast("Kon agenda niet laden", "error");
         setLoading(false);
         return;
       }
-
       setProjecten(
         (data ?? []).map((d: any) => ({
           id: d.id,
@@ -256,37 +236,37 @@ export default function AgendaPage() {
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
   const weekLabel = (() => {
     const end = addDays(weekStart, 6);
-    if (weekStart.getMonth() === end.getMonth()) {
+    if (weekStart.getMonth() === end.getMonth())
       return `${weekStart.getDate()}–${end.getDate()} ${MAANDEN[weekStart.getMonth()]} ${weekStart.getFullYear()}`;
-    }
     return `${weekStart.getDate()} ${MAANDEN[weekStart.getMonth()]} – ${end.getDate()} ${MAANDEN[end.getMonth()]} ${end.getFullYear()}`;
   })();
 
   const dayLabel = `${DAGEN_LONG[(selectedDay.getDay() + 6) % 7]} ${selectedDay.getDate()} ${MAANDEN[selectedDay.getMonth()]} ${selectedDay.getFullYear()}`;
-
   const dayProjects = (day: Date) =>
     projecten.filter((p) => projectOnDay(p, day));
 
   return (
     <div className="min-h-screen flex bg-[#F5F6FA]">
-      <Sidebar className="fixed top-0 left-0 h-screen" />
+      <Sidebar
+        className="fixed top-0 left-0 h-screen"
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
       {toast && (
         <Toast message={toast.message} type={toast.type} onClose={hideToast} />
       )}
 
       <div className="flex flex-col flex-1 h-screen">
-        <Topbar title="Agenda" />
+        <Topbar title="Agenda" onMenuToggle={() => setSidebarOpen((p) => !p)} />
 
         <main className="flex-1 overflow-hidden flex flex-col">
-          {/* Toolbar */}
-          <div className="flex items-center justify-between px-8 py-4 bg-white border-b border-slate-100 shrink-0">
-            <div className="flex items-center gap-3">
-              {/* Prev / Next */}
+          {/* ── Toolbar ── */}
+          <div className="flex items-center justify-between px-3 md:px-8 py-3 md:py-4 bg-white border-b border-slate-100 shrink-0 gap-3">
+            <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => {
@@ -308,19 +288,17 @@ export default function AgendaPage() {
                 </button>
               </div>
 
-              {/* Period label */}
-              <div>
-                <p className="text-sm font-bold text-slate-800">
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-slate-800 truncate">
                   {view === "week" ? weekLabel : dayLabel}
                 </p>
                 {view === "week" && (
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-slate-400 hidden sm:block">
                     Week {Math.ceil(weekStart.getDate() / 7)}
                   </p>
                 )}
               </div>
 
-              {/* Today button */}
               <button
                 onClick={() => {
                   const t = new Date();
@@ -329,14 +307,14 @@ export default function AgendaPage() {
                   setSelectedDay(t);
                   setDayWindowStart(addDays(getMondayOf(t), -3));
                 }}
-                className="px-3 py-1.5 text-xs font-semibold text-p bg-p/8 hover:bg-p/15 rounded-lg transition-colors cursor-pointer"
+                className="px-2.5 md:px-3 py-1.5 text-xs font-semibold text-p bg-p/8 hover:bg-p/15 rounded-lg transition-colors cursor-pointer shrink-0"
               >
                 Vandaag
               </button>
             </div>
 
             {/* View toggle */}
-            <div className="flex items-center gap-1 bg-slate-100 rounded-xl p-1">
+            <div className="flex items-center gap-1 bg-slate-100 rounded-xl p-1 shrink-0">
               {(
                 [
                   ["week", "Week", Squares2X2Icon],
@@ -346,135 +324,202 @@ export default function AgendaPage() {
                 <button
                   key={v}
                   onClick={() => setView(v)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-all cursor-pointer ${view === v ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+                  className={`flex items-center gap-1.5 px-2 md:px-3 py-1.5 rounded-lg text-sm font-semibold transition-all cursor-pointer ${view === v ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
                 >
                   <Icon className="w-4 h-4" />
-                  {label}
+                  <span className="hidden sm:inline">{label}</span>
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Content */}
+          {/* ── Content ── */}
           <div className="flex-1 overflow-auto min-h-0 w-full">
             {loading ? (
               <div className="flex items-center justify-center h-full">
                 <div className="w-6 h-6 rounded-full border-2 border-p border-t-transparent animate-spin" />
               </div>
             ) : view === "week" ? (
-              /* ─── Week view ─── */
-              <div className="h-full flex flex-col px-6 py-4 gap-3">
-                {/* Day header row */}
-                <div className="grid grid-cols-7 gap-3 shrink-0">
-                  {weekDays.map((day, i) => {
-                    const isToday = isSameDay(day, today);
-                    const count = dayProjects(day).length;
-                    return (
-                      <button
-                        key={i}
-                        onClick={() => {
-                          navigateDay(day);
-                          setView("dag");
-                        }}
-                        className={`flex flex-col items-center py-2.5 rounded-xl transition-all cursor-pointer ${isToday ? "bg-p text-white" : "bg-white border border-slate-100 text-slate-600 hover:border-p/30"}`}
-                      >
-                        <p
-                          className={`text-[10px] font-bold uppercase tracking-widest ${isToday ? "text-white/70" : "text-slate-400"}`}
+              <>
+                {/* Desktop week view — hidden on mobile */}
+                <div className="hidden md:flex h-full flex-col px-6 py-4 gap-3">
+                  <div className="grid grid-cols-7 gap-3 shrink-0">
+                    {weekDays.map((day, i) => {
+                      const isToday = isSameDay(day, today);
+                      const count = dayProjects(day).length;
+                      return (
+                        <button
+                          key={i}
+                          onClick={() => {
+                            navigateDay(day);
+                            setView("dag");
+                          }}
+                          className={`flex flex-col items-center py-2.5 rounded-xl transition-all cursor-pointer ${isToday ? "bg-p text-white" : "bg-white border border-slate-100 text-slate-600 hover:border-p/30"}`}
                         >
-                          {DAGEN[i]}
-                        </p>
-                        <p
-                          className={`text-lg font-bold leading-tight ${isToday ? "text-white" : "text-slate-800"}`}
-                        >
-                          {day.getDate()}
-                        </p>
-                        {count > 0 && (
-                          <div
-                            className={`mt-1 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${isToday ? "bg-white/20 text-white" : "bg-p/10 text-p"}`}
+                          <p
+                            className={`text-[10px] font-bold uppercase tracking-widest ${isToday ? "text-white/70" : "text-slate-400"}`}
                           >
-                            {count}
-                          </div>
-                        )}
-                      </button>
-                    );
-                  })}
+                            {DAGEN[i]}
+                          </p>
+                          <p
+                            className={`text-lg font-bold leading-tight ${isToday ? "text-white" : "text-slate-800"}`}
+                          >
+                            {day.getDate()}
+                          </p>
+                          {count > 0 && (
+                            <div
+                              className={`mt-1 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${isToday ? "bg-white/20 text-white" : "bg-p/10 text-p"}`}
+                            >
+                              {count}
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="grid grid-cols-7 gap-3 flex-1 min-h-0">
+                    {weekDays.map((day, i) => {
+                      const projects = dayProjects(day);
+                      const isToday = isSameDay(day, today);
+                      return (
+                        <div
+                          key={i}
+                          className={`rounded-2xl p-2 space-y-2 overflow-y-auto ${isToday ? "bg-p/5 border border-p/15" : "bg-slate-50/60 border border-slate-100"}`}
+                        >
+                          {projects.length === 0 ? (
+                            <div className="flex items-center justify-center h-full min-h-20">
+                              <p className="text-xs text-slate-300">Vrij</p>
+                            </div>
+                          ) : (
+                            projects.map((p) => (
+                              <ProjectCard
+                                key={p.id}
+                                project={p}
+                                compact
+                                onClick={() =>
+                                  router.push(`/projecten/bekijken/${p.id}`)
+                                }
+                              />
+                            ))
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
 
-                {/* Project grid per day — fills remaining height */}
-                <div className="grid grid-cols-7 gap-3 flex-1 min-h-0">
+                {/* Mobile week view — vertical list */}
+                <div className="md:hidden px-3 py-4 space-y-4">
                   {weekDays.map((day, i) => {
                     const projects = dayProjects(day);
                     const isToday = isSameDay(day, today);
                     return (
-                      <div
-                        key={i}
-                        className={`rounded-2xl p-2 space-y-2 overflow-y-auto ${isToday ? "bg-p/5 border border-p/15" : "bg-slate-50/60 border border-slate-100"}`}
-                      >
-                        {projects.length === 0 ? (
-                          <div className="flex items-center justify-center h-full min-h-20">
-                            <p className="text-xs text-slate-300">Vrij</p>
+                      <div key={i}>
+                        {/* Day header */}
+                        <button
+                          onClick={() => {
+                            navigateDay(day);
+                            setView("dag");
+                          }}
+                          className={`flex items-center gap-3 w-full px-4 py-2.5 rounded-xl mb-2 transition-colors ${isToday ? "bg-p text-white" : "bg-white border border-slate-100"}`}
+                        >
+                          <div
+                            className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${isToday ? "bg-white/20" : "bg-slate-100"}`}
+                          >
+                            <p
+                              className={`text-sm font-bold ${isToday ? "text-white" : "text-slate-800"}`}
+                            >
+                              {day.getDate()}
+                            </p>
                           </div>
-                        ) : (
-                          projects.map((p) => (
-                            <ProjectCard
-                              key={p.id}
-                              project={p}
-                              compact
-                              onClick={() =>
-                                router.push(`/projecten/bekijken/${p.id}`)
-                              }
-                            />
-                          ))
+                          <div className="text-left flex-1">
+                            <p
+                              className={`text-sm font-bold ${isToday ? "text-white" : "text-slate-800"}`}
+                            >
+                              {DAGEN_LONG[i]}
+                            </p>
+                            <p
+                              className={`text-xs ${isToday ? "text-white/70" : "text-slate-400"}`}
+                            >
+                              {projects.length === 0
+                                ? "Geen projecten"
+                                : `${projects.length} project${projects.length !== 1 ? "en" : ""}`}
+                            </p>
+                          </div>
+                          <ChevronRightIcon
+                            className={`w-4 h-4 shrink-0 ${isToday ? "text-white/60" : "text-slate-300"}`}
+                          />
+                        </button>
+
+                        {/* Projects */}
+                        {projects.length > 0 && (
+                          <div className="space-y-2 pl-2">
+                            {projects.map((p) => (
+                              <ProjectCard
+                                key={p.id}
+                                project={p}
+                                compact
+                                onClick={() =>
+                                  router.push(`/projecten/bekijken/${p.id}`)
+                                }
+                              />
+                            ))}
+                          </div>
                         )}
                       </div>
                     );
                   })}
                 </div>
-              </div>
+              </>
             ) : (
               /* ─── Day view ─── */
-              <div className="h-full flex flex-col px-6 py-4 min-h-0 w-full">
-                {/* Day nav pills — full width grid */}
-                <div
-                  className="grid grid-cols-14 gap-2 mb-4 shrink-0"
-                  style={{ gridTemplateColumns: `repeat(14, minmax(0, 1fr))` }}
-                >
-                  {Array.from({ length: 14 }, (_, i) =>
-                    addDays(dayWindowStart, i),
-                  ).map((day, i) => {
-                    const isSelected = isSameDay(day, selectedDay);
-                    const isToday = isSameDay(day, today);
-                    const count = dayProjects(day).length;
-                    return (
-                      <button
-                        key={i}
-                        onClick={() => navigateDay(day)}
-                        className={`flex flex-col items-center py-3 rounded-xl transition-all cursor-pointer border ${isSelected ? "bg-p border-p text-white" : isToday ? "bg-p/5 border-p/20 text-p" : "bg-white border-slate-100 text-slate-600 hover:border-p/30"}`}
-                      >
-                        <p
-                          className={`text-[10px] font-bold uppercase tracking-wider ${isSelected ? "text-white/70" : "text-slate-400"}`}
+              <div className="h-full flex flex-col px-3 md:px-6 py-4 min-h-0 w-full">
+                {/* Day picker — scrollable */}
+                <div className="overflow-x-auto mb-4 shrink-0 -mx-3 md:mx-0 px-3 md:px-0">
+                  <div
+                    className="flex gap-2 w-max md:grid md:w-auto"
+                    style={{
+                      gridTemplateColumns: `repeat(14, minmax(0, 1fr))`,
+                    }}
+                  >
+                    {Array.from({ length: 14 }, (_, i) =>
+                      addDays(dayWindowStart, i),
+                    ).map((day, i) => {
+                      const isSelected = isSameDay(day, selectedDay);
+                      const isToday = isSameDay(day, today);
+                      const count = dayProjects(day).length;
+                      return (
+                        <button
+                          key={i}
+                          onClick={() => navigateDay(day)}
+                          className={`flex flex-col items-center py-2.5 md:py-3 px-3 md:px-0 rounded-xl transition-all cursor-pointer border min-w-[52px] md:min-w-0
+                            ${isSelected ? "bg-p border-p text-white" : isToday ? "bg-p/5 border-p/20 text-p" : "bg-white border-slate-100 text-slate-600 hover:border-p/30"}`}
                         >
-                          {DAGEN[(day.getDay() + 6) % 7]}
-                        </p>
-                        <p
-                          className={`text-base font-bold ${isSelected ? "text-white" : "text-slate-800"}`}
-                        >
-                          {day.getDate()}
-                        </p>
-                        {count > 0 && (
-                          <div
-                            className={`mt-0.5 w-1.5 h-1.5 rounded-full ${isSelected ? "bg-white" : "bg-p"}`}
-                          />
-                        )}
-                      </button>
-                    );
-                  })}
+                          <p
+                            className={`text-[10px] font-bold uppercase tracking-wider ${isSelected ? "text-white/70" : "text-slate-400"}`}
+                          >
+                            {DAGEN[(day.getDay() + 6) % 7]}
+                          </p>
+                          <p
+                            className={`text-base font-bold ${isSelected ? "text-white" : "text-slate-800"}`}
+                          >
+                            {day.getDate()}
+                          </p>
+                          {count > 0 && (
+                            <div
+                              className={`mt-0.5 w-1.5 h-1.5 rounded-full ${isSelected ? "bg-white" : "bg-p"}`}
+                            />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
 
-                {/* Projects for selected day — scrollable */}
+                {/* Projects for selected day */}
                 <div className="flex-1 overflow-y-auto min-h-0 w-full">
                   {dayProjects(selectedDay).length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-full text-center">
+                    <div className="flex flex-col items-center justify-center h-full text-center py-16">
                       <div className="w-14 h-14 rounded-2xl bg-white border border-slate-100 shadow-sm flex items-center justify-center mb-4">
                         <CalendarDaysIcon className="w-7 h-7 text-slate-300" />
                       </div>
@@ -486,21 +531,20 @@ export default function AgendaPage() {
                       </p>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 pb-4 w-full">
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 md:gap-4 pb-4 w-full">
                       {dayProjects(selectedDay).map((p) => (
                         <div
                           key={p.id}
                           className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden"
                         >
-                          {/* Project header */}
-                          <div className="px-5 py-4 border-b border-slate-50 flex items-start justify-between gap-4">
-                            <div>
-                              <p className="text-base font-bold text-slate-800">
+                          <div className="px-4 md:px-5 py-4 border-b border-slate-50 flex items-start justify-between gap-3">
+                            <div className="min-w-0 flex-1">
+                              <p className="text-base font-bold text-slate-800 truncate">
                                 {p.naam}
                               </p>
                               <div className="flex items-center gap-1.5 mt-1">
-                                <MapPinIcon className="w-3.5 h-3.5 text-slate-300" />
-                                <p className="text-sm text-slate-400">
+                                <MapPinIcon className="w-3.5 h-3.5 text-slate-300 shrink-0" />
+                                <p className="text-sm text-slate-400 truncate">
                                   {p.locatie_naam}
                                   {p.locatie_plaats
                                     ? ` · ${p.locatie_plaats}`
@@ -520,9 +564,7 @@ export default function AgendaPage() {
                               </button>
                             </div>
                           </div>
-
-                          {/* Wagens */}
-                          <div className="p-4 space-y-3">
+                          <div className="p-3 md:p-4 space-y-3">
                             <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
                               Wagens & bezetting
                             </p>
@@ -534,7 +576,7 @@ export default function AgendaPage() {
                               p.bussen.map((b) => (
                                 <div
                                   key={b.id}
-                                  className="flex items-start gap-3 px-4 py-3 bg-slate-50 rounded-xl border border-slate-100"
+                                  className="flex items-start gap-3 px-3 md:px-4 py-3 bg-slate-50 rounded-xl border border-slate-100"
                                 >
                                   <div className="w-8 h-8 rounded-lg bg-p/10 flex items-center justify-center shrink-0">
                                     <TruckIcon className="w-4 h-4 text-p" />

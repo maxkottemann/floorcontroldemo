@@ -43,6 +43,7 @@ export default function getKamersPage({}) {
   const router = useRouter();
   const { toast, showToast, hideToast } = useToast();
   const [refresh, setRefresh] = useState(0);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const [activeGebouw, setActiveGebouw] = useState("");
   const [activeVerdieping, setActiveVerdieping] = useState<{
@@ -132,13 +133,10 @@ export default function getKamersPage({}) {
   }, []);
 
   const addVloer = () => setVloeren([...vloeren, { id: "", naam: "", m2: "" }]);
-
-  const updateVloer = (index: number, updates: Partial<Vloer>) => {
+  const updateVloer = (index: number, updates: Partial<Vloer>) =>
     setVloeren((prev) =>
       prev.map((v, i) => (i === index ? { ...v, ...updates } : v)),
     );
-  };
-
   const removeVloer = (index: number) =>
     setVloeren(vloeren.filter((_, i) => i !== index));
 
@@ -173,7 +171,6 @@ export default function getKamersPage({}) {
         .select("naam, id, verdiepingen(naam, bouwdeel(naam))")
         .order("aangemaakt_op", { ascending: false })
         .limit(20);
-
       setAlleKamers(
         data?.map((d: any) => ({
           id: d.id,
@@ -196,7 +193,6 @@ export default function getKamersPage({}) {
         )
         .eq("id", id)
         .single();
-
       setLocatie({
         naam: data?.naam,
         type: data?.type,
@@ -216,252 +212,268 @@ export default function getKamersPage({}) {
     setVloeren([{ id: "", naam: "", m2: "" }]);
   }
 
+  // ── Shared locatie header ───────────────────────────────────────────
+  const locatieHeader = locatie && (
+    <div>
+      <p className="text-xs font-semibold tracking-widest text-[#154273] uppercase mb-1">
+        Locatie
+      </p>
+      <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight truncate">
+        {locatie.naam}
+      </h1>
+      <div className="flex items-center gap-2 mt-2 flex-wrap">
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold bg-[#154273]/10 text-[#154273] border border-[#154273]/20">
+          {locatie.type}
+        </span>
+        {locatie.extra_checkin && (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
+            <CheckBadgeIcon className="w-3.5 h-3.5" />
+            Extra check-in
+          </span>
+        )}
+      </div>
+      <div className="flex flex-wrap gap-2 md:gap-3 mt-3 md:mt-4">
+        {locatie.adres && (
+          <div className="inline-flex items-center gap-2 px-3 py-2 bg-white border border-gray-100 rounded-lg shadow-sm text-sm text-gray-700">
+            <MapPinIcon className="w-4 h-4 text-[#154273] shrink-0" />
+            <span className="font-medium">{locatie.adres}</span>
+            {locatie.plaats && (
+              <span className="text-gray-400 hidden sm:inline">
+                · {locatie.plaats}
+              </span>
+            )}
+          </div>
+        )}
+        {locatie.perceel && (
+          <div className="inline-flex items-center gap-2 px-3 py-2 bg-white border border-gray-100 rounded-lg shadow-sm text-sm text-gray-700">
+            <BuildingOfficeIcon className="w-4 h-4 text-[#154273] shrink-0" />
+            <span className="font-medium">{locatie.perceel}</span>
+          </div>
+        )}
+        {locatie.contact_persoon && (
+          <div className="inline-flex items-center gap-2 px-3 py-2 bg-white border border-gray-100 rounded-lg shadow-sm text-sm text-gray-700">
+            <UserIcon className="w-4 h-4 text-[#154273] shrink-0" />
+            <span className="font-medium">{locatie.contact_persoon}</span>
+          </div>
+        )}
+        {locatie.telefoonnummer && (
+          <div className="inline-flex items-center gap-2 px-3 py-2 bg-white border border-gray-100 rounded-lg shadow-sm text-sm text-gray-700">
+            <PhoneIcon className="w-4 h-4 text-[#154273] shrink-0" />
+            <span className="font-medium">{locatie.telefoonnummer}</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  // ── Shared form ─────────────────────────────────────────────────────
+  const form = (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="px-4 md:px-6 py-4 md:py-5 border-b border-gray-50">
+        <h2 className="text-base font-semibold text-gray-900">
+          Nieuwe ruimte toevoegen
+        </h2>
+        <p className="text-sm text-gray-400 mt-0.5">
+          Vul de gegevens in om een ruimte aan te maken
+        </p>
+      </div>
+
+      <div className="p-4 md:p-6 space-y-5 md:space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="md:col-span-1">
+            <Inputfield
+              value={naam}
+              onChange={(e) => setNaam(e)}
+              title="Ruimtenaam"
+              className="pb-3 pt-7"
+            />
+          </div>
+          <div>
+            <DropdownBig
+              title="Gebouw"
+              options={alleGebouwen.map((g) => g.naam)}
+              placeholder="Selecteer gebouw"
+              onChange={(selectedNaam) => {
+                const selectedGebouw = alleGebouwen.find(
+                  (g) => g.naam === selectedNaam,
+                );
+                if (selectedGebouw) setActiveGebouw(selectedGebouw.id);
+                setActiveVerdieping(null);
+              }}
+            />
+          </div>
+          <div>
+            <DropdownBig
+              title="Verdieping"
+              value={activeVerdieping?.naam || ""}
+              options={alleVerdiepingen.map((v) => v.naam)}
+              placeholder="Selecteer verdieping"
+              onChange={(selectedNaam) => {
+                const sel = alleVerdiepingen.find(
+                  (v) => v.naam === selectedNaam,
+                );
+                if (sel) setActiveVerdieping(sel);
+              }}
+            />
+          </div>
+        </div>
+
+        <div>
+          <div className="mb-3">
+            <p className="text-sm font-semibold text-gray-700">
+              Vloeroppervlakken
+            </p>
+            <p className="text-xs text-gray-400">
+              Voeg één of meerdere vloertypes met oppervlak toe
+            </p>
+          </div>
+          <div className="space-y-2">
+            {vloeren.map((vloer, index) => (
+              <div
+                key={index}
+                className="flex items-end gap-2 md:gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100"
+              >
+                <div className="flex-1 min-w-0">
+                  <Dropdown
+                    title={`Vloertype ${index + 1}`}
+                    options={alleVloerTypes}
+                    displayKey="naam"
+                    value={vloer}
+                    placeholder="Selecteer vloertype"
+                    onChange={(selected) =>
+                      updateVloer(index, {
+                        id: selected.id,
+                        naam: selected.naam,
+                      })
+                    }
+                  />
+                </div>
+                <div className="w-20 md:w-28 shrink-0">
+                  <InputfieldSmall
+                    title="m²"
+                    value={vloer.m2 || ""}
+                    onChange={(value: string) =>
+                      updateVloer(index, { m2: value })
+                    }
+                  />
+                </div>
+                {vloeren.length > 1 && (
+                  <button
+                    onClick={() => removeVloer(index)}
+                    className="mb-0.5 p-2 text-gray-300 hover:text-red-400 hover:bg-red-50 rounded-lg transition-colors shrink-0"
+                  >
+                    <TrashIcon className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex justify-between pt-2 border-t border-gray-50">
+          <button
+            onClick={addVloer}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#154273] hover:text-[#0f2f52] hover:cursor-pointer px-3 py-1.5 rounded-lg transition-colors"
+          >
+            <PlusIcon className="w-3.5 h-3.5" />
+            Vloer toevoegen
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+            className="inline-flex items-center gap-2 px-4 md:px-5 py-2.5 bg-[#154273] hover:bg-[#0f2f52] hover:cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-xl shadow-sm transition-colors"
+          >
+            <PlusIcon className="w-4 h-4" />
+            <span className="hidden sm:inline">
+              {isSubmitting ? "Bezig..." : "Ruimte toevoegen"}
+            </span>
+            <span className="sm:hidden">
+              {isSubmitting ? "..." : "Toevoegen"}
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  // ── Shared recent kamers ────────────────────────────────────────────
+  const recenteKamers = (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="px-4 md:px-5 py-4 border-b border-gray-50">
+        <h2 className="text-base font-semibold text-gray-900">
+          Recente ruimtes
+        </h2>
+        <p className="text-xs text-gray-400 mt-0.5">Laatste 20 aangemaakt</p>
+      </div>
+      <div className="divide-y divide-gray-50">
+        {alleKamers.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center px-6">
+            <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center mb-3">
+              <HomeModernIcon className="w-5 h-5 text-gray-300" />
+            </div>
+            <p className="text-sm font-medium text-gray-400">
+              Nog geen kamers aangemaakt
+            </p>
+          </div>
+        ) : (
+          alleKamers.map((k) => (
+            <a
+              key={k.id}
+              href={`/locaties/kamerbekijken/${k.id}`}
+              className="flex items-center gap-3 px-4 md:px-5 py-3.5 hover:bg-gray-50 active:bg-gray-100 transition-colors group"
+            >
+              <div className="w-8 h-8 rounded-lg bg-[#154273]/10 flex items-center justify-center shrink-0 group-hover:bg-[#154273]/20 transition-colors">
+                <HomeModernIcon className="w-4 h-4 text-[#154273]" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-gray-800 truncate">
+                  {k.kamer_naam}
+                </p>
+                <p className="text-xs text-gray-400 truncate">
+                  {k.gebouw_naam} · {k.verdieping_naam}
+                </p>
+              </div>
+              <ChevronRightIcon className="w-4 h-4 text-gray-200 group-hover:text-[#154273] shrink-0 transition-colors" />
+            </a>
+          ))
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen flex bg-[#F5F6FA]">
-      <Sidebar className="fixed top-0 left-0 h-screen" />
+      <Sidebar
+        className="fixed top-0 left-0 h-screen"
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
       {toast && (
         <Toast message={toast.message} type={toast.type} onClose={hideToast} />
       )}
 
       <div className="flex flex-col flex-1 h-screen">
-        <Topbar title="Ruimtebeheer" />
+        <Topbar
+          title="Ruimtebeheer"
+          onMenuToggle={() => setSidebarOpen((p) => !p)}
+        />
 
-        <main className="flex-1 overflow-auto p-8">
-          <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-6 items-start">
+        <main className="flex-1 overflow-auto p-3 md:p-8">
+          {/* ── Desktop (xl+) — original two-column layout ── */}
+          <div className="hidden xl:grid xl:grid-cols-[1fr_360px] gap-6 items-start">
             <div className="flex flex-col gap-6">
-              {locatie && (
-                <div>
-                  <p className="text-xs font-semibold tracking-widest text-[#154273] uppercase mb-1">
-                    Locatie
-                  </p>
-                  <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
-                    {locatie.naam}
-                  </h1>
-                  <div className="flex items-center gap-2 mt-2">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold bg-[#154273]/10 text-[#154273] border border-[#154273]/20">
-                      {locatie.type}
-                    </span>
-                    {locatie.extra_checkin && (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
-                        <CheckBadgeIcon className="w-3.5 h-3.5" />
-                        Extra check-in
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="flex flex-wrap gap-3 mt-4">
-                    {locatie.adres && (
-                      <div className="inline-flex items-center gap-2 px-3 py-2 bg-white border border-gray-100 rounded-lg shadow-sm text-sm text-gray-700">
-                        <MapPinIcon className="w-4 h-4 text-[#154273] shrink-0" />
-                        <span className="font-medium">{locatie.adres}</span>
-                        {locatie.plaats && (
-                          <span className="text-gray-400">
-                            · {locatie.plaats}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                    {locatie.perceel && (
-                      <div className="inline-flex items-center gap-2 px-3 py-2 bg-white border border-gray-100 rounded-lg shadow-sm text-sm text-gray-700">
-                        <BuildingOfficeIcon className="w-4 h-4 text-[#154273] shrink-0" />
-                        <span className="font-medium">{locatie.perceel}</span>
-                      </div>
-                    )}
-                    {locatie.contact_persoon && (
-                      <div className="inline-flex items-center gap-2 px-3 py-2 bg-white border border-gray-100 rounded-lg shadow-sm text-sm text-gray-700">
-                        <UserIcon className="w-4 h-4 text-[#154273] shrink-0" />
-                        <span className="font-medium">
-                          {locatie.contact_persoon}
-                        </span>
-                      </div>
-                    )}
-                    {locatie.telefoonnummer && (
-                      <div className="inline-flex items-center gap-2 px-3 py-2 bg-white border border-gray-100 rounded-lg shadow-sm text-sm text-gray-700">
-                        <PhoneIcon className="w-4 h-4 text-[#154273] shrink-0" />
-                        <span className="font-medium">
-                          {locatie.telefoonnummer}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                <div className="px-6 py-5 border-b border-gray-50">
-                  <h2 className="text-base font-semibold text-gray-900">
-                    Nieuwe ruimte toevoegen
-                  </h2>
-                  <p className="text-sm text-gray-400 mt-0.5">
-                    Vul de gegevens in om een ruimte aan te maken
-                  </p>
-                </div>
-
-                <div className="p-6 space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="md:col-span-1">
-                      <Inputfield
-                        value={naam}
-                        onChange={(e) => setNaam(e)}
-                        title="Ruimtenaam"
-                        className="pb-3 pt-7"
-                      />
-                    </div>
-                    <div>
-                      <DropdownBig
-                        title="Gebouw"
-                        options={alleGebouwen.map((g) => g.naam)}
-                        placeholder="Selecteer gebouw"
-                        onChange={(selectedNaam) => {
-                          const selectedGebouw = alleGebouwen.find(
-                            (g) => g.naam === selectedNaam,
-                          );
-                          if (selectedGebouw)
-                            setActiveGebouw(selectedGebouw.id);
-                          setActiveVerdieping(null);
-                        }}
-                      />
-                    </div>
-                    <div>
-                      <DropdownBig
-                        title="Verdieping"
-                        value={activeVerdieping?.naam || ""}
-                        options={alleVerdiepingen.map((v) => v.naam)}
-                        placeholder="Selecteer verdieping"
-                        onChange={(selectedNaam) => {
-                          const selectedverdieping = alleVerdiepingen.find(
-                            (v) => v.naam === selectedNaam,
-                          );
-                          if (selectedverdieping)
-                            setActiveVerdieping(selectedverdieping);
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex items-center justify-between mb-3">
-                      <div>
-                        <p className="text-sm font-semibold text-gray-700">
-                          Vloeroppervlakken
-                        </p>
-                        <p className="text-xs text-gray-400">
-                          Voeg één of meerdere vloertypes met oppervlak toe
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      {vloeren.map((vloer, index) => (
-                        <div
-                          key={index}
-                          className="flex items-end gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100"
-                        >
-                          <div className="flex-1">
-                            <Dropdown
-                              title={`Vloertype ${index + 1}`}
-                              options={alleVloerTypes}
-                              displayKey="naam"
-                              value={vloer}
-                              placeholder="Selecteer vloertype"
-                              onChange={(selected) =>
-                                updateVloer(index, {
-                                  id: selected.id,
-                                  naam: selected.naam,
-                                })
-                              }
-                            />
-                          </div>
-                          <div className="w-28">
-                            <InputfieldSmall
-                              title="m²"
-                              value={vloer.m2 || ""}
-                              onChange={(value: string) =>
-                                updateVloer(index, { m2: value })
-                              }
-                            />
-                          </div>
-                          {vloeren.length > 1 && (
-                            <button
-                              onClick={() => removeVloer(index)}
-                              className="mb-0.5 p-2 text-gray-300 hover:text-red-400 hover:bg-red-50 rounded-lg transition-colors"
-                              title="Verwijder vloer"
-                            >
-                              <TrashIcon className="w-4 h-4" />
-                            </button>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="flex justify-between pt-2 border-t border-gray-50">
-                    <button
-                      onClick={addVloer}
-                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#154273] hover:text-[#0f2f52] hover:cursor-pointer px-3 py-1.5 rounded-lg transition-colors"
-                    >
-                      <PlusIcon className="w-3.5 h-3.5" />
-                      Vloer toevoegen
-                    </button>
-                    <button
-                      onClick={handleSubmit}
-                      disabled={isSubmitting}
-                      className="inline-flex items-center  gap-2 px-5 py-2.5 bg-[#154273] hover:bg-[#0f2f52] hover:cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-xl shadow-sm transition-colors"
-                    >
-                      <PlusIcon className="w-4 h-4" />
-                      {isSubmitting ? "Bezig..." : "Ruimte toevoegen"}
-                    </button>
-                  </div>
-                </div>
-              </div>
+              {locatieHeader}
+              {form}
             </div>
-
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-              <div className="px-5 py-4 border-b border-gray-50">
-                <h2 className="text-base font-semibold text-gray-900">
-                  Recente ruimtes
-                </h2>
-                <p className="text-xs text-gray-400 mt-0.5">
-                  Laatste 20 aangemaakt
-                </p>
-              </div>
-
-              <div className="divide-y divide-gray-50">
-                {alleKamers.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-12 text-center px-6">
-                    <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center mb-3">
-                      <HomeModernIcon className="w-5 h-5 text-gray-300" />
-                    </div>
-                    <p className="text-sm font-medium text-gray-400">
-                      Nog geen kamers aangemaakt
-                    </p>
-                  </div>
-                ) : (
-                  alleKamers.map((k) => (
-                    <a
-                      key={k.id}
-                      href={`/locaties/kamerbekijken/${k.id}`}
-                      className="flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 transition-colors group"
-                    >
-                      <div className="w-8 h-8 rounded-lg bg-[#154273]/10 flex items-center justify-center shrink-0 group-hover:bg-[#154273]/20 transition-colors">
-                        <HomeModernIcon className="w-4 h-4 text-[#154273]" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-gray-800 truncate">
-                          {k.kamer_naam}
-                        </p>
-                        <p className="text-xs text-gray-400 truncate">
-                          {k.gebouw_naam} · {k.verdieping_naam}
-                        </p>
-                      </div>
-                      <ChevronRightIcon className="w-4 h-4 text-gray-200 group-hover:text-[#154273] shrink-0 transition-colors" />
-                    </a>
-                  ))
-                )}
-              </div>
-            </div>
+            {recenteKamers}
           </div>
-          {/* end grid */}
+
+          {/* ── Mobile / tablet (below xl) — single column ── */}
+          <div className="xl:hidden flex flex-col gap-4">
+            {locatieHeader}
+            {form}
+            {recenteKamers}
+          </div>
         </main>
       </div>
     </div>

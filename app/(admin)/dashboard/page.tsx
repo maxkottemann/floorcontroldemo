@@ -79,6 +79,8 @@ export default function DashboardPage() {
   const [activeProjecten, setActiveProjecten] = useState<ActiveProject[]>([]);
   const [loadingProjects, setLoadingProjects] = useState(true);
 
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   const sustainability = [
     { label: "CO₂-reductie mobiliteit", value: 18, target: 25, suffix: "%" },
     { label: "Afvalreductie", value: 42, target: 50, suffix: "%" },
@@ -258,11 +260,18 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen flex">
-      <Sidebar className="fixed top-0 left-0 h-screen" />
+      <Sidebar
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        className="fixed top-0 left-0 h-screen"
+      />
       <div className="flex flex-col flex-1 h-screen">
-        <Topbar title="Dashboard" />
+        <Topbar
+          title="Dashboard"
+          onMenuToggle={() => setSidebarOpen((p) => !p)}
+        />
         <main className="flex-1 overflow-auto p-6 bg-[#F5F6FA]">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-5">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-5 mb-5">
             <Card>
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">
                 Jaarplanning gepland
@@ -377,7 +386,7 @@ export default function DashboardPage() {
                         </span>
                       </div>
 
-                      <div className="grid grid-cols-3 divide-x divide-slate-100">
+                      <div className="grid grid-cols-1 md:grid-cols-3 divide-x divide-slate-100">
                         {p.perType.map((t, i) => (
                           <div
                             key={t.type}
@@ -434,7 +443,7 @@ export default function DashboardPage() {
               )}
             </Card>
 
-            <Card className="col-span-2">
+            <Card className="col-span-3 md:col-span-2">
               <div className="mb-4">
                 <h2 className="text-lg font-bold">Duurzaamheid</h2>
                 <p className="text-sm text-slate-500">
@@ -549,7 +558,7 @@ export default function DashboardPage() {
               )}
             </Card>
 
-            <Card className="col-span-2">
+            <Card className="col-span-3 md:col-span-2">
               <div className="flex items-start justify-between mb-5">
                 <div>
                   <p className="text-lg font-bold">Snelle acties</p>

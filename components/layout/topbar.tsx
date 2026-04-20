@@ -2,16 +2,19 @@
 
 import { supabase } from "@/lib/supabase";
 import {
-  UserCircleIcon,
   ArrowRightStartOnRectangleIcon,
   ChevronDownIcon,
+  Bars3Icon,
 } from "@heroicons/react/24/outline";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
-type TopbarProps = { title: string };
+type TopbarProps = {
+  title: string;
+  onMenuToggle?: () => void;
+};
 
-export default function Topbar({ title }: TopbarProps) {
+export default function Topbar({ title, onMenuToggle }: TopbarProps) {
   const router = useRouter();
   const [username, setUsername] = useState("Laden...");
   const [email, setEmail] = useState("");
@@ -59,13 +62,27 @@ export default function Topbar({ title }: TopbarProps) {
     .slice(0, 2);
 
   return (
-    <div className="flex flex-row w-full bg-p h-16 justify-between items-center px-6 shrink-0 z-40">
-      <h2 className="text-white font-bold text-lg tracking-tight">{title}</h2>
+    <div className="flex flex-row w-full bg-p h-16 justify-between items-center px-4 sm:px-6 shrink-0 z-40">
+      <div className="flex items-center gap-3">
+        {onMenuToggle && (
+          <button
+            onClick={onMenuToggle}
+            className="lg:hidden flex items-center justify-center w-9 h-9 rounded-xl hover:bg-white/20 transition-colors"
+          >
+            <Bars3Icon className="w-5 h-5 text-white" />
+          </button>
+        )}
+        <h2
+          className={`text-white font-bold text-lg tracking-tight ${onMenuToggle ? "hidden lg:block" : ""}`}
+        >
+          {title}
+        </h2>
+      </div>
 
       <div className="relative" ref={menuRef}>
         <button
           onClick={() => setMenuOpen((p) => !p)}
-          className="flex items-center gap-2.5  hover:bg-white/20 transition-colors rounded-xl px-3 py-2 cursor-pointer"
+          className="flex items-center gap-2.5 hover:bg-white/20 transition-colors rounded-xl px-3 py-2 cursor-pointer"
         >
           <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center shrink-0">
             <span className="text-xs font-bold text-white">{initials}</span>
@@ -87,7 +104,6 @@ export default function Topbar({ title }: TopbarProps) {
 
         {menuOpen && (
           <div className="fixed top-16 right-4 w-52 bg-white rounded-2xl border border-slate-100 shadow-xl z-[999] overflow-hidden">
-            {/* User info header */}
             <div className="px-4 py-3.5 border-b border-slate-50">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-full bg-p/10 flex items-center justify-center shrink-0">
@@ -103,8 +119,6 @@ export default function Topbar({ title }: TopbarProps) {
                 </div>
               </div>
             </div>
-
-            {/* Actions */}
             <div className="p-2">
               <button
                 onClick={handleLogout}

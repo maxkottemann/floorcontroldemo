@@ -86,7 +86,6 @@ function PlanOnderhoudsPopup({
         .select("kamers(verdiepingen(bouwdeel(locatie_id)))")
         .eq("id", kamervloer_id)
         .single();
-
       const locatie_id = (vloer?.kamers as any)?.verdiepingen?.bouwdeel
         ?.locatie_id;
       if (!locatie_id) {
@@ -104,7 +103,6 @@ function PlanOnderhoudsPopup({
         })
         .select("id")
         .single();
-
       if (projectError || !project) {
         showToast("Project kon niet worden aangemaakt", "error");
         return;
@@ -113,13 +111,11 @@ function PlanOnderhoudsPopup({
       const { error: vloerError } = await supabase
         .from("project_vloeren")
         .insert({ project_id: project.id, kamervloer_id });
-
       if (vloerError) {
         await supabase.from("projecten").delete().eq("id", project.id);
         showToast("Vloer kon niet worden gekoppeld", "error");
         return;
       }
-
       showToast("Project aangemaakt", "success");
       onSuccess("Onderhoud ingepland");
       onClose();
@@ -129,10 +125,10 @@ function PlanOnderhoudsPopup({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm p-4">
       <div
         ref={ref}
-        className="bg-white rounded-2xl shadow-xl border border-slate-100 w-full max-w-md mx-4 overflow-visible"
+        className="bg-white rounded-2xl shadow-xl border border-slate-100 w-full max-w-md overflow-visible"
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
           <div>
@@ -201,6 +197,7 @@ export default function MeldingBekijkenPage() {
   const { toast, showToast, hideToast } = useToast();
   const router = useRouter();
   const { id } = useParams();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const [melding, setMelding] = useState<melding>();
   const [locatieInfo, setLocatieInfo] = useState<LocatieInfo>();
@@ -225,12 +222,10 @@ export default function MeldingBekijkenPage() {
           )
           .eq("id", id)
           .single();
-
         if (!data || error) {
           showToast("Kon melding niet laden", "error");
           return;
         }
-
         setMelding({
           id: data.id,
           profielnaam: (data.profielen as any)?.naam,
@@ -248,36 +243,21 @@ export default function MeldingBekijkenPage() {
     getMelding();
   }, [id]);
 
-  // Separate useEffect for location chain
   useEffect(() => {
     async function getLocatieInfo() {
       if (!melding?.kamervloer_id) return;
-
       const { data } = await supabase
         .from("kamer_vloeren")
         .select(
-          `
-          kamers(
-            naam,
-            verdiepingen(
-              naam,
-              bouwdeel(
-                naam,
-                locaties(naam)
-              )
-            )
-          )
-        `,
+          `kamers(naam, verdiepingen(naam, bouwdeel(naam, locaties(naam))))`,
         )
         .eq("id", melding.kamervloer_id)
         .single();
-
       if (data) {
         const kamer = data.kamers as any;
         const verdieping = kamer?.verdiepingen;
         const bouwdeel = verdieping?.bouwdeel;
         const locatie = bouwdeel?.locaties;
-
         setLocatieInfo({
           locatie_naam: locatie?.naam ?? "—",
           bouwdeel_naam: bouwdeel?.naam ?? "—",
@@ -334,9 +314,257 @@ export default function MeldingBekijkenPage() {
     setRejecting(false);
   }
 
+  // ── Shared action panel content ─────────────────────────────────────
+  const actionPanel = melding && (
+    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+      <div className="px-5 py-4 border-b border-slate-50">
+        <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
+          Acties
+        </p>
+      </div>
+      <div className="p-5 space-y-3">
+        {melding.afgehandeld ? (
+          <div className="flex flex-col items-center justify-center py-6 text-center">
+            <CheckCircleIcon className="w-8 h-8 text-emerald-400 mb-2" />
+            <p className="text-sm font-semibold text-slate-500">
+              Melding is afgehandeld
+            </p>
+            <p className="text-xs text-slate-300 mt-1">
+              Er zijn geen acties meer beschikbaar
+            </p>
+          </div>
+        ) : (
+          <>
+            <button
+              onClick={() => setPlanPopupOpen(true)}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-p text-white hover:bg-p/90 transition-all cursor-pointer"
+            >
+              <CalendarDaysIcon className="w-4 h-4 shrink-0" />
+              <div className="text-left">
+                <p className="text-sm font-bold">Plan onderhoud</p>
+                <p className="text-xs text-white/70">
+                  Maak een project aan voor deze vloer
+                </p>
+              </div>
+            </button>
+
+            {confirm === "afhandelen" ? (
+              <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-3 space-y-2">
+                <p className="text-xs font-semibold text-emerald-700 text-center">
+                  Melding afhandelen?
+                </p>
+                <textarea
+                  value={uitleg}
+                  onChange={(e) => setUitleg(e.target.value)}
+                  placeholder="Uitleg verplicht..."
+                  rows={3}
+                  className="w-full text-xs text-slate-700 bg-white border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-emerald-300 placeholder:text-slate-300 resize-none transition-all"
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      setConfirm(null);
+                      setUitleg("");
+                    }}
+                    className="flex-1 py-1.5 text-xs font-semibold cursor-pointer text-slate-500 hover:text-slate-700 bg-white border border-slate-200 rounded-lg transition-colors"
+                  >
+                    Annuleren
+                  </button>
+                  <button
+                    onClick={() => {
+                      setConfirm(null);
+                      markAfgehandeld();
+                    }}
+                    disabled={handling || !uitleg.trim()}
+                    className="flex-1 py-1.5 text-xs font-bold text-white cursor-pointer bg-emerald-500 hover:bg-emerald-600 rounded-lg transition-colors disabled:opacity-60"
+                  >
+                    {handling ? "Bezig..." : "Bevestigen"}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => setConfirm("afhandelen")}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 transition-all cursor-pointer"
+              >
+                <CheckCircleIcon className="w-4 h-4 text-emerald-600 shrink-0" />
+                <div className="text-left">
+                  <p className="text-sm font-bold text-emerald-700">
+                    Afhandelen
+                  </p>
+                  <p className="text-xs text-emerald-600/70">
+                    Markeer als opgelost
+                  </p>
+                </div>
+              </button>
+            )}
+
+            {confirm === "afwijzen" ? (
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-2">
+                <p className="text-xs font-semibold text-slate-600 text-center">
+                  Melding afwijzen?
+                </p>
+                <textarea
+                  value={uitleg}
+                  onChange={(e) => setUitleg(e.target.value)}
+                  placeholder="Uitleg verplicht..."
+                  rows={3}
+                  className="w-full text-xs text-slate-700 bg-white border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-slate-300 placeholder:text-slate-300 resize-none transition-all"
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      setConfirm(null);
+                      setUitleg("");
+                    }}
+                    className="flex-1 py-1.5 text-xs font-semibold text-slate-500 cursor-pointer hover:text-slate-700 bg-white border border-slate-200 rounded-lg transition-colors"
+                  >
+                    Annuleren
+                  </button>
+                  <button
+                    onClick={() => {
+                      setConfirm(null);
+                      markRejected();
+                    }}
+                    disabled={rejecting || !uitleg.trim()}
+                    className="flex-1 py-1.5 text-xs font-bold text-white cursor-pointer bg-slate-500 hover:bg-slate-600 rounded-lg transition-colors disabled:opacity-60"
+                  >
+                    {rejecting ? "Bezig..." : "Bevestigen"}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => setConfirm("afwijzen")}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-100 transition-all cursor-pointer"
+              >
+                <XMarkIcon className="w-4 h-4 text-slate-500 shrink-0" />
+                <div className="text-left">
+                  <p className="text-sm font-bold text-slate-600">Afwijzen</p>
+                  <p className="text-xs text-slate-400">
+                    Melding niet relevant
+                  </p>
+                </div>
+              </button>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+
+  const mainContent = melding && (
+    <>
+      {/* Beschrijving */}
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        <div className="px-4 md:px-6 py-5 md:py-6 border-b border-slate-50">
+          <div className="flex items-center gap-2.5 mb-3">
+            <div className="w-7 h-7 rounded-lg bg-p/10 flex items-center justify-center">
+              <ChatBubbleBottomCenterTextIcon className="w-4 h-4 text-p" />
+            </div>
+            <p className="text-sm font-bold text-slate-700">Beschrijving</p>
+          </div>
+          <p className="text-sm text-slate-600 leading-relaxed">
+            {melding.beschrijving}
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-slate-50">
+          {[
+            {
+              icon: <SwatchIcon className="w-4 h-4 text-slate-400" />,
+              label: "Vloertype",
+              value: melding.kamervloer_naam ?? "—",
+            },
+            {
+              icon: <UserIcon className="w-4 h-4 text-slate-400" />,
+              label: "Ingediend door",
+              value: melding.profielnaam ?? "—",
+            },
+          ].map(({ icon, label, value }) => (
+            <div key={label} className="px-4 md:px-6 py-4 md:py-5">
+              <div className="flex items-center gap-2 mb-2">
+                {icon}
+                <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
+                  {label}
+                </p>
+              </div>
+              <p className="text-sm font-semibold text-slate-700">{value}</p>
+            </div>
+          ))}
+          <div className="px-4 md:px-6 py-4 md:py-5">
+            <div className="flex items-center gap-2 mb-2">
+              <ClockIcon className="w-4 h-4 text-slate-400" />
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
+                Aangemaakt op
+              </p>
+            </div>
+            <p className="text-sm font-semibold text-slate-700">
+              {formatDate(melding.aangemaakt_op)}
+            </p>
+            <p className="text-xs text-slate-400 mt-0.5">
+              {formatTime(melding.aangemaakt_op)}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Locatie */}
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        <div className="px-4 md:px-6 py-4 border-b border-slate-50">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-lg bg-p/10 flex items-center justify-center">
+              <MapPinIcon className="w-4 h-4 text-p" />
+            </div>
+            <p className="text-sm font-bold text-slate-700">Locatie</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-slate-50">
+          {[
+            {
+              icon: <MapPinIcon className="w-4 h-4 text-slate-400" />,
+              label: "Locatie",
+              value: locatieInfo?.locatie_naam,
+            },
+            {
+              icon: <BuildingOfficeIcon className="w-4 h-4 text-slate-400" />,
+              label: "Gebouw",
+              value: locatieInfo?.bouwdeel_naam,
+            },
+            {
+              icon: <Square3Stack3DIcon className="w-4 h-4 text-slate-400" />,
+              label: "Verdieping",
+              value: locatieInfo?.verdieping_naam,
+            },
+            {
+              icon: <HomeModernIcon className="w-4 h-4 text-slate-400" />,
+              label: "Kamer",
+              value: locatieInfo?.kamer_naam,
+            },
+          ].map(({ icon, label, value }) => (
+            <div key={label} className="px-4 md:px-6 py-4 md:py-5">
+              <div className="flex items-center gap-2 mb-2">
+                {icon}
+                <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
+                  {label}
+                </p>
+              </div>
+              <p className="text-sm font-semibold text-slate-700">
+                {value ?? "—"}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+
   return (
     <div className="min-h-screen flex bg-[#F5F6FA]">
-      <Sidebar className="fixed top-0 left-0 h-screen" />
+      <Sidebar
+        className="fixed top-0 left-0 h-screen"
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
       {toast && (
         <Toast message={toast.message} type={toast.type} onClose={hideToast} />
       )}
@@ -350,9 +578,12 @@ export default function MeldingBekijkenPage() {
       )}
 
       <div className="flex flex-col flex-1 h-screen">
-        <Topbar title="Meldingen" />
+        <Topbar
+          title="Meldingen"
+          onMenuToggle={() => setSidebarOpen((p) => !p)}
+        />
 
-        <main className="flex-1 overflow-auto p-8">
+        <main className="flex-1 overflow-auto p-3 md:p-8">
           {loading ? (
             <div className="flex items-center justify-center py-24">
               <div className="w-6 h-6 rounded-full border-2 border-p border-t-transparent animate-spin" />
@@ -364,296 +595,49 @@ export default function MeldingBekijkenPage() {
               </p>
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-4 md:space-y-6">
               {/* Back + header */}
               <div>
                 <button
                   onClick={() => router.back()}
-                  className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-600 transition-colors mb-4 cursor-pointer"
+                  className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-600 transition-colors mb-3 md:mb-4 cursor-pointer"
                 >
                   <ArrowLeftIcon className="w-4 h-4" />
                   Terug naar meldingen
                 </button>
                 <div className="flex items-start justify-between gap-4">
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <p className="text-xs font-bold uppercase tracking-[0.14em] text-p/60 mb-1">
                       Melding
                     </p>
-                    <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+                    <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight truncate">
                       {melding.titel}
                     </h1>
                   </div>
                   {melding.afgehandeld ? (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-bold bg-emerald-50 text-emerald-700 border border-emerald-100 shrink-0">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs md:text-sm font-bold bg-emerald-50 text-emerald-700 border border-emerald-100 shrink-0">
                       <CheckCircleIcon className="w-4 h-4" />
-                      Afgehandeld
+                      <span className="hidden sm:inline">Afgehandeld</span>
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-bold bg-amber-50 text-amber-600 border border-amber-100 shrink-0">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs md:text-sm font-bold bg-amber-50 text-amber-600 border border-amber-100 shrink-0">
                       <ExclamationTriangleIcon className="w-4 h-4" />
-                      Openstaand
+                      <span className="hidden sm:inline">Openstaand</span>
                     </span>
                   )}
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-6 items-start">
-                {/* Main */}
-                <div className="space-y-5">
-                  {/* Beschrijving */}
-                  <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-                    <div className="px-6 py-6 border-b border-slate-50">
-                      <div className="flex items-center gap-2.5 mb-3">
-                        <div className="w-7 h-7 rounded-lg bg-p/10 flex items-center justify-center">
-                          <ChatBubbleBottomCenterTextIcon className="w-4 h-4 text-p" />
-                        </div>
-                        <p className="text-sm font-bold text-slate-700">
-                          Beschrijving
-                        </p>
-                      </div>
-                      <p className="text-sm text-slate-600 leading-relaxed">
-                        {melding.beschrijving}
-                      </p>
-                    </div>
+              {/* Desktop — two column (xl+) */}
+              <div className="hidden xl:grid xl:grid-cols-[1fr_300px] gap-6 items-start">
+                <div className="space-y-5">{mainContent}</div>
+                {actionPanel}
+              </div>
 
-                    {/* Melding meta */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-slate-50">
-                      <div className="px-6 py-5">
-                        <div className="flex items-center gap-2 mb-2">
-                          <SwatchIcon className="w-4 h-4 text-slate-400" />
-                          <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
-                            Vloertype
-                          </p>
-                        </div>
-                        <p className="text-sm font-semibold text-slate-700">
-                          {melding.kamervloer_naam ?? "—"}
-                        </p>
-                      </div>
-                      <div className="px-6 py-5">
-                        <div className="flex items-center gap-2 mb-2">
-                          <UserIcon className="w-4 h-4 text-slate-400" />
-                          <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
-                            Ingediend door
-                          </p>
-                        </div>
-                        <p className="text-sm font-semibold text-slate-700">
-                          {melding.profielnaam ?? "—"}
-                        </p>
-                      </div>
-                      <div className="px-6 py-5">
-                        <div className="flex items-center gap-2 mb-2">
-                          <ClockIcon className="w-4 h-4 text-slate-400" />
-                          <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
-                            Aangemaakt op
-                          </p>
-                        </div>
-                        <p className="text-sm font-semibold text-slate-700">
-                          {formatDate(melding.aangemaakt_op)}
-                        </p>
-                        <p className="text-xs text-slate-400 mt-0.5">
-                          {formatTime(melding.aangemaakt_op)}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Locatie info */}
-                  <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-                    <div className="px-6 py-4 border-b border-slate-50">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-7 h-7 rounded-lg bg-p/10 flex items-center justify-center">
-                          <MapPinIcon className="w-4 h-4 text-p" />
-                        </div>
-                        <p className="text-sm font-bold text-slate-700">
-                          Locatie
-                        </p>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-slate-50">
-                      {[
-                        {
-                          icon: (
-                            <MapPinIcon className="w-4 h-4 text-slate-400" />
-                          ),
-                          label: "Locatie",
-                          value: locatieInfo?.locatie_naam,
-                        },
-                        {
-                          icon: (
-                            <BuildingOfficeIcon className="w-4 h-4 text-slate-400" />
-                          ),
-                          label: "Gebouw",
-                          value: locatieInfo?.bouwdeel_naam,
-                        },
-                        {
-                          icon: (
-                            <Square3Stack3DIcon className="w-4 h-4 text-slate-400" />
-                          ),
-                          label: "Verdieping",
-                          value: locatieInfo?.verdieping_naam,
-                        },
-                        {
-                          icon: (
-                            <HomeModernIcon className="w-4 h-4 text-slate-400" />
-                          ),
-                          label: "Kamer",
-                          value: locatieInfo?.kamer_naam,
-                        },
-                      ].map(({ icon, label, value }) => (
-                        <div key={label} className="px-6 py-5">
-                          <div className="flex items-center gap-2 mb-2">
-                            {icon}
-                            <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
-                              {label}
-                            </p>
-                          </div>
-                          <p className="text-sm font-semibold text-slate-700">
-                            {value ?? "—"}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Right sidebar — actions */}
-                <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-                  <div className="px-5 py-4 border-b border-slate-50">
-                    <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
-                      Acties
-                    </p>
-                  </div>
-                  <div className="p-5 space-y-3">
-                    {melding.afgehandeld ? (
-                      <div className="flex flex-col items-center justify-center py-6 text-center">
-                        <CheckCircleIcon className="w-8 h-8 text-emerald-400 mb-2" />
-                        <p className="text-sm font-semibold text-slate-500">
-                          Melding is afgehandeld
-                        </p>
-                        <p className="text-xs text-slate-300 mt-1">
-                          Er zijn geen acties meer beschikbaar
-                        </p>
-                      </div>
-                    ) : (
-                      <>
-                        <button
-                          onClick={() => setPlanPopupOpen(true)}
-                          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-p text-white hover:bg-p/90 transition-all cursor-pointer"
-                        >
-                          <CalendarDaysIcon className="w-4 h-4 shrink-0" />
-                          <div className="text-left">
-                            <p className="text-sm font-bold">Plan onderhoud</p>
-                            <p className="text-xs text-white/70">
-                              Maak een project aan voor deze vloer
-                            </p>
-                          </div>
-                        </button>
-
-                        {confirm === "afhandelen" ? (
-                          <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-3 space-y-2">
-                            <p className="text-xs font-semibold text-emerald-700 text-center">
-                              Melding afhandelen?
-                            </p>
-                            <textarea
-                              value={uitleg}
-                              onChange={(e) => setUitleg(e.target.value)}
-                              placeholder="Uitleg verplicht..."
-                              rows={3}
-                              className="w-full text-xs text-slate-700 bg-white border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-emerald-300 placeholder:text-slate-300 resize-none transition-all"
-                            />
-                            <div className="flex gap-2">
-                              <button
-                                onClick={() => {
-                                  setConfirm(null);
-                                  setUitleg("");
-                                }}
-                                className="flex-1 py-1.5 text-xs font-semibold cursor-pointer text-slate-500 hover:text-slate-700 bg-white border border-slate-200 rounded-lg transition-colors"
-                              >
-                                Annuleren
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setConfirm(null);
-                                  markAfgehandeld();
-                                }}
-                                disabled={handling || !uitleg.trim()}
-                                className="flex-1 py-1.5 text-xs font-bold text-white cursor-pointer bg-emerald-500 hover:bg-emerald-600 rounded-lg transition-colors disabled:opacity-60"
-                              >
-                                {handling ? "Bezig..." : "Bevestigen"}
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => setConfirm("afhandelen")}
-                            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 transition-all cursor-pointer"
-                          >
-                            <CheckCircleIcon className="w-4 h-4 text-emerald-600 shrink-0" />
-                            <div className="text-left">
-                              <p className="text-sm font-bold text-emerald-700">
-                                Afhandelen
-                              </p>
-                              <p className="text-xs text-emerald-600/70">
-                                Markeer als opgelost
-                              </p>
-                            </div>
-                          </button>
-                        )}
-
-                        {confirm === "afwijzen" ? (
-                          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-2">
-                            <p className="text-xs font-semibold text-slate-600 text-center">
-                              Melding afwijzen?
-                            </p>
-                            <textarea
-                              value={uitleg}
-                              onChange={(e) => setUitleg(e.target.value)}
-                              placeholder="Uitleg verplicht..."
-                              rows={3}
-                              className="w-full text-xs text-slate-700 bg-white border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-slate-300 placeholder:text-slate-300 resize-none transition-all"
-                            />
-                            <div className="flex gap-2">
-                              <button
-                                onClick={() => {
-                                  setConfirm(null);
-                                  setUitleg("");
-                                }}
-                                className="flex-1 py-1.5 text-xs font-semibold text-slate-500 cursor-pointer hover:text-slate-700 bg-white border border-slate-200 rounded-lg transition-colors"
-                              >
-                                Annuleren
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setConfirm(null);
-                                  markRejected();
-                                }}
-                                disabled={rejecting || !uitleg.trim()}
-                                className="flex-1 py-1.5 text-xs font-bold text-white cursor-pointer bg-slate-500 hover:bg-slate-600 rounded-lg transition-colors disabled:opacity-60"
-                              >
-                                {rejecting ? "Bezig..." : "Bevestigen"}
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => setConfirm("afwijzen")}
-                            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-100 transition-all cursor-pointer"
-                          >
-                            <XMarkIcon className="w-4 h-4 text-slate-500 shrink-0" />
-                            <div className="text-left">
-                              <p className="text-sm font-bold text-slate-600">
-                                Afwijzen
-                              </p>
-                              <p className="text-xs text-slate-400">
-                                Melding niet relevant
-                              </p>
-                            </div>
-                          </button>
-                        )}
-                      </>
-                    )}
-                  </div>
-                </div>
+              {/* Mobile/tablet — single column */}
+              <div className="xl:hidden space-y-4">
+                {actionPanel}
+                {mainContent}
               </div>
             </div>
           )}

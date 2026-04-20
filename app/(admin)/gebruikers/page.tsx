@@ -271,6 +271,8 @@ export default function GebruikersBeheerAanvragenPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>("alle");
 
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   async function load() {
     const [{ data: a }, { data: l }] = await Promise.all([
       supabase
@@ -301,13 +303,20 @@ export default function GebruikersBeheerAanvragenPage() {
 
   return (
     <div className="min-h-screen flex bg-[#F5F6FA]">
-      <Sidebar className="fixed top-0 left-0 h-screen" />
+      <Sidebar
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        className="fixed top-0 left-0 h-screen"
+      />
       {toast && (
         <Toast message={toast.message} type={toast.type} onClose={hideToast} />
       )}
 
       <div className="flex flex-col flex-1 h-screen">
-        <Topbar title="Account aanvragen" />
+        <Topbar
+          title="Account aanmaken"
+          onMenuToggle={() => setSidebarOpen((p) => !p)}
+        />
 
         <main className="flex-1 overflow-auto p-8">
           <div className="space-y-6  mx-auto">

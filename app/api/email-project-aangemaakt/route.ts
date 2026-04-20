@@ -1,7 +1,6 @@
 import { Resend } from "resend";
 import { ProjectAangemaaktEmail } from "@/components/layout/emailtemplate";
 import { createClient } from "@supabase/supabase-js";
-import { supabase } from "@/lib/supabase";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 

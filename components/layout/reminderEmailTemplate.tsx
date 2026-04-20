@@ -24,6 +24,7 @@ export interface ProjectReminderEmailProps {
   vloertypes: VloerRegel[];
   bussen: BusRegel[];
   totaalM2: number;
+  dagen: number; // ← add this
 }
 
 function formatDate(d?: string) {
@@ -48,6 +49,7 @@ export const ProjectReminderEmail = ({
   vloertypes,
   bussen,
   totaalM2,
+  dagen,
 }: ProjectReminderEmailProps) => (
   <div
     style={{
@@ -102,7 +104,7 @@ export const ProjectReminderEmail = ({
             margin: "0 0 8px 0",
           }}
         >
-          Herinnering · start over 5 dagen
+          Herinnering · start over {dagen} {dagen === 1 ? "dag" : "dagen"}
         </p>
         <h1
           className="h1"
@@ -137,8 +139,8 @@ export const ProjectReminderEmail = ({
             lineHeight: "1.5",
           }}
         >
-          Dit is een herinnering dat onderstaand project over 5 dagen van start
-          gaat.
+          Dit is een herinnering dat onderstaand project over {dagen}{" "}
+          {dagen === 1 ? "dag" : "dagen"} van start gaat.
         </p>
       </div>
 
@@ -311,7 +313,7 @@ export const ProjectReminderEmail = ({
                   <span
                     style={{
                       fontSize: "14px",
-                      color: "#3AB8BF",
+                      color: "#81378e",
                       marginRight: "8px",
                     }}
                   >
@@ -451,7 +453,7 @@ export const ProjectReminderEmail = ({
                       fontSize: "11px",
                       fontWeight: "700",
                       color: "#ffffff",
-                      backgroundColor: "#3AB8BF",
+                      backgroundColor: "#81378e",
                       borderRadius: "4px",
                       padding: "2px 8px",
                       fontFamily: "monospace",
@@ -472,7 +474,7 @@ export const ProjectReminderEmail = ({
                         borderTop: j === 0 ? "none" : "1px solid #f1f5f9",
                       }}
                     >
-                      <span style={{ color: "#3AB8BF", marginRight: "8px" }}>
+                      <span style={{ color: "#81378e", marginRight: "8px" }}>
                         ●
                       </span>
                       {naam}

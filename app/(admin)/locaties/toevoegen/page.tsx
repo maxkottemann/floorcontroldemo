@@ -25,7 +25,6 @@ interface Gebouw {
 
 const INITIAL_FLOORS = 20;
 const TOTAL_FLOORS = 100;
-
 const SPECIAL_FLOORS = ["Kelder", "Begane grond"];
 
 function getFloorOptions(showAll: boolean): string[] {
@@ -51,19 +50,17 @@ function VerdiepingenSelect({
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
+      if (ref.current && !ref.current.contains(e.target as Node))
         setOpen(false);
-      }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const toggle = (floor: string) => {
-    const current = gebouw.verdiepingen;
-    const updated = current.includes(floor)
-      ? current.filter((f) => f !== floor)
-      : [...current, floor];
+    const updated = gebouw.verdiepingen.includes(floor)
+      ? gebouw.verdiepingen.filter((f) => f !== floor)
+      : [...gebouw.verdiepingen, floor];
     onChange(index, { verdiepingen: updated });
   };
 
@@ -120,7 +117,6 @@ function VerdiepingenSelect({
               );
             })}
           </ul>
-
           {!gebouw.showAll && (
             <button
               type="button"
@@ -148,34 +144,27 @@ export default function LocatiesToevoegen() {
   const [submitting, setSubmitting] = useState(false);
   const [opAfroep, setOpAfroep] = useState(false);
   const [perJaar, setPerJaar] = useState("1");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const { toast, showToast, hideToast } = useToast();
+  const router = useRouter();
 
   const typeOptions = ["type 1", "type 2", "type 3"];
   const extraCheckinOptions = ["Ja", "Nee"];
   const perceelOptions = ["Perceel 2", "Perceel 5"];
 
   const [gebouwen, setGebouwen] = useState<Gebouw[]>([
-    { naam: "Gebouw 1", verdiepingen: [] as string[], showAll: false },
+    { naam: "Gebouw 1", verdiepingen: [], showAll: false },
   ]);
 
   const addGebouw = () =>
-    setGebouwen([
-      ...gebouwen,
-      { naam: "", verdiepingen: [] as string[], showAll: false },
-    ]);
-
-  const updateGebouw = (index: number, updates: Partial<Gebouw>) => {
+    setGebouwen([...gebouwen, { naam: "", verdiepingen: [], showAll: false }]);
+  const updateGebouw = (index: number, updates: Partial<Gebouw>) =>
     setGebouwen((prev) =>
       prev.map((g, i) => (i === index ? { ...g, ...updates } : g)),
     );
-  };
-
-  const removeGebouw = (index: number) => {
+  const removeGebouw = (index: number) =>
     setGebouwen(gebouwen.filter((_, i) => i !== index));
-  };
-
-  const router = useRouter();
 
   function checkValues(): boolean {
     if (!naam) {
@@ -214,9 +203,7 @@ export default function LocatiesToevoegen() {
   }
 
   async function handleSubmit() {
-    if (!checkValues()) return;
-    if (!checkValidValues()) return;
-
+    if (!checkValues() || !checkValidValues()) return;
     setSubmitting(true);
 
     let afstand: number | null = null;
@@ -237,7 +224,6 @@ export default function LocatiesToevoegen() {
       .select("id")
       .eq("naam", perceel)
       .single();
-
     if (perceelError) {
       showToast("Er ging iets mis, probeer het opnieuw", "error");
       return;
@@ -260,7 +246,6 @@ export default function LocatiesToevoegen() {
       })
       .select("id")
       .single();
-
     if (locatieError) {
       showToast("Er ging iets mis, probeer het opnieuw", "error");
       console.log(locatieError);
@@ -273,7 +258,6 @@ export default function LocatiesToevoegen() {
         .insert({ locatie_id: locatie.id, naam: gebouw.naam })
         .select("id")
         .single();
-
       if (bouwError) {
         showToast("Er ging iets mis, probeer het opnieuw", "error");
         return;
@@ -283,35 +267,45 @@ export default function LocatiesToevoegen() {
         bouwdeel_id: bouwData.id,
         naam: SPECIAL_FLOORS.includes(v) ? v : `Verdieping ${v}`,
       }));
-
       const { error: vError } = await supabase
         .from("verdiepingen")
         .insert(verdiepingRows);
-
       if (vError) {
         showToast("Er ging iets mis bij verdiepingen", "error");
         return;
       }
     }
+
     setSubmitting(false);
     showToast("Locatie toegevoegd", "success");
     setTimeout(() => router.push("/locaties"), 1000);
   }
+
   return (
     <div className="min-h-screen flex bg-gray-100">
-      <Sidebar className="fixed top-0 left-0 h-screen" />
+      <Sidebar
+        className="fixed top-0 left-0 h-screen"
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
       {toast && (
         <Toast message={toast.message} type={toast.type} onClose={hideToast} />
       )}
 
       <div className="flex flex-col flex-1 h-screen">
-        <Topbar title="Locatie toevoegen" />
+        <Topbar
+          title="Locatie toevoegen"
+          onMenuToggle={() => setSidebarOpen((p) => !p)}
+        />
 
-        <main className="flex-1 overflow-auto p-6">
-          <Card className="bg-white shadow-lg rounded-xl p-8 border border-gray-200">
-            <h2 className="text-2xl font-bold text-gray-900 mb-8">Toevoegen</h2>
+        <main className="flex-1 overflow-auto p-3 md:p-6">
+          <Card className="bg-white shadow-lg rounded-xl p-4 md:p-8 border border-gray-200">
+            <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-6 md:mb-8">
+              Toevoegen
+            </h2>
 
-            <form className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Form grid — 1 col mobile, 2 col md+ */}
+            <form className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
               <Inputfield
                 title="Naam"
                 placeholder="Naam van de locatie"
@@ -370,7 +364,6 @@ export default function LocatiesToevoegen() {
                 placeholder="Selecteer"
                 onChange={(v) => setOpAfroep(v === "Ja")}
               />
-
               {!opAfroep && (
                 <DropdownBig
                   title="Per jaar"
@@ -382,23 +375,25 @@ export default function LocatiesToevoegen() {
               )}
             </form>
 
-            <div className="flex flex-col gap-3 mt-6">
+            {/* Gebouwen & verdiepingen */}
+            <div className="flex flex-col gap-3 mt-5 md:mt-6">
               <p className="text-sm font-medium text-gray-700">
                 Gebouwen & verdiepingen
               </p>
 
               {gebouwen.map((gebouw, index) => (
                 <div key={index} className="flex items-center gap-2">
+                  {/* Gebouw name input — full width on mobile */}
                   <input
                     value={gebouw.naam}
                     onChange={(e) =>
                       updateGebouw(index, { naam: e.target.value })
                     }
                     placeholder={`Gebouw ${index + 1}`}
-                    className="w-36 h-9 px-3 text-sm bg-white border border-gray-200 rounded-lg outline-none focus:border-gray-400 focus:ring-2 focus:ring-gray-100 placeholder:text-gray-400 transition-all duration-150"
+                    className="w-28 md:w-36 h-9 px-3 text-sm bg-white border border-gray-200 rounded-lg outline-none focus:border-gray-400 focus:ring-2 focus:ring-gray-100 placeholder:text-gray-400 transition-all duration-150 shrink-0"
                   />
 
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <VerdiepingenSelect
                       gebouw={gebouw}
                       index={index}
@@ -410,7 +405,7 @@ export default function LocatiesToevoegen() {
                     <button
                       type="button"
                       onClick={() => removeGebouw(index)}
-                      className="text-gray-400 hover:text-red-500 transition-colors"
+                      className="text-gray-400 hover:text-red-500 transition-colors shrink-0 p-1"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -452,7 +447,8 @@ export default function LocatiesToevoegen() {
               </button>
             </div>
 
-            <div className="mt-8 flex justify-end">
+            {/* Submit */}
+            <div className="mt-6 md:mt-8 flex justify-end">
               <MainButton
                 icon={<PlusIcon />}
                 label={submitting ? "Bezig..." : "Toevoegen"}

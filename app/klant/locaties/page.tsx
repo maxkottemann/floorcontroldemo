@@ -29,18 +29,16 @@ export default function locatiePage() {
   const [alleLocaties, setAlleLocaties] = useState<locatie[]>([]);
   const [zoekterm, setZoekTerm] = useState("");
   const [totalLocaties, setTotalLocaties] = useState<number>(0);
-
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [locatieType, setLocatieType] = useState("");
   const [allePercelen, setAllePercelen] = useState<Perceel[]>([]);
 
-  const filtered = alleLocaties.filter((l) =>
-    l.naam.toLowerCase().includes(zoekterm.toLowerCase()),
+  const filtered = alleLocaties.filter(
+    (l) =>
+      l.naam.toLowerCase().includes(zoekterm.toLowerCase()) &&
+      l.type.toLowerCase().includes(locatieType.toLowerCase()),
   );
 
-  const router = useRouter();
-
-  useEffect(() => {
-    router.refresh();
-  }, []);
   useEffect(() => {
     async function getPercelen() {
       const { data, error } = await supabase
@@ -95,10 +93,17 @@ export default function locatiePage() {
 
   return (
     <div className="min-h-screen flex">
-      <SidebarClient className="fixed top-0 left-0 h-screen" />
+      <SidebarClient
+        className="fixed top-0 left-0 h-screen"
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
 
       <div className="flex flex-col flex-1 h-screen">
-        <Topbar title="Locaties" />
+        <Topbar
+          title="Locaties"
+          onMenuToggle={() => setSidebarOpen((p) => !p)}
+        />
         <main className="flex-1 overflow-auto p-6 bg-bg">
           <Card>
             <div className="flex items-center justify-between mb-6">
@@ -159,6 +164,8 @@ export default function locatiePage() {
                 placeholder="Locatie type"
                 className="w-40"
                 options={["Type 1", "Type 2", "Type 3"]}
+                value={locatieType}
+                onChange={(val) => setLocatieType(val)}
               />
             </div>
 
