@@ -1,21 +1,28 @@
 import * as React from "react";
 
-interface VloerType {
+export interface VloerRegel {
   naam: string;
   m2: number;
 }
 
-interface ProjectAangemaaktEmailProps {
+export interface BusRegel {
+  naam: string;
+  kenteken: string;
+  crew: string[];
+}
+
+export interface ProjectReminderEmailProps {
   projectNaam: string;
+  startDatum: string;
+  eindDatum?: string;
   locatieNaam: string;
   locatieAdres?: string;
-  startDatum: string;
-  locatieplaats: string;
-  eindDatum?: string;
-  contactPersoon?: string;
+  locatieplaats?: string;
+  contactNaam?: string;
   beschrijving?: string;
   opmerking?: string;
-  vloertypes: VloerType[];
+  vloertypes: VloerRegel[];
+  bussen: BusRegel[];
   totaalM2: number;
 }
 
@@ -28,19 +35,20 @@ function formatDate(d?: string) {
   });
 }
 
-export const ProjectAangemaaktEmail = ({
+export const ProjectReminderEmail = ({
   projectNaam,
+  startDatum,
+  eindDatum,
   locatieNaam,
   locatieAdres,
   locatieplaats,
-  startDatum,
-  eindDatum,
-  contactPersoon,
-  vloertypes,
-  opmerking,
+  contactNaam,
   beschrijving,
+  opmerking,
+  vloertypes,
+  bussen,
   totaalM2,
-}: ProjectAangemaaktEmailProps) => (
+}: ProjectReminderEmailProps) => (
   <div
     style={{
       fontFamily: "'Helvetica Neue', Arial, sans-serif",
@@ -48,11 +56,10 @@ export const ProjectAangemaaktEmail = ({
       padding: "32px 0",
     }}
   >
-    {/* Responsive style tag — Gmail on Android + Apple Mail both respect this */}
     <style>{`
       @media only screen and (max-width: 600px) {
-        .outer { padding: 0 !important; }
-        .card  { padding: 24px 20px !important; }
+        .outer  { padding: 0 !important; }
+        .card   { padding: 24px 20px !important; }
         .detail-table { border-spacing: 0 !important; }
         .detail-td {
           display: block !important;
@@ -61,6 +68,7 @@ export const ProjectAangemaaktEmail = ({
           margin-bottom: 10px !important;
         }
         .h1 { font-size: 20px !important; }
+        .footer-right { display: none !important; }
       }
     `}</style>
 
@@ -94,7 +102,7 @@ export const ProjectAangemaaktEmail = ({
             margin: "0 0 8px 0",
           }}
         >
-          Nieuw project ingepland
+          Herinnering · start over 5 dagen
         </p>
         <h1
           className="h1"
@@ -129,8 +137,8 @@ export const ProjectAangemaaktEmail = ({
             lineHeight: "1.5",
           }}
         >
-          Er is een nieuw project voor u ingepland. Hieronder vindt u alle
-          details.
+          Dit is een herinnering dat onderstaand project over 5 dagen van start
+          gaat.
         </p>
       </div>
 
@@ -143,7 +151,7 @@ export const ProjectAangemaaktEmail = ({
           borderTop: "1px solid #81378e",
         }}
       >
-        {/* Locatie + Periode — stack on mobile via .detail-td */}
+        {/* Locatie + Periode */}
         <table
           className="detail-table"
           style={{
@@ -190,7 +198,8 @@ export const ProjectAangemaaktEmail = ({
                 </p>
                 {locatieAdres && (
                   <p style={{ fontSize: "12px", color: "#94a3b8", margin: 0 }}>
-                    {locatieAdres}, {locatieplaats}
+                    {locatieAdres}
+                    {locatieplaats ? `, ${locatieplaats}` : ""}
                   </p>
                 )}
               </td>
@@ -245,7 +254,7 @@ export const ProjectAangemaaktEmail = ({
           }}
         />
 
-        {/* Werkzaamheden */}
+        {/* Vloertypes */}
         <p
           style={{
             fontSize: "11px",
@@ -392,6 +401,109 @@ export const ProjectAangemaaktEmail = ({
           }}
         />
 
+        {/* Bussen */}
+        <p
+          style={{
+            fontSize: "11px",
+            fontWeight: "700",
+            letterSpacing: "0.14em",
+            textTransform: "uppercase",
+            color: "#94a3b8",
+            margin: "0 0 16px 0",
+          }}
+        >
+          Ingeplande bussen & medewerkers
+        </p>
+
+        {bussen.map((bus, i) => (
+          <table
+            key={i}
+            style={{
+              width: "100%",
+              borderCollapse: "collapse",
+              border: "1px solid #e2e8f0",
+              borderRadius: "12px",
+              marginBottom: "12px",
+              backgroundColor: "#f8fafc",
+            }}
+          >
+            <tbody>
+              <tr>
+                <td
+                  style={{
+                    padding: "14px 18px",
+                    borderBottom:
+                      bus.crew.length > 0 ? "1px solid #f1f5f9" : "none",
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: "14px",
+                      fontWeight: "700",
+                      color: "#0f172a",
+                      marginRight: "10px",
+                    }}
+                  >
+                    {bus.naam}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: "11px",
+                      fontWeight: "700",
+                      color: "#ffffff",
+                      backgroundColor: "#3AB8BF",
+                      borderRadius: "4px",
+                      padding: "2px 8px",
+                      fontFamily: "monospace",
+                    }}
+                  >
+                    {bus.kenteken}
+                  </span>
+                </td>
+              </tr>
+              {bus.crew.length > 0 ? (
+                bus.crew.map((naam, j) => (
+                  <tr key={j}>
+                    <td
+                      style={{
+                        padding: "9px 18px",
+                        fontSize: "13px",
+                        color: "#334155",
+                        borderTop: j === 0 ? "none" : "1px solid #f1f5f9",
+                      }}
+                    >
+                      <span style={{ color: "#3AB8BF", marginRight: "8px" }}>
+                        ●
+                      </span>
+                      {naam}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td
+                    style={{
+                      padding: "9px 18px",
+                      fontSize: "13px",
+                      color: "#94a3b8",
+                    }}
+                  >
+                    Nog geen medewerkers toegewezen
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        ))}
+
+        <div
+          style={{
+            height: "1px",
+            backgroundColor: "#f1f5f9",
+            margin: "28px 0",
+          }}
+        />
+
         {opmerking && (
           <div
             style={{
@@ -467,6 +579,7 @@ export const ProjectAangemaaktEmail = ({
                 Duofort B.V. · FloorControl
               </td>
               <td
+                className="footer-right"
                 style={{
                   fontSize: "11px",
                   color: "#cbd5e1",
