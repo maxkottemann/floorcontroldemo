@@ -54,22 +54,26 @@ export async function middleware(req: NextRequest) {
     return res;
   }
 
-  const { data: profiel } = await supabase
-    .from("profielen")
-    .select("id, rol")
-    .eq("gebruiker_id", user.id)
-    .single();
+  if (user) {
+    const { data: profiel } = await supabase
+      .from("profielen")
+      .select("id, rol")
+      .eq("gebruiker_id", user.id)
+      .single();
 
-  if (!profiel) {
-    return NextResponse.redirect(new URL("/locaties-kiezen", req.url));
-  }
+    if (!profiel) {
+      return NextResponse.redirect(new URL("/locaties-kiezen", req.url));
+    }
 
-  if (profiel.rol === "locatie_manager" && !pathname.startsWith("/klant")) {
-    return NextResponse.redirect(new URL("/klant/dashboard", req.url));
-  }
+    const rol = profiel.rol;
 
-  if (profiel.rol === "admin" && pathname.startsWith("/klant")) {
-    return NextResponse.redirect(new URL("/dashboard", req.url));
+    if (rol === "locatie_manager" && !pathname.startsWith("/klant")) {
+      return NextResponse.redirect(new URL("/klant/dashboard", req.url));
+    }
+
+    if (rol === "admin" && pathname.startsWith("/klant")) {
+      return NextResponse.redirect(new URL("/dashboard", req.url));
+    }
   }
 
   return res;
