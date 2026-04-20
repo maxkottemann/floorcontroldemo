@@ -468,7 +468,6 @@ export default function getKamersPage({}) {
             {recenteKamers}
           </div>
 
-          {/* ── Mobile / tablet (below xl) — single column ── */}
           <div className="xl:hidden flex flex-col gap-4">
             {locatieHeader}
             {form}
