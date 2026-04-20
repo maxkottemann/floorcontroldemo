@@ -40,6 +40,12 @@ export async function middleware(req: NextRequest) {
 
   if (isPublic) return res;
 
+  const isRecoveryPage = pathname.startsWith("/wachtwoordherstellen");
+
+  if (isRecoveryPage) {
+    return NextResponse.next();
+  }
+
   if (!user) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
