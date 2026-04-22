@@ -313,7 +313,7 @@ export default function DashboardPage() {
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">
                 Kwaliteit oplevering
               </p>
-              <p className="text-3xl font-bold text-p mb-2">96,4%</p>
+              <p className="text-3xl font-bold text-p mb-2">98,4%</p>
               <p className="text-slate-400 text-xs">Boven KPI-norm 95%</p>
               <div className="mt-3 h-1.5 rounded-full bg-slate-100 overflow-hidden">
                 <div
@@ -323,6 +323,7 @@ export default function DashboardPage() {
               </div>
             </Card>
             <Card>
+              <a href="/meldingen">
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">
                 Open meldingen
               </p>
@@ -335,6 +336,7 @@ export default function DashboardPage() {
               )}
               <p className="text-slate-400 text-xs">Openstaande acties</p>
               <div className="mt-3 h-1.5 rounded-full bg-slate-100 overflow-hidden" />
+              </a>
             </Card>
           </div>
 
@@ -374,7 +376,7 @@ export default function DashboardPage() {
                             {p.perceel_naam}
                           </p>
                           <p className="text-xs text-slate-400">
-                            {p.totaal} locaties · {p.gepland} gepland ·{" "}
+                            {p.totaal} locaties · {p.gepland - p.afgerond} projecten projecten ·{" "}
                             {p.afgerond} afgerond
                           </p>
                         </div>
@@ -480,7 +482,7 @@ export default function DashboardPage() {
             <Card className="col-span-3">
               <div className="flex items-start justify-between mb-5">
                 <div>
-                  <p className="text-lg font-bold">Actuele uitvoeringen</p>
+                  <p className="text-lg font-bold">Actuele projecten</p>
                   <p className="text-sm text-slate-500">
                     Lopende projecten en voortgang
                   </p>

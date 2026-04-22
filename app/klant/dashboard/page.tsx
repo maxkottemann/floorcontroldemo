@@ -402,7 +402,7 @@ export default function DashboardPage() {
                             {p.perceel_naam}
                           </p>
                           <p className="text-xs text-slate-400">
-                            {p.totaal} locaties · {p.gepland} gepland ·{" "}
+                            {p.totaal} locaties · {p.gepland - p.afgerond} gepland ·{" "}
                             {p.afgerond} afgerond
                           </p>
                         </div>
@@ -508,7 +508,7 @@ export default function DashboardPage() {
               <div className="flex items-start justify-between mb-4 md:mb-5">
                 <div>
                   <p className="text-base md:text-lg font-bold">
-                    Actuele uitvoeringen
+                    Actuele projecten
                   </p>
                   <p className="text-sm text-slate-500">
                     Lopende projecten en voortgang
