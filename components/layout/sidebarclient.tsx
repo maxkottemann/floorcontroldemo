@@ -48,7 +48,7 @@ export default function SidebarClient({
     {
       href: "/klant/projecten",
       icon: <ClipboardDocumentIcon className="w-5 h-5" />,
-      label: "Projecten",
+      label: "Planning",
     },
     {
       href: "/klant/locaties",

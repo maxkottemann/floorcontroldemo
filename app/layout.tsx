@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Floorcontrol Duofort testomgeving",
+  title: "FloorControl",
   description: "Ontwikkeld door Cas Kotteman en Max Kotteman",
 };
 

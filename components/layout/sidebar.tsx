@@ -44,7 +44,7 @@ export default function Sidebar({ className, open, onClose }: SidebarProps) {
     {
       href: "/projecten",
       icon: <ClipboardDocumentIcon className="w-5 h-5" />,
-      label: "Projecten",
+      label: "Planning",
     },
     {
       href: "/locaties",
