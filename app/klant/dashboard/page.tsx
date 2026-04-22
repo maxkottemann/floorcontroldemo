@@ -599,30 +599,30 @@ export default function DashboardPage() {
               <div className="grid grid-cols-2 gap-3">
                 {[
                   {
-                    label: "Project plannen",
+                    label: "Projecten bekijken",
                     icon: <ClipboardDocumentListIcon className="w-5 h-5" />,
-                    href: "/projecten/aanmaken",
+                    href: "/klant/projecten",
                     color:
                       "bg-p/10 text-p group-hover:bg-p group-hover:text-white",
                   },
                   {
-                    label: "Meldingen bekijken",
+                    label: "Meldingen Maken",
                     icon: <BellAlertIcon className="w-5 h-5" />,
-                    href: "/meldingen",
+                    href: "/klant/meldingen",
                     color:
                       "bg-amber-50 text-amber-600 group-hover:bg-amber-500 group-hover:text-white",
                   },
                   {
                     label: "Rapportages",
                     icon: <DocumentChartBarIcon className="w-5 h-5" />,
-                    href: "/rapporten",
+                    href: "/klant/rapporten",
                     color:
                       "bg-emerald-50 text-emerald-600 group-hover:bg-emerald-500 group-hover:text-white",
                   },
                   {
-                    label: "Account aanmaken",
+                    label: "Duurzaamheid bekijken",
                     icon: <UserPlusIcon className="w-5 h-5" />,
-                    href: "/gebruikers",
+                    href: "/klant/milieu",
                     color:
                       "bg-slate-100 text-slate-500 group-hover:bg-slate-700 group-hover:text-white",
                   },

@@ -578,7 +578,6 @@ export default function ProjectBekijkenPage() {
     0,
   );
 
-  // Sidebar content — shared between desktop sidebar and mobile bottom section
   const sidebarContent = (
     <div className="space-y-4 md:space-y-5">
       {locatie && (
