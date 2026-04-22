@@ -168,11 +168,6 @@ export default function LoginPage() {
 
           {/* Footer */}
           <div className="mt-6 pt-6 border-t border-slate-200 text-center">
-            <img
-              src="/duofortlogo.png"
-              alt="FloorControl"
-              className="h-10 mb-2  object-contain items-center mx-auto"
-            />
             <p className="text-sm text-slate-400">
               Nog geen account?{" "}
               <a

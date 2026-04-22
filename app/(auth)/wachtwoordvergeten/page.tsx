@@ -166,11 +166,6 @@ export default function WachtwoordVergetenPage() {
               </form>
 
               <div className="mt-6 pt-6 border-t border-slate-200 text-center">
-                <img
-                  src="/duofortlogo.png"
-                  alt="FloorControl"
-                  className="h-10 mb-2  object-contain items-center mx-auto"
-                />
                 <a
                   href="/login"
                   className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-[#154273] font-semibold transition-colors"
