@@ -39,6 +39,7 @@ interface ActiveProject {
   id: string;
   projectnaam: string;
   totalm2: number;
+  beschrijving: string;
   finishedm2: number;
   bussen: any[];
 }
@@ -237,6 +238,7 @@ export default function DashboardPage() {
         data.map((d: any) => ({
           id: d.id,
           projectnaam: d.naam,
+          beschrijving: d.beschrijving,
           totalm2: Array.isArray(d.project_vloeren)
             ? d.project_vloeren.reduce(
                 (t: number, pv: any) =>
@@ -284,7 +286,6 @@ export default function DashboardPage() {
         />
 
         <main className="flex-1 overflow-auto p-3 md:p-6 bg-[#F5F6FA]">
-          {/* Stat cards — 2 col mobile, 4 col lg */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5 mb-4 md:mb-5">
             <Card>
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">
@@ -402,8 +403,8 @@ export default function DashboardPage() {
                             {p.perceel_naam}
                           </p>
                           <p className="text-xs text-slate-400">
-                            {p.totaal} locaties · {p.gepland - p.afgerond} gepland ·{" "}
-                            {p.afgerond} afgerond
+                            {p.totaal} locaties · {p.gepland - p.afgerond}{" "}
+                            gepland · {p.afgerond} afgerond
                           </p>
                         </div>
                         <span className="text-sm font-bold text-p">
@@ -549,9 +550,14 @@ export default function DashboardPage() {
                       >
                         <div className="flex items-start justify-between gap-3 mb-3">
                           <div className="min-w-0 flex-1">
-                            <p className="text-sm font-bold text-slate-800 truncate">
-                              {a.projectnaam}
-                            </p>
+                            <div className="flex flex-row">
+                              <p className="text-sm font-bold text-slate-800 truncate">
+                                {a.projectnaam}
+                              </p>
+                              <p className="text-xs mt-0.5 ml-4 text-slate-800 truncate">
+                                {a.beschrijving}
+                              </p>
+                            </div>
                             <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
                               {a.bussen.filter(Boolean).map((b: any) => (
                                 <span
@@ -586,7 +592,6 @@ export default function DashboardPage() {
               )}
             </Card>
 
-            {/* Snelle acties — full width mobile, col-span-2 lg */}
             <Card className="col-span-1 lg:col-span-2">
               <div className="flex items-start justify-between mb-4 md:mb-5">
                 <div>

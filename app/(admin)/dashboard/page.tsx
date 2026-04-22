@@ -42,6 +42,7 @@ interface ActiveProject {
   id: string;
   projectnaam: string;
   totalm2: number;
+  beschrijving?: string;
   finishedm2: number;
   bussen: any[];
 }
@@ -121,8 +122,8 @@ export default function DashboardPage() {
 
       const geplandLocatieIds = new Set(
         locaties
-          .filter((l:any) => (geplandCount[l.id] ?? 0) >= (l.per_jaar ?? 1))
-          .map((l:any) => l.id),
+          .filter((l: any) => (geplandCount[l.id] ?? 0) >= (l.per_jaar ?? 1))
+          .map((l: any) => l.id),
       );
       const afgerondLocatieIds = new Set(
         locaties
@@ -210,7 +211,7 @@ export default function DashboardPage() {
       const { data, error } = await supabase
         .from("projecten")
         .select(
-          `id, naam, project_vloeren(kamer_vloeren(vierkante_meter)), gewassen_vloeren(vierkante_meter), project_bussen(bussen(id, naam, kenteken, type))`,
+          `id, naam, beschrijving, project_vloeren(kamer_vloeren(vierkante_meter)), gewassen_vloeren(vierkante_meter), project_bussen(bussen(id, naam, kenteken, type))`,
         )
         .eq("status", "bezig")
         .limit(5);
@@ -225,6 +226,7 @@ export default function DashboardPage() {
         data.map((d: any) => ({
           id: d.id,
           projectnaam: d.naam,
+          beschrijving: d.beschrijving,
           totalm2: Array.isArray(d.project_vloeren)
             ? d.project_vloeren.reduce(
                 (t: number, pv: any) =>
@@ -282,7 +284,7 @@ export default function DashboardPage() {
                 <p className="text-3xl font-bold text-p mb-2">{planningPct}%</p>
               )}
               <p className="text-slate-400 text-xs">
-                 {wasJaarLabel} · {data?.totaalGepland ?? "—"}/
+                {wasJaarLabel} · {data?.totaalGepland ?? "—"}/
                 {data?.totaalLocaties ?? "—"} locaties
               </p>
               <div className="mt-3 h-1.5 rounded-full bg-slate-100 overflow-hidden">
@@ -324,18 +326,18 @@ export default function DashboardPage() {
             </Card>
             <Card>
               <a href="/meldingen">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">
-                Open meldingen
-              </p>
-              {loading ? (
-                <div className="w-12 h-8 bg-slate-100 rounded animate-pulse mb-2" />
-              ) : (
-                <p className="text-3xl font-bold text-p mb-2">
-                  {data?.openMeldingen ?? "—"}
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">
+                  Open meldingen
                 </p>
-              )}
-              <p className="text-slate-400 text-xs">Openstaande acties</p>
-              <div className="mt-3 h-1.5 rounded-full bg-slate-100 overflow-hidden" />
+                {loading ? (
+                  <div className="w-12 h-8 bg-slate-100 rounded animate-pulse mb-2" />
+                ) : (
+                  <p className="text-3xl font-bold text-p mb-2">
+                    {data?.openMeldingen ?? "—"}
+                  </p>
+                )}
+                <p className="text-slate-400 text-xs">Openstaande acties</p>
+                <div className="mt-3 h-1.5 rounded-full bg-slate-100 overflow-hidden" />
               </a>
             </Card>
           </div>
@@ -376,8 +378,8 @@ export default function DashboardPage() {
                             {p.perceel_naam}
                           </p>
                           <p className="text-xs text-slate-400">
-                            {p.totaal} locaties · {p.gepland - p.afgerond} projecten projecten ·{" "}
-                            {p.afgerond} afgerond
+                            {p.totaal} locaties · {p.gepland - p.afgerond}{" "}
+                            projecten projecten · {p.afgerond} afgerond
                           </p>
                         </div>
                         <span className="text-sm font-bold text-p">
@@ -523,9 +525,14 @@ export default function DashboardPage() {
                       >
                         <div className="flex items-start justify-between gap-3 mb-3">
                           <div className="min-w-0 flex-1">
-                            <p className="text-sm font-bold text-slate-800 truncate">
-                              {a.projectnaam}
-                            </p>
+                            <div className="flex flex-row">
+                              <p className="text-sm font-bold text-slate-800 truncate">
+                                {a.projectnaam}
+                              </p>
+                              <p className="text-xs mt-0.5 ml-4 text-slate-800 truncate">
+                                {a.beschrijving}
+                              </p>
+                            </div>
                             <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
                               {a.bussen.filter(Boolean).map((b: any) => (
                                 <span

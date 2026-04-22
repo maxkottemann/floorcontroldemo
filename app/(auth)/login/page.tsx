@@ -57,7 +57,7 @@ export default function LoginPage() {
               Duofort B.V.
             </p>
             <h1 className="text-4xl font-bold text-white leading-tight mb-4">
-              Floor<span className="text-green-500">Control</span>
+              Floor<span className="text-p">Control</span>
             </h1>
             <p className="text-white/70 text-base leading-relaxed max-w-xs">
               Beheer uw locaties, projecten en vloeren vanuit één platform.
