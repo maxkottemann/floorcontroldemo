@@ -1,4 +1,3 @@
-// app/api/locaties-publiek/route.ts
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 

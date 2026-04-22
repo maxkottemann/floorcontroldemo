@@ -82,10 +82,10 @@ export default function DashboardPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const sustainability = [
-    { label: "CO₂-reductie mobiliteit", value: 18, target: 25, suffix: "%" },
-    { label: "Afvalreductie", value: 42, target: 50, suffix: "%" },
-    { label: "Chemiereductie", value: 61, target: 70, suffix: "%" },
-    { label: "Elektrische ritten", value: 74, target: 80, suffix: "%" },
+    { label: "CO₂-reductie mobiliteit", value: 93, target: 90, suffix: "%" },
+    { label: "Afvalreductie", value: 52, target: 50, suffix: "%" },
+    { label: "Chemiereductie", value: 30, target: 30, suffix: "%" },
+    { label: "Afvalwater reductie", value: 39, target: 40, suffix: "%" },
   ];
 
   const ring = (value: number) => ({
@@ -121,8 +121,8 @@ export default function DashboardPage() {
 
       const geplandLocatieIds = new Set(
         locaties
-          .filter((l) => (geplandCount[l.id] ?? 0) >= (l.per_jaar ?? 1))
-          .map((l) => l.id),
+          .filter((l:any) => (geplandCount[l.id] ?? 0) >= (l.per_jaar ?? 1))
+          .map((l:any) => l.id),
       );
       const afgerondLocatieIds = new Set(
         locaties

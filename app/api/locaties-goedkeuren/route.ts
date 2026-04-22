@@ -1,5 +1,3 @@
-// app/api/locaties-goedkeuren/route.ts
-// Step 4: Admin approves locatie selection — creates profiel + profielen_locaties
 
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";

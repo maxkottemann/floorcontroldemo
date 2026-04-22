@@ -1,6 +1,5 @@
 "use client";
 
-// Admin page showing all account aanvragen with approve actions
 
 import Toast from "@/components/layout/toast";
 import Topbar from "@/components/layout/topbar";
