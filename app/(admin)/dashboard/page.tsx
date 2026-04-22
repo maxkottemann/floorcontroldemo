@@ -561,12 +561,6 @@ export default function DashboardPage() {
             </Card>
 
             <Card className="col-span-3 md:col-span-2">
-              <div className="flex items-start justify-between mb-5">
-                <div>
-                  <p className="text-lg font-bold">Snelle acties</p>
-                  <p className="text-sm text-slate-500">Selecteer een actie</p>
-                </div>
-              </div>
               <div className="grid grid-cols-2 gap-3">
                 {[
                   {
