@@ -88,6 +88,7 @@ export default function MilieuPage() {
   const [totaalKGco2, setTotaalKGco2] = useState<number>(0);
   const [maxKGco2, setmaxKGco2] = useState<number>(0);
   const [co2saved, setco2saved] = useState<number>(0);
+  const [co2tonsaved, setco2Tonsaved] = useState(0);
 
   const router = useRouter();
 
@@ -100,38 +101,43 @@ export default function MilieuPage() {
         )
         .eq("status", "afgerond");
 
-      let total = 0; // actual emissions
-      let max = 0; // all diesel baseline
+      let total = 0;
+      let max = 0;
 
       (data || []).forEach((d: any) => {
+        if (!d.start_datum || !d.eind_datum) return;
         const start = new Date(d.start_datum);
         const end = new Date(d.eind_datum);
 
         const afstand = Number(d?.locaties?.afstand) || 0;
 
         const diffDays =
-          (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24) + 1;
+          Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) +
+          1;
 
         const kmDriven = afstand * diffDays * 2;
+
+        console.log(diffDays);
 
         const buses = d.project_bussen || [];
 
         buses.forEach((pb: any) => {
           const type = pb.bussen?.type;
 
-          max += kmDriven * 1;
+          max += kmDriven * 0.173;
 
           if (type === "Diesel") {
-            total += kmDriven * 0.1;
-          }
-
-          if (type === "Elektrisch") {
-            total += kmDriven * 0.00000003;
+            total += kmDriven * 0.173;
+          } else if (type === "HVO100") {
+            total += kmDriven * 0.017;
           }
         });
       });
 
-      setTotaalKGco2(total);
+      const totaltonnes = Number((total / 1000).toFixed(2));
+      const kgsaved = Number(max - total);
+      setTotaalKGco2(totaltonnes);
+      setco2Tonsaved(kgsaved);
 
       const co2saved = max > 0 ? ((max - total) / max) * 100 : 0;
       setco2saved(co2saved);
@@ -174,6 +180,8 @@ export default function MilieuPage() {
     (s, r) => s + safenumber(r.waterverbruik) * safenumber(r.vierkante_meter),
     0,
   );
+
+  console.log(totalWater);
   const totalAfval = reinigmethodes.reduce(
     (s, r) => s + safenumber(r.afvalwater) * safenumber(r.vierkante_meter),
     0,
@@ -195,6 +203,7 @@ export default function MilieuPage() {
       s + safenumber(r.waterverbruik_old) * safenumber(r.vierkante_meter),
     0,
   );
+
   const totalAfvalOld = reinigmethodes.reduce(
     (s, r) => s + safenumber(r.afvalwater_old) * safenumber(r.vierkante_meter),
     0,
@@ -254,9 +263,9 @@ export default function MilieuPage() {
     {
       icon: <CloudIcon className="w-5 h-5 text-green-500" />,
       bg: "bg-green-100",
-      value: totaalKGco2,
-      unit: "kg CO₂",
-      label: "CO₂-uitstoot",
+      value: co2tonsaved,
+      unit: "ton CO₂",
+      label: "bespaart",
       color: "text-green-600",
       saving: co2saved,
     },

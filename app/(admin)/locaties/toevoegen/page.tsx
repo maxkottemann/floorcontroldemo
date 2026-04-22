@@ -375,7 +375,6 @@ export default function LocatiesToevoegen() {
               )}
             </form>
 
-            {/* Gebouwen & verdiepingen */}
             <div className="flex flex-col gap-3 mt-5 md:mt-6">
               <p className="text-sm font-medium text-gray-700">
                 Gebouwen & verdiepingen
@@ -383,7 +382,6 @@ export default function LocatiesToevoegen() {
 
               {gebouwen.map((gebouw, index) => (
                 <div key={index} className="flex items-center gap-2">
-                  {/* Gebouw name input — full width on mobile */}
                   <input
                     value={gebouw.naam}
                     onChange={(e) =>
@@ -447,7 +445,6 @@ export default function LocatiesToevoegen() {
               </button>
             </div>
 
-            {/* Submit */}
             <div className="mt-6 md:mt-8 flex justify-end">
               <MainButton
                 icon={<PlusIcon />}

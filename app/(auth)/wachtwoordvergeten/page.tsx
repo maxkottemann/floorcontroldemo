@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { KeyIcon } from "@heroicons/react/24/outline";
+import { KeyIcon, ArrowLeftIcon } from "@heroicons/react/24/outline";
 
-export default function AccountAanvragenPage() {
+export default function WachtwoordVergetenPage() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
@@ -12,121 +12,175 @@ export default function AccountAanvragenPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-
     if (!email) {
       setError("Vul je e-mailadres in");
       return;
     }
-
     setLoading(true);
     setError("");
-
     const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: "https://floor-control.vercel.app/wachtwoordherstellen",
     });
-
     setLoading(false);
-
     if (err) {
-      if (err.code === "23505") {
-        setError("Dit e-mailadres heeft al een aanvraag ingediend.");
-      } else {
-        setError("Er ging iets mis. Probeer opnieuw.");
-      }
+      setError("Er ging iets mis. Probeer opnieuw.");
       return;
     }
-
     setDone(true);
   }
 
-  return done ? (
-    <div className="min-h-screen bg-gradient-to-br from-[#f5f6fa] to-[#eef1f7] flex items-center justify-center p-6">
-      <div className="w-full max-w-md text-center bg-white rounded-3xl shadow-sm border border-slate-100 px-8 py-10">
-        <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-emerald-50 flex items-center justify-center">
-          <KeyIcon className="w-6 h-6 text-emerald-600" />
-        </div>
-
-        <h1 className="text-xl font-bold text-slate-900">Check je e-mail</h1>
-
-        <p className="text-sm text-slate-500 mt-2 leading-relaxed">
-          We hebben een link gestuurd om je wachtwoord opnieuw in te stellen.
-          Controleer je inbox (en spamfolder).
-        </p>
-
-        <a
-          href="/login"
-          className="inline-flex mt-6 items-center justify-center px-5 py-2.5 rounded-xl bg-p text-white text-sm font-semibold hover:bg-p/90 transition"
-        >
-          Terug naar inloggen
-        </a>
-      </div>
-    </div>
-  ) : (
-    <div className="min-h-screen bg-gradient-to-br from-[#f5f6fa] to-[#eef1f7] flex items-center justify-center p-6">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-10">
-          <img
-            src="/duofortlogo.png"
-            className="h-12 mx-auto mb-5 object-contain"
-            alt="Duofort"
-          />
-          <h1 className="text-2xl font-semibold text-slate-900">
-            Wachtwoord vergeten
-          </h1>
-          <p className="text-sm text-slate-400 mt-1">
-            FloorControl · Duofort B.V.
-          </p>
-        </div>
-
-        <div className="bg-white rounded-3xl shadow-sm border border-slate-100 px-8 py-8">
-          <div className="mb-6 text-center">
-            <p className="text-sm text-slate-500 leading-relaxed">
-              Vul je e-mailadres in en we sturen je een link om je wachtwoord
-              opnieuw in te stellen.
+  return (
+    <div className="min-h-screen flex">
+      {/* Left banner — matches login page */}
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
+        <img
+          src="/logingbg.png"
+          alt="FloorControl"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#154273]/80 via-[#154273]/40 to-transparent" />
+        <div className="relative z-10 flex flex-col justify-between p-12 w-full">
+          <div>
+            <img
+              src="/logo.png"
+              alt="FloorControl"
+              className="h-0 object-contain brightness-0 invert"
+            />
+          </div>
+          <div>
+            <p className="text-white/60 text-xs font-bold uppercase tracking-[0.2em] mb-3">
+              Duofort B.V.
+            </p>
+            <h1 className="text-4xl font-bold text-white leading-tight mb-4">
+              Floor<span className="text-[#3AB8BF]">Control</span>
+            </h1>
+            <p className="text-white/70 text-base leading-relaxed max-w-xs">
+              Beheer uw locaties, projecten en vloeren vanuit één platform.
             </p>
           </div>
-
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label className="text-sm font-medium text-slate-600 mb-1 block">
-                E-mailadres
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="jan@bedrijf.nl"
-                className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-700 outline-none transition-all
-                focus:border-p focus:ring-2 focus:ring-p/10 placeholder:text-slate-300"
-              />
-            </div>
-            {error && (
-              <p className="text-xs text-red-500 font-medium -mt-2">{error}</p>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl
-              bg-p text-white text-sm font-semibold
-              hover:bg-p/90 active:scale-[0.99]
-              transition-all disabled:opacity-50 cursor-pointer"
-            >
-              {loading ? (
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <KeyIcon className="w-4 h-4" />
-              )}
-              Wachtwoord herstellen
-            </button>
-
-            <p className="text-xs text-slate-400 text-center pt-2">
-              Al een account?{" "}
-              <a href="/login" className="text-p font-medium hover:underline">
-                Inloggen
-              </a>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-px bg-white/30" />
+            <p className="text-white/40 text-xs">
+              Vloerbeheer · Projectplanning · Rapportage
             </p>
-          </form>
+          </div>
+        </div>
+      </div>
+
+      {/* Right panel */}
+      <div className="flex-1 flex flex-col justify-center items-center p-6 md:p-12 bg-[#F5F6FA]">
+        {/* Mobile logo */}
+        <div className="lg:hidden mb-8">
+          <img
+            src="/logo.png"
+            alt="FloorControl"
+            className="h-10 object-contain"
+          />
+        </div>
+
+        <div className="w-full max-w-sm">
+          {done ? (
+            /* ── Success state ── */
+            <div className="text-center">
+              <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center">
+                <KeyIcon className="w-7 h-7 text-emerald-500" />
+              </div>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#154273]/60 mb-2">
+                Verstuurd
+              </p>
+              <h2 className="text-2xl font-bold text-slate-900 tracking-tight mb-3">
+                Check je inbox
+              </h2>
+              <p className="text-sm text-slate-400 leading-relaxed mb-8">
+                We hebben een herstelLink gestuurd naar{" "}
+                <span className="font-semibold text-slate-600">{email}</span>.
+                Controleer ook je spamfolder.
+              </p>
+              <a
+                href="/login"
+                className="inline-flex items-center gap-2 px-5 py-3 bg-[#154273] hover:bg-[#0f2f52] text-white text-sm font-bold rounded-xl transition-all shadow-sm"
+              >
+                <ArrowLeftIcon className="w-4 h-4" />
+                Terug naar inloggen
+              </a>
+            </div>
+          ) : (
+            /* ── Form state ── */
+            <>
+              <div className="flex flex-row w-full">
+                <img
+                  src="/logo.png"
+                  alt="FloorControl"
+                  className="h-25 object-contain  mb-10"
+                />
+              </div>
+              <div className="mb-8">
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#154273]/60 mb-2">
+                  Toegang herstellen
+                </p>
+                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
+                  Wachtwoord vergeten
+                </h2>
+                <p className="text-sm text-slate-400 mt-1">
+                  We sturen je een link om je wachtwoord opnieuw in te stellen
+                </p>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">
+                    E-mailadres
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="jan@bedrijf.nl"
+                    className="w-full px-4 py-3 text-sm text-slate-800 bg-white border border-slate-200 rounded-xl outline-none focus:border-[#154273]/40 focus:ring-2 focus:ring-[#154273]/10 placeholder:text-slate-300 transition-all shadow-sm"
+                  />
+                </div>
+
+                {error && (
+                  <div className="flex items-center gap-2.5 px-4 py-3 bg-red-50 border border-red-100 rounded-xl">
+                    <div className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0" />
+                    <p className="text-xs font-semibold text-red-600">
+                      {error}
+                    </p>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#154273] hover:bg-[#0f2f52] disabled:opacity-60 text-white text-sm font-bold rounded-xl transition-all shadow-sm cursor-pointer"
+                >
+                  {loading ? (
+                    <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                  ) : (
+                    <>
+                      <KeyIcon className="w-4 h-4" />
+                      Verstuur herstelLink
+                    </>
+                  )}
+                </button>
+              </form>
+
+              <div className="mt-6 pt-6 border-t border-slate-200 text-center">
+                <img
+                  src="/duofortlogo.png"
+                  alt="FloorControl"
+                  className="h-10 mb-2  object-contain items-center mx-auto"
+                />
+                <a
+                  href="/login"
+                  className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-[#154273] font-semibold transition-colors"
+                >
+                  <ArrowLeftIcon className="w-3.5 h-3.5" />
+                  Terug naar inloggen
+                </a>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

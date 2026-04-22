@@ -60,6 +60,9 @@ export default function getKamersPage({}) {
   const [alleKamers, setAlleKamers] = useState<latestKamers[]>([]);
   const [locatie, setLocatie] = useState<Locatie>();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [ruimtefunctie, setRuimteFunctie] = useState("");
+
+  const ruimtefunctiesOpties = ["Gang", "Kantoor", "Binnekomst"];
 
   async function handleSubmit() {
     if (!naam) return showToast("Vul een naam in", "error");
@@ -68,6 +71,9 @@ export default function getKamersPage({}) {
       return showToast("Selecteer een verdieping", "error");
     if (vloeren.length === 0)
       return showToast("Voeg minimaal 1 vloer toe", "error");
+    if (!ruimtefunctie) {
+      return showToast("Selecteer een ruimtefunctie", "error");
+    }
     if (
       vloeren.some(
         (v) => !v.id || !v.m2 || isNaN(Number(v.m2)) || Number(v.m2) <= 0,
@@ -83,7 +89,11 @@ export default function getKamersPage({}) {
 
     const { data: kamerData, error: kamerError } = await supabase
       .from("kamers")
-      .insert({ verdieping_id: activeVerdieping?.id, naam })
+      .insert({
+        verdieping_id: activeVerdieping?.id,
+        naam: naam,
+        ruimtefunctie: ruimtefunctie,
+      })
       .select("id")
       .single();
 
@@ -166,13 +176,29 @@ export default function getKamersPage({}) {
 
   useEffect(() => {
     async function getLatestKamers() {
-      const { data } = await supabase
+      // Get all bouwdeel IDs for this locatie
+      const { data: bouwdelen } = await supabase
+        .from("bouwdeel")
+        .select("id")
+        .eq("locatie_id", id);
+
+      const bouwdeelIds = (bouwdelen ?? []).map((b) => b.id);
+
+      const { data: verdiepingen } = await supabase
+        .from("verdiepingen")
+        .select("id")
+        .in("bouwdeel_id", bouwdeelIds);
+
+      const verdiepingIds = (verdiepingen ?? []).map((v) => v.id);
+
+      const { data: kamers } = await supabase
         .from("kamers")
         .select("naam, id, verdiepingen(naam, bouwdeel(naam))")
+        .in("verdieping_id", verdiepingIds)
         .order("aangemaakt_op", { ascending: false })
         .limit(20);
       setAlleKamers(
-        data?.map((d: any) => ({
+        kamers?.map((d: any) => ({
           id: d.id,
           kamer_naam: d.naam,
           verdieping_naam: d.verdiepingen?.naam,
@@ -266,9 +292,8 @@ export default function getKamersPage({}) {
     </div>
   );
 
-  // ── Shared form ─────────────────────────────────────────────────────
   const form = (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-visible">
       <div className="px-4 md:px-6 py-4 md:py-5 border-b border-gray-50">
         <h2 className="text-base font-semibold text-gray-900">
           Nieuwe ruimte toevoegen
@@ -279,13 +304,23 @@ export default function getKamersPage({}) {
       </div>
 
       <div className="p-4 md:p-6 space-y-5 md:space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="md:col-span-1">
             <Inputfield
               value={naam}
               onChange={(e) => setNaam(e)}
               title="Ruimtenaam"
               className="pb-3 pt-7"
+            />
+          </div>
+          <div>
+            <DropdownBig
+              title="Ruimtefunctie"
+              options={ruimtefunctiesOpties}
+              placeholder="Selecteer gebouw"
+              onChange={(selecteFunctie) => {
+                setRuimteFunctie(selecteFunctie);
+              }}
             />
           </div>
           <div>
@@ -331,7 +366,7 @@ export default function getKamersPage({}) {
             {vloeren.map((vloer, index) => (
               <div
                 key={index}
-                className="flex items-end gap-2 md:gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100"
+                className="flex gap-2 md:gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100 overflow-y-visible "
               >
                 <div className="flex-1 min-w-0">
                   <Dropdown
@@ -340,6 +375,7 @@ export default function getKamersPage({}) {
                     displayKey="naam"
                     value={vloer}
                     placeholder="Selecteer vloertype"
+                    className="overflow-y-visible"
                     onChange={(selected) =>
                       updateVloer(index, {
                         id: selected.id,
@@ -360,7 +396,7 @@ export default function getKamersPage({}) {
                 {vloeren.length > 1 && (
                   <button
                     onClick={() => removeVloer(index)}
-                    className="mb-0.5 p-2 text-gray-300 hover:text-red-400 hover:bg-red-50 rounded-lg transition-colors shrink-0"
+                    className="mb-0.5 p-2 text-gray-300 hover:text-red-400 mt-2 cursor-pointer rounded-lg transition-colors shrink-0"
                   >
                     <TrashIcon className="w-4 h-4" />
                   </button>
@@ -396,7 +432,6 @@ export default function getKamersPage({}) {
     </div>
   );
 
-  // ── Shared recent kamers ────────────────────────────────────────────
   const recenteKamers = (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
       <div className="px-4 md:px-5 py-4 border-b border-gray-50">
@@ -459,7 +494,6 @@ export default function getKamersPage({}) {
         />
 
         <main className="flex-1 overflow-auto p-3 md:p-8">
-          {/* ── Desktop (xl+) — original two-column layout ── */}
           <div className="hidden xl:grid xl:grid-cols-[1fr_360px] gap-6 items-start">
             <div className="flex flex-col gap-6">
               {locatieHeader}

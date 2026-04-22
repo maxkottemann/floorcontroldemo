@@ -16,6 +16,9 @@ import {
   UserGroupIcon,
   Squares2X2Icon,
   ViewColumnsIcon,
+  ChatBubbleBottomCenterIcon,
+  DocumentTextIcon,
+  ChatBubbleLeftEllipsisIcon,
 } from "@heroicons/react/24/outline";
 
 interface AgendaProject {
@@ -23,6 +26,7 @@ interface AgendaProject {
   naam: string;
   start_datum: string;
   eind_datum: string;
+  opmerkingen?: string;
   status: string;
   locatie_naam: string;
   locatie_plaats: string;
@@ -130,6 +134,15 @@ function ProjectCard({
               {project.locatie_naam}
             </p>
           </div>
+
+          {project.opmerkingen && (
+            <div className="flex items-center gap-1 mt-0.5">
+              <ChatBubbleLeftEllipsisIcon className="w-4 h-4 text-slate-300 shrink-0" />
+              <p className="text-sm text-slate-400 truncate">
+                {project?.opmerkingen}
+              </p>
+            </div>
+          )}
         </div>
         <StatusPill status={project.status} />
       </div>
@@ -197,7 +210,7 @@ export default function AgendaPage() {
         .from("projecten")
         .select(
           `
-        id, naam, start_datum, eind_datum, status,
+        id, naam, start_datum, eind_datum, status, opmerkingen,
         locaties!projecten_locatie_id_fkey(naam, plaats),
         project_bussen(bussen(id, naam, kenteken), project_bus_medewerkers(medewerkers(voornaam, achternaam)))
       `,
@@ -217,6 +230,7 @@ export default function AgendaPage() {
           start_datum: d.start_datum,
           eind_datum: d.eind_datum,
           status: d.status,
+          opmerkingen: d.opmerkingen,
           locatie_naam: d.locaties?.naam ?? "—",
           locatie_plaats: d.locaties?.plaats ?? "",
           bussen: (d.project_bussen ?? []).map((pb: any) => ({
@@ -264,7 +278,6 @@ export default function AgendaPage() {
         <Topbar title="Agenda" onMenuToggle={() => setSidebarOpen((p) => !p)} />
 
         <main className="flex-1 overflow-hidden flex flex-col">
-          {/* ── Toolbar ── */}
           <div className="flex items-center justify-between px-3 md:px-8 py-3 md:py-4 bg-white border-b border-slate-100 shrink-0 gap-3">
             <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
               <div className="flex items-center gap-1">
@@ -313,7 +326,6 @@ export default function AgendaPage() {
               </button>
             </div>
 
-            {/* View toggle */}
             <div className="flex items-center gap-1 bg-slate-100 rounded-xl p-1 shrink-0">
               {(
                 [
@@ -333,7 +345,6 @@ export default function AgendaPage() {
             </div>
           </div>
 
-          {/* ── Content ── */}
           <div className="flex-1 overflow-auto min-h-0 w-full">
             {loading ? (
               <div className="flex items-center justify-center h-full">
@@ -341,7 +352,6 @@ export default function AgendaPage() {
               </div>
             ) : view === "week" ? (
               <>
-                {/* Desktop week view — hidden on mobile */}
                 <div className="hidden md:flex h-full flex-col px-6 py-4 gap-3">
                   <div className="grid grid-cols-7 gap-3 shrink-0">
                     {weekDays.map((day, i) => {

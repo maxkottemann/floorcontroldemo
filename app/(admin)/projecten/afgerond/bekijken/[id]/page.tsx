@@ -237,7 +237,7 @@ export default function AfgerondProjectBekijkenPage() {
   const projectId = Array.isArray(id) ? id[0] : (id as string);
   const { toast, showToast, hideToast } = useToast();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [kmDriven, setKmDriven] = useState(1);
+  const [kmDriven, setKmDriven] = useState(0);
 
   const [project, setProject] = useState<ProjectDetail | null>(null);
   const [vloerStats, setVloerStats] = useState<VloerStat[]>([]);
@@ -357,10 +357,46 @@ export default function AfgerondProjectBekijkenPage() {
           Math.ceil(
             (new Date(project.eind_datum).getTime() -
               new Date(project.start_datum).getTime()) /
-              (1000 * 60 * 60 * 24),
+              (1000 * 60 * 60 * 24) +
+              1,
           ),
         )
       : 0;
+
+  useEffect(() => {
+    async function getKMs() {
+      if (!id) return;
+      const { data } = await supabase
+        .from("projecten")
+        .select(
+          "start_datum,eind_datum,project_bussen(bussen(type)),locaties(afstand)",
+        )
+        .eq("id", id);
+
+      let kmDrivenTemp = 0;
+
+      (data || []).forEach((d: any) => {
+        if (!d.start_datum || !d.eind_datum) return;
+        const start = new Date(d.start_datum);
+        const end = new Date(d.eind_datum);
+
+        const afstand = Number(d?.locaties?.afstand) || 0;
+
+        const diffDays =
+          Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) +
+          1;
+
+        const buses = d.project_bussen || [];
+
+        buses.forEach((d: any) => {
+          console.log("i ruin");
+          kmDrivenTemp += afstand * diffDays * 2;
+        });
+      });
+      setKmDriven(kmDrivenTemp);
+    }
+    getKMs();
+  }, [id]);
 
   return (
     <div className="min-h-screen flex bg-[#F5F6FA]">

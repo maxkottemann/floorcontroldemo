@@ -7,7 +7,7 @@ import { useToast } from "@/components/hooks/usetoasts";
 import { useEffect, useState } from "react";
 import { gewassenvloer } from "@/types/gewassenvloer";
 import { supabase } from "@/lib/supabase";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import {
   MapPinIcon,
   BuildingOfficeIcon,
@@ -18,7 +18,9 @@ import {
   ChatBubbleBottomCenterTextIcon,
   CheckCircleIcon,
   SparklesIcon,
+  ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
+import { melding } from "@/types/melding";
 
 interface VloerInfo {
   vloertype_naam: string;
@@ -93,6 +95,8 @@ export default function VloerPaspoortBekijkenPage() {
   const [loadingInfo, setLoadingInfo] = useState(true);
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [alleOpmerkingen, setAlleOpmerkingen] = useState<Opmerking[]>([]);
+  const [meldingen, setMeldingen] = useState<melding[]>([]);
+  const router = useRouter();
 
   useEffect(() => {
     async function getOpmerkingen() {
@@ -178,13 +182,41 @@ export default function VloerPaspoortBekijkenPage() {
     getVloerHistory();
   }, [id]);
 
+  useEffect(() => {
+    async function getMeldingen() {
+      if (!id) return;
+      const { data, error } = await supabase
+        .from("meldingen")
+        .select(
+          "id,profielen(naam),kamervloer_id,titel,beschrijving,afgehandeld,aangemaakt_op",
+        )
+        .eq("kamervloer_id", id)
+        .order("aangemaakt_op", { ascending: false });
+      if (!data || error) {
+        setMeldingen([]);
+        return;
+      }
+
+      setMeldingen(
+        (data || []).map((d: any) => ({
+          id: d.id,
+          profielnaam: d.profielen.naam,
+          kamervloer_id: d.kamervloer_id,
+          titel: d.titel,
+          beschrijving: d.beschrijving,
+          aangemaakt_op: d.aangemaakt_op,
+          afgehandeld: d.afgehandeld,
+        })),
+      );
+    }
+    getMeldingen();
+  }, [id]);
+
   const lastWasbeurt = wasbeurten[0];
   const opmerkingen = alleOpmerkingen;
 
-  // ── Shared sidebar content ───────────────────────────────────────────
   const sidebarContent = (
     <div className="space-y-4">
-      {/* Locatie */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
         <div className="flex items-center gap-3 px-4 md:px-5 py-4 md:py-5 border-b border-slate-50">
           <div className="w-9 h-9 rounded-xl bg-p/10 flex items-center justify-center">
@@ -243,7 +275,6 @@ export default function VloerPaspoortBekijkenPage() {
         ) : null}
       </div>
 
-      {/* Vloerdetails */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
         <div className="flex items-center gap-3 px-4 md:px-5 py-4 md:py-5 border-b border-slate-50">
           <div className="w-9 h-9 rounded-xl bg-p/10 flex items-center justify-center">
@@ -300,7 +331,6 @@ export default function VloerPaspoortBekijkenPage() {
 
         <main className="flex-1 overflow-auto p-3 md:p-8">
           <div className="space-y-4 md:space-y-6">
-            {/* Header */}
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.14em] text-p/60 mb-1">
                 Vloerpaspoort
@@ -320,10 +350,8 @@ export default function VloerPaspoortBekijkenPage() {
               )}
             </div>
 
-            {/* Desktop — two column */}
             <div className="hidden xl:grid xl:grid-cols-[1fr_320px] gap-6 items-start">
               <div className="space-y-4">
-                {/* Stat cards */}
                 {!loadingHistory && (
                   <div className="grid grid-cols-3 gap-4">
                     <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-5 py-4">
@@ -367,16 +395,14 @@ export default function VloerPaspoortBekijkenPage() {
                     </div>
                   </div>
                 )}
-                {/* History + opmerkingen — same as mobile below */}
                 {historyCard()}
                 {opmerkingenCard()}
+                {meldingenCard()}
               </div>
               {sidebarContent}
             </div>
 
-            {/* Mobile/tablet — single column */}
             <div className="xl:hidden space-y-4">
-              {/* Stat cards — 1 col mobile, 3 col sm */}
               {!loadingHistory && (
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-4 py-4">
@@ -423,6 +449,7 @@ export default function VloerPaspoortBekijkenPage() {
               {sidebarContent}
               {historyCard()}
               {opmerkingenCard()}
+              {meldingenCard()}
             </div>
           </div>
         </main>
@@ -430,7 +457,6 @@ export default function VloerPaspoortBekijkenPage() {
     </div>
   );
 
-  // ── Shared cards defined after return to use component state ─────────
   function historyCard() {
     return (
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
@@ -576,6 +602,107 @@ export default function VloerPaspoortBekijkenPage() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+  function meldingenCard() {
+    return (
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        <div className="flex items-start gap-3 px-4 md:px-6 py-4 md:py-5 border-b border-slate-50">
+          <div className="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
+            <ExclamationTriangleIcon className="w-5 h-5 text-amber-500" />
+          </div>
+          <div className="flex-1">
+            <h2 className="text-base font-bold text-slate-800">Meldingen</h2>
+            <p className="text-sm text-slate-400">
+              {meldingen.length} melding{meldingen.length !== 1 ? "en" : ""}{" "}
+              voor deze vloer
+            </p>
+          </div>
+          {meldingen.length > 0 && (
+            <span
+              className={`text-xs font-bold px-2.5 py-1 rounded-full shrink-0 border ${
+                meldingen.some((m) => !m.afgehandeld)
+                  ? "text-amber-600 bg-amber-50 border-amber-100"
+                  : "text-emerald-600 bg-emerald-50 border-emerald-100"
+              }`}
+            >
+              {meldingen.filter((m) => !m.afgehandeld).length > 0
+                ? `${meldingen.filter((m) => !m.afgehandeld).length} open`
+                : "Alles afgehandeld"}
+            </span>
+          )}
+        </div>
+
+        {meldingen.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-10 text-center">
+            <CheckCircleIcon className="w-7 h-7 text-slate-200 mb-2" />
+            <p className="text-sm text-slate-300">
+              Geen meldingen geregistreerd
+            </p>
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-50 max-h-64 overflow-y-auto">
+            {meldingen.map((m) => (
+              <div
+                key={m.id}
+                onClick={() => router.push(`/meldingen/bekijken/${m.id}`)}
+                className="flex items-start gap-3 px-4 md:px-6 py-3.5 cursor-pointer hover:bg-slate-50 active:bg-slate-100 transition-colors"
+              >
+                <div
+                  className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${m.afgehandeld ? "bg-emerald-50" : "bg-amber-50"}`}
+                >
+                  {m.afgehandeld ? (
+                    <CheckCircleIcon className="w-4 h-4 text-emerald-500" />
+                  ) : (
+                    <ExclamationTriangleIcon className="w-4 h-4 text-amber-500" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2 mb-0.5 flex-wrap">
+                    <p className="text-xs font-bold text-slate-700 truncate">
+                      {m.titel}
+                    </p>
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0 ${
+                        m.afgehandeld
+                          ? "bg-emerald-50 text-emerald-600 border-emerald-100"
+                          : "bg-amber-50 text-amber-600 border-amber-100"
+                      }`}
+                    >
+                      {m.afgehandeld ? "Afgehandeld" : "Openstaand"}
+                    </span>
+                  </div>
+                  {m.beschrijving && (
+                    <p className="text-xs text-slate-500 leading-snug line-clamp-2">
+                      {m.beschrijving}
+                    </p>
+                  )}
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    {formatDate(m.aangemaakt_op)}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        {/* Footer totals */}
+        {meldingen.length > 0 && (
+          <div className="px-4 md:px-6 py-3 bg-slate-50/60 border-t border-slate-100 flex items-center gap-4">
+            <div className="flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-full bg-amber-400" />
+              <span className="text-xs text-slate-500">
+                {meldingen.filter((m) => !m.afgehandeld).length} openstaand
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-full bg-emerald-400" />
+              <span className="text-xs text-slate-500">
+                {meldingen.filter((m) => m.afgehandeld).length} afgehandeld
+              </span>
+            </div>
           </div>
         )}
       </div>

@@ -23,7 +23,12 @@ import {
   Square3Stack3DIcon,
   ChevronDownIcon,
   TruckIcon,
+  BuildingOffice2Icon,
 } from "@heroicons/react/24/outline";
+import { BsType } from "react-icons/bs";
+import { BiSortAZ } from "react-icons/bi";
+import { GrGroup } from "react-icons/gr";
+import { HiOfficeBuilding } from "react-icons/hi";
 import SidebarClient from "@/components/layout/sidebarclient";
 
 function formatDate(d?: string) {
@@ -191,11 +196,9 @@ function PieChart({
                 <p className="text-xs font-semibold text-slate-600 flex-1 min-w-0 truncate">
                   {d.label}
                 </p>
-                <span className="text-[10px] text-slate-400 shrink-0 tabular-nums">
+
+                <span className="text-xs font-bold text-slate-700 shrink-0 w-20 text-right tabular-nums">
                   {d.m2 ?? d.value}m²
-                </span>
-                <span className="text-xs font-bold text-slate-700 shrink-0 w-8 text-right tabular-nums">
-                  {pct}%
                 </span>
               </div>
             );
@@ -578,75 +581,48 @@ export default function ProjectBekijkenPage() {
     0,
   );
 
+  // Sidebar content — shared between desktop sidebar and mobile bottom section
   const sidebarContent = (
     <div className="space-y-4 md:space-y-5">
-      {locatie && (
+      {uniqueVloerTypes.length === 1 && (
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-          <div className="flex items-center gap-3 px-4 md:px-5 py-4 md:py-5 border-b border-slate-50">
+          <div className="flex items-center gap-3 px-5 py-5 border-b border-slate-50">
             <div className="w-9 h-9 rounded-xl bg-p/10 flex items-center justify-center">
-              <BuildingOfficeIcon className="w-5 h-5 text-p" />
+              <SwatchIcon className="w-5 h-5 text-p" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-slate-800">Locatie</h2>
-              <p className="text-sm text-slate-400">{locatie.naam}</p>
+              <h2 className="text-base font-bold text-slate-800">Vloertypes</h2>
+              <p className="text-sm text-slate-400">
+                Verdeling per vloertype op m²
+              </p>
             </div>
           </div>
-          <div className="p-4 md:p-5 space-y-4">
-            {(locatie.type || locatie.extra_checkin) && (
-              <div className="flex items-center gap-2 flex-wrap">
-                {locatie.type && (
-                  <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-50 text-blue-700 border border-blue-100">
-                    {locatie.type}
-                  </span>
-                )}
-                {locatie.extra_checkin && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
-                    <CheckBadgeIcon className="w-3.5 h-3.5" />
-                    Extra check-in
-                  </span>
-                )}
+          <div className="p-5">
+            <div className="flex items-center justify-between px-4 py-3 bg-p/5 border border-p/15 rounded-xl">
+              <div className="flex items-center gap-3">
+                <div className="w-3 h-3 rounded-full bg-p shrink-0" />
+                <p className="text-sm font-bold text-slate-800">
+                  {uniqueVloerTypes[0]}
+                </p>
               </div>
-            )}
-            <div className="space-y-3">
-              {locatie.perceel && (
-                <div className="flex items-center gap-3">
-                  <Square3Stack3DIcon className="w-4 h-4 text-slate-300 shrink-0" />
-                  <span className="text-sm font-medium text-slate-600">
-                    {locatie.perceel}
-                  </span>
-                </div>
-              )}
-              {locatie.adres && (
-                <div className="flex items-center gap-3">
-                  <MapPinIcon className="w-4 h-4 text-slate-300 shrink-0" />
-                  <span className="text-sm font-medium text-slate-600">
-                    {locatie.adres}
-                    {locatie.plaats ? `, ${locatie.plaats}` : ""}
-                  </span>
-                </div>
-              )}
-              {locatie.contact_persoon && (
-                <div className="flex items-center gap-3">
-                  <UserIcon className="w-4 h-4 text-slate-300 shrink-0" />
-                  <span className="text-sm font-medium text-slate-600">
-                    {locatie.contact_persoon}
-                  </span>
-                </div>
-              )}
-              {locatie.telefoonnummer && (
-                <div className="flex items-center gap-3">
-                  <PhoneIcon className="w-4 h-4 text-slate-300 shrink-0" />
-                  <span className="text-sm font-medium text-slate-600">
-                    {locatie.telefoonnummer}
-                  </span>
-                </div>
-              )}
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-bold text-p">
+                  {kamervloeren.reduce(
+                    (s, v) => s + (v.vierkante_meter ?? 0),
+                    0,
+                  )}
+                  m²
+                </span>
+                <span className="text-xs font-bold text-p/60 bg-p/10 px-2 py-0.5 rounded-full">
+                  100%
+                </span>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {uniqueVloerTypes.length > 0 && (
+      {uniqueVloerTypes.length > 1 && (
         <PieChart
           title="Vloertypes"
           subtitle="Verdeling per vloertype op m²"
@@ -657,56 +633,6 @@ export default function ProjectBekijkenPage() {
             return { label: type ?? "—", value: m2, m2 };
           })}
         />
-      )}
-
-      {reinigmethodeData.length > 0 && (
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-          <div className="flex items-center gap-3 px-4 md:px-5 py-4 md:py-5 border-b border-slate-50">
-            <div className="w-9 h-9 rounded-xl bg-p/10 flex items-center justify-center">
-              <SwatchIcon className="w-5 h-5 text-p" />
-            </div>
-            <div>
-              <h2 className="text-base font-bold text-slate-800">
-                Reinigingsmethodes
-              </h2>
-              <p className="text-sm text-slate-400">
-                Verdeling per methode op m²
-              </p>
-            </div>
-          </div>
-          <div className="p-4 md:p-5 space-y-3">
-            {(() => {
-              const total = reinigmethodeData.reduce((s, d) => s + d.value, 0);
-              return reinigmethodeData
-                .sort((a, b) => b.value - a.value)
-                .map((d, i) => {
-                  const pct =
-                    total > 0 ? Math.round((d.value / total) * 100) : 0;
-                  return (
-                    <div key={d.label}>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <p className="text-xs font-semibold text-slate-600 truncate max-w-[70%]">
-                          {d.label}
-                        </p>
-                        <span className="text-xs font-bold text-slate-700">
-                          {pct}%
-                        </span>
-                      </div>
-                      <div className="h-2.5 rounded-full bg-slate-100 overflow-hidden">
-                        <div
-                          className="h-full rounded-full transition-all duration-700"
-                          style={{
-                            width: `${pct}%`,
-                            background: PIE_COLORS[i % PIE_COLORS.length],
-                          }}
-                        />
-                      </div>
-                    </div>
-                  );
-                });
-            })()}
-          </div>
-        </div>
       )}
 
       {projectBussen.length > 0 && (
@@ -805,6 +731,11 @@ export default function ProjectBekijkenPage() {
                   value={project?.locatie_naam}
                 />
                 <InfoChip
+                  icon={<BuildingOffice2Icon className="w-4 h-4" />}
+                  label="Tyoe"
+                  value={locatie?.type}
+                />
+                <InfoChip
                   icon={<CalendarDaysIcon className="w-4 h-4" />}
                   label="Start"
                   value={formatDate(project?.start_datum)}
@@ -835,6 +766,7 @@ export default function ProjectBekijkenPage() {
                     value={locatie.telefoonnummer}
                   />
                 )}
+
                 {project?.opmerkingen && (
                   <InfoChip
                     icon={
@@ -843,6 +775,19 @@ export default function ProjectBekijkenPage() {
                     label="Opmerking"
                     value={project.opmerkingen}
                   />
+                )}
+                {locatie?.extra_checkin && (
+                  <div className="inline-flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-100 rounded-lg shadow-sm">
+                    <ChatBubbleBottomCenterTextIcon className="w-4 h-4 text-amber-500 shrink-0" />
+                    <div className="flex flex-col">
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-amber-600">
+                        Aanmeldprocedure
+                      </span>
+                      <span className="text-sm font-bold text-amber-700">
+                        {locatie.extra_checkin}
+                      </span>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>

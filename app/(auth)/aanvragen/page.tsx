@@ -19,11 +19,9 @@ export default function AccountAanvragenPage() {
     }
     setLoading(true);
     setError("");
-
     const { error: err } = await supabase
       .from("account_aanvraag")
       .insert({ naam, email, stap: "aangevraagd" });
-
     setLoading(false);
     if (err) {
       if (err.code === "23505")
@@ -35,92 +33,154 @@ export default function AccountAanvragenPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F6FA] flex items-center justify-center p-6">
-      <div className="w-full max-w-md">
-        {/* Logo / brand */}
-        <div className="text-center mb-8">
+    <div className="min-h-screen flex">
+      {/* Left banner */}
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
+        <img
+          src="/logingbg.png"
+          alt="FloorControl"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#154273]/80 via-[#154273]/40 to-transparent" />
+        <div className="relative z-10 flex flex-col justify-between p-12 w-full">
+          <div>
+            <img
+              src="/logo.png"
+              alt="FloorControl"
+              className="h-10 object-contain brightness-0 invert"
+            />
+          </div>
+          <div>
+            <p className="text-white/60 text-xs font-bold uppercase tracking-[0.2em] mb-3">
+              Duofort B.V.
+            </p>
+            <h1 className="text-4xl font-bold text-white leading-tight mb-4">
+              Floor<span className="text-[#3AB8BF]">Control</span>
+            </h1>
+            <p className="text-white/70 text-base leading-relaxed max-w-xs">
+              Beheer uw locaties, projecten en vloeren vanuit één platform.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-px bg-white/30" />
+            <p className="text-white/40 text-xs">
+              Vloerbeheer · Projectplanning · Rapportage
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Right panel */}
+      <div className="flex-1 flex flex-col justify-center items-center p-6 md:p-12 bg-[#F5F6FA]">
+        {/* Mobile logo */}
+        <div className="lg:hidden mb-8">
           <img
-            src="/duofortlogo.png"
-            className="h-10 mx-auto mb-4 object-contain"
-            alt="Duofort"
+            src="/logo.png"
+            alt="FloorControl"
+            className="h-10 object-contain"
           />
-          <h1 className="text-2xl font-bold text-slate-900">
-            Toegang aanvragen
-          </h1>
-          <p className="text-sm text-slate-400 mt-1">
-            FloorControl · Duofort B.V.
-          </p>
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        <div className="w-full max-w-sm">
           {done ? (
-            <div className="px-8 py-10 flex flex-col items-center text-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-emerald-100 flex items-center justify-center">
-                <CheckCircleIcon className="w-7 h-7 text-emerald-600" />
+            <div className="text-center">
+              <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center">
+                <CheckCircleIcon className="w-7 h-7 text-emerald-500" />
               </div>
-              <div>
-                <p className="text-base font-bold text-slate-800">
-                  Aanvraag ingediend
-                </p>
-                <p className="text-sm text-slate-400 mt-1">
-                  Uw aanvraag is ontvangen. U ontvangt een e-mail zodra uw
-                  account is goedgekeurd.
-                </p>
-              </div>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#154273]/60 mb-2">
+                Ontvangen
+              </p>
+              <h2 className="text-2xl font-bold text-slate-900 tracking-tight mb-3">
+                Aanvraag ingediend
+              </h2>
+              <p className="text-sm text-slate-400 leading-relaxed mb-8">
+                Uw aanvraag is ontvangen. U ontvangt een e-mail zodra uw account
+                is goedgekeurd.
+              </p>
+              <a
+                href="/login"
+                className="inline-flex items-center gap-2 px-5 py-3 bg-[#154273] hover:bg-[#0f2f52] text-white text-sm font-bold rounded-xl transition-all shadow-sm"
+              >
+                Terug naar inloggen
+              </a>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="px-8 py-8 space-y-5">
-              <div>
-                <p className="text-sm font-bold text-slate-700 mb-1">
-                  Volledige naam
+            <>
+              <div className="mb-8">
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#154273]/60 mb-2">
+                  Nieuw account
                 </p>
-                <input
-                  value={naam}
-                  onChange={(e) => setNaam(e.target.value)}
-                  placeholder="Jan de Vries"
-                  className="w-full px-4 py-2.5 text-slate-700 text-sm bg-slate-50 rounded-xl border border-slate-200 outline-none focus:border-p/50 focus:ring-2 focus:ring-p/10 transition-all placeholder:text-slate-300"
-                />
-              </div>
-              <div>
-                <p className="text-sm font-bold text-slate-700 mb-1">
-                  E-mailadres
+                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
+                  Toegang aanvragen
+                </h2>
+                <p className="text-sm text-slate-400 mt-1">
+                  Vul uw gegevens in om toegang aan te vragen
                 </p>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="jan@bedrijf.nl"
-                  className="w-full px-4 py-2.5 text-slate-700 text-sm bg-slate-50 rounded-xl border border-slate-200 outline-none focus:border-p/50 focus:ring-2 focus:ring-p/10 transition-all placeholder:text-slate-300"
-                />
               </div>
 
-              {error && (
-                <p className="text-xs text-red-500 font-medium">{error}</p>
-              )}
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">
+                    Volledige naam
+                  </label>
+                  <input
+                    value={naam}
+                    onChange={(e) => setNaam(e.target.value)}
+                    placeholder="Jan de Vries"
+                    className="w-full px-4 py-3 text-slate-800 text-sm bg-white border border-slate-200 rounded-xl outline-none focus:border-[#154273]/40 focus:ring-2 focus:ring-[#154273]/10 placeholder:text-slate-300 transition-all shadow-sm"
+                  />
+                </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-p text-white text-sm font-bold hover:bg-p/90 transition-all disabled:opacity-50 cursor-pointer"
-              >
-                {loading ? (
-                  <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
-                ) : (
-                  <UserPlusIcon className="w-4 h-4" />
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">
+                    E-mailadres
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="jan@bedrijf.nl"
+                    className="w-full px-4 py-3 text-slate-800 text-sm bg-white border border-slate-200 rounded-xl outline-none focus:border-[#154273]/40 focus:ring-2 focus:ring-[#154273]/10 placeholder:text-slate-300 transition-all shadow-sm"
+                  />
+                </div>
+
+                {error && (
+                  <div className="flex items-center gap-2.5 px-4 py-3 bg-red-50 border border-red-100 rounded-xl">
+                    <div className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0" />
+                    <p className="text-xs font-semibold text-red-600">
+                      {error}
+                    </p>
+                  </div>
                 )}
-                Toegang aanvragen
-              </button>
 
-              <p className="text-xs text-slate-400 text-center">
-                Al een account?{" "}
-                <a
-                  href="/login"
-                  className="text-p font-semibold hover:underline"
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#154273] hover:bg-[#0f2f52] disabled:opacity-60 text-white text-sm font-bold rounded-xl transition-all shadow-sm cursor-pointer"
                 >
-                  Inloggen
-                </a>
-              </p>
-            </form>
+                  {loading ? (
+                    <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                  ) : (
+                    <>
+                      <UserPlusIcon className="w-4 h-4" />
+                      Toegang aanvragen
+                    </>
+                  )}
+                </button>
+              </form>
+
+              <div className="mt-6 pt-6 border-t border-slate-200 text-center">
+                <p className="text-sm text-slate-400">
+                  Al een account?{" "}
+                  <a
+                    href="/login"
+                    className="text-[#154273] font-bold hover:text-[#154273]/70 transition-colors"
+                  >
+                    Inloggen
+                  </a>
+                </p>
+              </div>
+            </>
           )}
         </div>
       </div>
