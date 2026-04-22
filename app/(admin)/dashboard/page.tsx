@@ -298,14 +298,14 @@ export default function DashboardPage() {
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">
                 Uitvoering op schema
               </p>
-              <p className="text-3xl font-bold text-p mb-2">87%</p>
+              <p className="text-3xl font-bold text-p mb-2">100%</p>
               <p className="text-slate-400 text-xs">
                 Binnen afgesproken venster
               </p>
               <div className="mt-3 h-1.5 rounded-full bg-slate-100 overflow-hidden">
                 <div
                   className="h-full bg-p rounded-full"
-                  style={{ width: "87%" }}
+                  style={{ width: "100%" }}
                 />
               </div>
             </Card>

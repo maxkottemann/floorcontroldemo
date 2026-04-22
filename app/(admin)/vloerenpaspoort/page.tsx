@@ -429,7 +429,7 @@ function VloerTable({
           >
             <option value="naam">Naam</option>
             <option value="status">Status</option>
-            <option value="laatste_wasbeurt">Wasbeurt</option>
+            <option value="laatste_onderhoud">Wasbeurt</option>
             <option value="gebouw">Gebouw</option>
             <option value="verdieping">Verdieping</option>
           </select>
@@ -535,7 +535,7 @@ function VloerTable({
                       <>
                         <ClockIcon className="w-3.5 h-3.5 text-slate-300 shrink-0" />
                         <p className="text-xs text-slate-300">
-                          Nog niet gewassen
+                          Nog niet onderhouden
                         </p>
                       </>
                     )}
