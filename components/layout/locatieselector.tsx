@@ -96,7 +96,12 @@ export default function LocatieSelector({
                     </p>
                     {(locatie.plaats || locatie.type) && (
                       <p className="text-xs text-slate-400 truncate">
-                        {[locatie.type, locatie.plaats]
+                        {[
+                          locatie.perceel,
+                          locatie.type,
+                          locatie.plaats,
+                          locatie.adres,
+                        ]
                           .filter(Boolean)
                           .join(" · ")}
                       </p>

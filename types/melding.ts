@@ -3,6 +3,7 @@ export interface melding {
   profielnaam: string;
   kamervloer_id: string;
   kamervloer_naam?: string;
+  vierkante_meter?: number;
   titel: string;
   beschrijving: string;
   afgehandeld: boolean;

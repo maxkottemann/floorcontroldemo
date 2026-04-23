@@ -326,7 +326,7 @@ function VloerTable({
   return (
     <div className="h-full flex flex-col gap-4 md:gap-5">
       {/* Header */}
-      <div className="flex items-center gap-3 md:gap-4">
+      <div className="flex items-center  gap-3 md:gap-4">
         <button
           onClick={onBack}
           className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-600 transition-colors cursor-pointer shrink-0"
@@ -491,10 +491,11 @@ function VloerTable({
             filtered.map((v) => (
               <div
                 key={v.id}
-                onClick={() => router.push(`/vloerenpaspoort/bekijken/${v.id}`)}
+                onClick={() =>
+                  router.push(`/klant/vloerenpaspoort/bekijken/${v.id}`)
+                }
                 className="cursor-pointer hover:bg-slate-50 active:bg-slate-100 transition-colors group"
               >
-                {/* Desktop row */}
                 <div className="hidden md:grid grid-cols-[1fr_180px_100px_160px_40px] items-center px-6 py-3.5">
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-8 h-8 rounded-xl bg-p/10 flex items-center justify-center shrink-0 group-hover:bg-p/15 transition-colors">

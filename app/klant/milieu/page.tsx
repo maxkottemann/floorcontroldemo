@@ -294,13 +294,6 @@ export default function MilieuPage() {
                   {totalM2.toFixed(0)}m² totaal onderhouden
                 </p>
               </div>
-              <div className="shrink-0">
-                <MainButton
-                  onClick={() => router.push("/milieu/kernwaardes")}
-                  label="Reinigmethode toevoegen"
-                  icon={<PlusIcon />}
-                />
-              </div>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">

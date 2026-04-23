@@ -25,6 +25,16 @@ import {
   Square3Stack3DIcon,
   HomeModernIcon,
 } from "@heroicons/react/24/outline";
+import MainButton from "@/components/layout/mainbutton";
+import { bericht } from "@/types/berichten";
+
+interface VloerLocatieInfo {
+  locatie_naam: string;
+  bouwdeel_naam: string;
+  verdieping_naam: string;
+  kamer_naam: string;
+  vierkante_meter: number | null;
+}
 
 interface LocatieInfo {
   locatie_naam: string;
@@ -52,11 +62,13 @@ function formatTime(d?: string) {
 function PlanOnderhoudsPopup({
   kamervloer_id,
   kamervloer_naam,
+  vierkante_meter,
   onClose,
   onSuccess,
 }: {
   kamervloer_id: string;
   kamervloer_naam?: string;
+  vierkante_meter: number;
   onClose: () => void;
   onSuccess: (uitleg: string) => void;
 }) {
@@ -88,6 +100,9 @@ function PlanOnderhoudsPopup({
         .single();
       const locatie_id = (vloer?.kamers as any)?.verdiepingen?.bouwdeel
         ?.locatie_id;
+
+      console.log(vloer);
+
       if (!locatie_id) {
         showToast("Kon locatie niet bepalen", "error");
         return;
@@ -136,7 +151,7 @@ function PlanOnderhoudsPopup({
               Onderhoud plannen
             </p>
             <p className="text-xs text-slate-400 mt-0.5">
-              {kamervloer_naam ?? "Vloer"}
+              {kamervloer_naam ?? "Vloer"} - {vierkante_meter} m2
             </p>
           </div>
           <button
@@ -209,6 +224,61 @@ export default function MeldingBekijkenPage() {
     null,
   );
   const [uitleg, setUitleg] = useState("");
+  const [vloerLocatie, setVloerLocatie] = useState<VloerLocatieInfo | null>(
+    null,
+  );
+  const [bericht, setBericht] = useState("");
+  const [alleBerichten, setAlleBerichten] = useState<bericht[]>([]);
+  const [currentProfielId, setCurrentProfielId] = useState<string | null>(null);
+  const [currentRol, setCurrentRol] = useState<string | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  async function handleSendMessage() {
+    if (!bericht.trim()) return;
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    const { data: profiel } = await supabase
+      .from("profielen")
+      .select("id")
+      .eq("gebruiker_id", user?.id ?? "")
+      .single();
+
+    const { error } = await supabase.from("melding_berichten").insert({
+      melding_id: id,
+      profiel_id: profiel?.id,
+      bericht: bericht,
+    });
+    if (error) {
+      console.log(error);
+      showToast("Bericht kon niet worden verzonden", "error");
+      return;
+    }
+    setBericht("");
+  }
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [alleBerichten]);
+
+  useEffect(() => {
+    async function getCurrentProfiel() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data: profiel } = await supabase
+        .from("profielen")
+        .select("id, rol")
+        .eq("gebruiker_id", user.id)
+        .single();
+      if (profiel) {
+        setCurrentProfielId(profiel.id);
+        setCurrentRol(profiel.rol);
+      }
+    }
+    getCurrentProfiel();
+  }, []);
 
   useEffect(() => {
     async function getMelding() {
@@ -218,7 +288,7 @@ export default function MeldingBekijkenPage() {
         const { data, error } = await supabase
           .from("meldingen")
           .select(
-            "id,profielen(naam),kamervloer_id,kamer_vloeren(vloer_types(naam)),titel,beschrijving,afgehandeld,aangemaakt_op",
+            "id,profielen(naam),kamervloer_id,kamer_vloeren(vloer_types(naam),vierkante_meter),titel,beschrijving,afgehandeld,aangemaakt_op",
           )
           .eq("id", id)
           .single();
@@ -231,6 +301,7 @@ export default function MeldingBekijkenPage() {
           profielnaam: (data.profielen as any)?.naam,
           kamervloer_id: data.kamervloer_id,
           kamervloer_naam: (data.kamer_vloeren as any)?.vloer_types?.naam,
+          vierkante_meter: (data.kamer_vloeren as any)?.vierkante_meter,
           titel: data.titel,
           beschrijving: data.beschrijving,
           afgehandeld: data.afgehandeld,
@@ -242,6 +313,101 @@ export default function MeldingBekijkenPage() {
     }
     getMelding();
   }, [id]);
+
+  // Berichten: initial load + realtime subscription
+  useEffect(() => {
+    if (!id) return;
+
+    async function loadBerichten() {
+      const { data: berichten, error: berichtenError } = await supabase
+        .from("melding_berichten")
+        .select("id,profiel_id,bericht,aangemaakt_op,profielen(naam)")
+        .eq("melding_id", id)
+        .order("aangemaakt_op", { ascending: true });
+
+      if (berichtenError) {
+        console.log(berichtenError);
+        showToast("Kon berichten niet laden", "error");
+        return;
+      }
+      setAlleBerichten(
+        (berichten || []).map((d: any) => ({
+          id: d.id,
+          profiel_id: d.profiel_id,
+          profiel_naam: d.profielen.naam,
+          bericht: d.bericht,
+          aangemaakt_op: d.aangemaakt_op,
+        })),
+      );
+    }
+
+    loadBerichten();
+
+    // Realtime: listen for new messages on this melding
+    const channel = supabase
+      .channel(`melding_berichten:${id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "melding_berichten",
+          filter: `melding_id=eq.${id}`,
+        },
+        async (payload) => {
+          // Fetch the full row including the joined profiel naam
+          const { data } = await supabase
+            .from("melding_berichten")
+            .select("id,profiel_id,bericht,aangemaakt_op,profielen(naam)")
+            .eq("id", payload.new.id)
+            .single();
+          if (data) {
+            setAlleBerichten((prev) => [
+              ...prev,
+              {
+                id: data.id,
+                profiel_id: data.profiel_id,
+                profiel_naam: (data.profielen as any)?.naam,
+                bericht: data.bericht,
+                aangemaakt_op: data.aangemaakt_op,
+              },
+            ]);
+          }
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [id]);
+
+  useEffect(() => {
+    async function getVloerLocatie() {
+      if (!melding?.kamervloer_id) return;
+      const { data } = await supabase
+        .from("kamer_vloeren")
+        .select(
+          "vierkante_meter, kamers(naam, verdiepingen(naam, bouwdeel(naam, locaties(naam))))",
+        )
+        .eq("id", melding.kamervloer_id)
+        .single();
+      if (data) {
+        const kamer = data.kamers as any;
+        const verdieping = kamer?.verdiepingen;
+        const bouwdeel = verdieping?.bouwdeel;
+        const locatie = bouwdeel?.locaties;
+        setVloerLocatie({
+          locatie_naam: locatie?.naam ?? "—",
+          bouwdeel_naam: bouwdeel?.naam ?? "—",
+          verdieping_naam: verdieping?.naam ?? "—",
+          kamer_naam: kamer?.naam ?? "—",
+          vierkante_meter: data.vierkante_meter ?? null,
+        });
+      }
+    }
+    getVloerLocatie();
+  }, [melding?.kamervloer_id]);
 
   useEffect(() => {
     async function getLocatieInfo() {
@@ -558,6 +724,121 @@ export default function MeldingBekijkenPage() {
     </>
   );
 
+  // ── Message area — full width, below main content ────────────────────
+  const messageArea = melding && (
+    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+      {/* Header */}
+      <div className="px-5 py-4 border-b border-slate-50 flex items-center gap-2.5">
+        <div className="w-7 h-7 rounded-lg bg-p/10 flex items-center justify-center">
+          <ChatBubbleBottomCenterTextIcon className="w-4 h-4 text-p" />
+        </div>
+        <p className="text-sm font-bold text-slate-700">Berichten</p>
+        {alleBerichten.length > 0 && (
+          <span className="ml-auto text-xs font-semibold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
+            {alleBerichten.length}
+          </span>
+        )}
+      </div>
+
+      {/* Message history */}
+      <div className="px-5 py-4 space-y-3 max-h-80 overflow-y-auto">
+        {alleBerichten.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <ChatBubbleBottomCenterTextIcon className="w-7 h-7 text-slate-200 mb-2" />
+            <p className="text-sm text-slate-300 font-medium">
+              Nog geen berichten
+            </p>
+          </div>
+        ) : (
+          alleBerichten.map((b) => {
+            const isOwn =
+              b.profiel_id === currentProfielId && currentRol === "admin";
+            return (
+              <div
+                key={b.id}
+                className={`flex gap-2.5 ${isOwn ? "flex-row-reverse" : "flex-row"}`}
+              >
+                {/* Avatar */}
+                <div
+                  className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
+                    isOwn ? "bg-p" : "bg-slate-100"
+                  }`}
+                >
+                  <UserIcon
+                    className={`w-3.5 h-3.5 ${isOwn ? "text-white" : "text-slate-400"}`}
+                  />
+                </div>
+
+                {/* Bubble + meta */}
+                <div
+                  className={`max-w-[72%] min-w-0 ${isOwn ? "items-end" : "items-start"} flex flex-col`}
+                >
+                  <div
+                    className={`flex items-baseline gap-2 mb-1 ${isOwn ? "flex-row-reverse" : "flex-row"}`}
+                  >
+                    <p className="text-xs font-bold text-slate-700">
+                      {isOwn ? "Jij" : b.profiel_naam}
+                    </p>
+                    <p className="text-xs text-slate-300">
+                      {formatTime(b.aangemaakt_op)}
+                    </p>
+                  </div>
+                  <div
+                    className={`px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed ${
+                      isOwn
+                        ? "bg-p text-white rounded-tr-sm"
+                        : "bg-slate-50 border border-slate-100 text-slate-600 rounded-tl-sm"
+                    }`}
+                  >
+                    {b.bericht}
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
+        <div ref={messagesEndRef} />
+      </div>
+
+      {/* Compose area */}
+      <div className="px-5 pb-5 pt-3 border-t border-slate-50">
+        <div className="flex gap-3 items-end">
+          <div className="w-7 h-7 rounded-full bg-p/10 flex items-center justify-center shrink-0 mb-0.5">
+            <UserIcon className="w-3.5 h-3.5 text-p" />
+          </div>
+          <div className="flex-1 relative">
+            <textarea
+              value={bericht}
+              placeholder="Schrijf een bericht…"
+              rows={2}
+              className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 pr-28 text-sm text-slate-800 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-p/20 focus:border-p/40 transition-all leading-relaxed"
+              onChange={(e) => setBericht(e.target.value)}
+              onKeyDown={(e) => {
+                if (
+                  e.key === "Enter" &&
+                  (e.metaKey || e.ctrlKey) &&
+                  bericht.trim()
+                ) {
+                  handleSendMessage();
+                }
+              }}
+            />
+            <button
+              onClick={handleSendMessage}
+              disabled={!bericht.trim()}
+              className="absolute right-2.5 bottom-2.5 flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-p hover:bg-p/90 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg transition-all cursor-pointer"
+            >
+              Verstuur
+            </button>
+          </div>
+        </div>
+        <p className="text-xs text-slate-300 mt-2 ml-10">
+          ⌘ + Enter om te versturen
+        </p>
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen flex bg-[#F5F6FA]">
       <Sidebar
@@ -573,6 +854,7 @@ export default function MeldingBekijkenPage() {
           kamervloer_id={melding.kamervloer_id}
           kamervloer_naam={melding.kamervloer_naam}
           onClose={() => setPlanPopupOpen(false)}
+          vierkante_meter={melding.vierkante_meter ?? 0}
           onSuccess={(uitleg) => markAfgehandeld(uitleg)}
         />
       )}
@@ -596,7 +878,7 @@ export default function MeldingBekijkenPage() {
             </div>
           ) : (
             <div className="space-y-4 md:space-y-6">
-              {/* Back + header */}
+              {/* Page heading */}
               <div>
                 <button
                   onClick={() => router.back()}
@@ -628,17 +910,20 @@ export default function MeldingBekijkenPage() {
                 </div>
               </div>
 
-              {/* Desktop — two column (xl+) */}
+              {/* Desktop: sidebar layout for main + actions */}
               <div className="hidden xl:grid xl:grid-cols-[1fr_300px] gap-6 items-start">
                 <div className="space-y-5">{mainContent}</div>
                 {actionPanel}
               </div>
 
-              {/* Mobile/tablet — single column */}
+              {/* Mobile: stacked */}
               <div className="xl:hidden space-y-4">
                 {actionPanel}
                 {mainContent}
               </div>
+
+              {/* Message area — full width on all breakpoints */}
+              {messageArea}
             </div>
           )}
         </main>
