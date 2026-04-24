@@ -72,19 +72,8 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* ── Right panel — login form ── */}
       <div className="flex-1 flex flex-col justify-center items-center p-6 md:p-12 bg-[#F5F6FA]">
-        {/* Mobile logo */}
-        <div className="lg:hidden mb-8">
-          <img
-            src="/logo.png"
-            alt="FloorControl"
-            className="h-10 object-contain"
-          />
-        </div>
-
         <div className="w-full max-w-sm">
-          {/* Header */}
           <div className="mb-8">
             <div className="mb-5">
               <img
@@ -104,7 +93,6 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* Form */}
           <div className="space-y-4">
             <div>
               <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">
