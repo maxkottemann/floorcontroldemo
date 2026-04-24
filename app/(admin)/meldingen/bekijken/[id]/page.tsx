@@ -480,7 +480,6 @@ export default function MeldingBekijkenPage() {
     setRejecting(false);
   }
 
-  // ── Shared action panel content ─────────────────────────────────────
   const actionPanel = melding && (
     <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
       <div className="px-5 py-4 border-b border-slate-50">
@@ -724,10 +723,8 @@ export default function MeldingBekijkenPage() {
     </>
   );
 
-  // ── Message area — full width, below main content ────────────────────
   const messageArea = melding && (
     <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-      {/* Header */}
       <div className="px-5 py-4 border-b border-slate-50 flex items-center gap-2.5">
         <div className="w-7 h-7 rounded-lg bg-p/10 flex items-center justify-center">
           <ChatBubbleBottomCenterTextIcon className="w-4 h-4 text-p" />
@@ -912,7 +909,9 @@ export default function MeldingBekijkenPage() {
 
               {/* Desktop: sidebar layout for main + actions */}
               <div className="hidden xl:grid xl:grid-cols-[1fr_300px] gap-6 items-start">
-                <div className="space-y-5">{mainContent}</div>
+                <div className="space-y-5">
+                  {mainContent} {messageArea}
+                </div>
                 {actionPanel}
               </div>
 
@@ -920,10 +919,8 @@ export default function MeldingBekijkenPage() {
               <div className="xl:hidden space-y-4">
                 {actionPanel}
                 {mainContent}
+                {messageArea}
               </div>
-
-              {/* Message area — full width on all breakpoints */}
-              {messageArea}
             </div>
           )}
         </main>

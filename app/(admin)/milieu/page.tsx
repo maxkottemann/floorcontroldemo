@@ -149,7 +149,8 @@ export default function MilieuPage() {
     async function getReinigmethodes() {
       const { data, error } = await supabase
         .from("gewassen_vloeren_per_methode")
-        .select("*");
+        .select("*")
+        .order("sort_num", { ascending: true });
       if (error) {
         showToast("Er ging iets mis, probeer het opnieuw", "error");
         setLoading(false);
@@ -217,11 +218,9 @@ export default function MilieuPage() {
     0,
   );
 
-  const chemieBesparing = Math.max(totalChemieOld - totalChemie, 0);
-  const waterBesparing = Math.max(totalWaterOld - totalWater, 0);
-  const afvalBesparing = Math.max(totalAfvalOld - totalAfval, 0);
-  console.log(totalStroomOld);
-  console.log(totalStroom);
+  const chemieBesparing = totalChemieOld - totalChemie;
+  const waterBesparing = totalWaterOld - totalWater;
+  const afvalBesparing = totalAfvalOld - totalAfval;
   const stroomBesparing = totalStroomOld - totalStroom;
 
   const waterSaving = calcPercentageSave(totalWaterOld, totalWater);
@@ -354,7 +353,7 @@ export default function MilieuPage() {
                   </div>
                   <div className="border-t border-slate-100 pt-3 flex items-center justify-between gap-2">
                     <span className="text-sm font-semibold text-emerald-700">
-                      −{formatNumber(c.savedValue)} {c.savedUnit}
+                      Bespaard: {formatNumber(c.savedValue)} {c.savedUnit}
                     </span>
                     {c.savedPct > 0 && (
                       <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-full px-2 py-0.5">
