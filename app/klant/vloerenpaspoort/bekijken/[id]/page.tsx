@@ -19,6 +19,7 @@ import {
   CheckCircleIcon,
   SparklesIcon,
   ExclamationTriangleIcon,
+  CalendarDaysIcon,
 } from "@heroicons/react/24/outline";
 import { melding } from "@/types/melding";
 import SidebarClient from "@/components/layout/sidebarclient";
@@ -97,6 +98,7 @@ export default function VloerPaspoortBekijkenPage() {
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [alleOpmerkingen, setAlleOpmerkingen] = useState<Opmerking[]>([]);
   const [meldingen, setMeldingen] = useState<melding[]>([]);
+  const [nextOnderhound, setNextOnderhoud] = useState("");
   const router = useRouter();
 
   useEffect(() => {
@@ -118,6 +120,31 @@ export default function VloerPaspoortBekijkenPage() {
       );
     }
     getOpmerkingen();
+  }, [id]);
+
+  useEffect(() => {
+    async function getNextOnderhoud() {
+      if (!id) return;
+      const { data, error } = await supabase
+        .from("project_vloeren")
+        .select("projecten(start_datum)")
+        .eq("kamervloer_id", id)
+        .neq("projecten.status", "afgerond");
+
+      if (error) {
+        console.log(error);
+        return;
+      }
+      if (!data) return;
+
+      const startDatums = data
+        .map((d) => (d.projecten as any)?.start_datum)
+        .filter(Boolean)
+        .sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+
+      setNextOnderhoud(startDatums[0] ?? null);
+    }
+    getNextOnderhoud();
   }, [id]);
 
   useEffect(() => {
@@ -275,7 +302,6 @@ export default function VloerPaspoortBekijkenPage() {
           </div>
         ) : null}
       </div>
-
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
         <div className="flex items-center gap-3 px-4 md:px-5 py-4 md:py-5 border-b border-slate-50">
           <div className="w-9 h-9 rounded-xl bg-p/10 flex items-center justify-center">
@@ -310,6 +336,48 @@ export default function VloerPaspoortBekijkenPage() {
           ))}
         </div>
       </div>
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        <div className="flex items-center gap-3 px-4 md:px-5 py-4 md:py-5 border-b border-slate-50">
+          <div className="w-9 h-9 rounded-xl bg-p/10 flex items-center justify-center">
+            <CalendarDaysIcon className="w-5 h-5 text-p" />
+          </div>
+          <h2 className="text-base font-bold text-slate-800">
+            Volgend onderhoud
+          </h2>
+        </div>
+        <div className="p-4 md:p-5">
+          {nextOnderhound ? (
+            <div className="flex items-center gap-3">
+              <div className="w-7 h-7 rounded-lg bg-p/10 flex items-center justify-center shrink-0">
+                <CalendarDaysIcon className="w-4 h-4 text-p" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-slate-800">
+                  {formatDate(nextOnderhound)}
+                </p>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Gepland onderhoud
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3">
+              <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
+                <CalendarDaysIcon className="w-4 h-4 text-slate-300" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-slate-400">
+                  Geen onderhoud gepland
+                </p>
+                <p className="text-xs text-slate-300 mt-0.5">
+                  Nog niet ingepland
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+      ;
     </div>
   );
 
@@ -649,7 +717,7 @@ export default function VloerPaspoortBekijkenPage() {
             {meldingen.map((m) => (
               <div
                 key={m.id}
-                onClick={() => router.push(`/klant/meldingen/bekijken/${m.id}`)}
+                onClick={() => router.push(`/meldingen/bekijken/${m.id}`)}
                 className="flex items-start gap-3 px-4 md:px-6 py-3.5 cursor-pointer hover:bg-slate-50 active:bg-slate-100 transition-colors"
               >
                 <div
@@ -689,7 +757,7 @@ export default function VloerPaspoortBekijkenPage() {
             ))}
           </div>
         )}
-
+        {/* Footer totals */}
         {meldingen.length > 0 && (
           <div className="px-4 md:px-6 py-3 bg-slate-50/60 border-t border-slate-100 flex items-center gap-4">
             <div className="flex items-center gap-1.5">

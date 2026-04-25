@@ -24,11 +24,15 @@ import {
   ChevronDownIcon,
   TruckIcon,
   BuildingOffice2Icon,
+  PencilSquareIcon,
+  TrashIcon,
 } from "@heroicons/react/24/outline";
 import { BsType } from "react-icons/bs";
 import { BiSortAZ } from "react-icons/bi";
 import { GrGroup } from "react-icons/gr";
 import { HiOfficeBuilding } from "react-icons/hi";
+import MainButton from "@/components/layout/mainbutton";
+import { ClipboardDocumentIcon } from "@heroicons/react/16/solid";
 
 function formatDate(d?: string) {
   if (!d) return "—";
@@ -401,6 +405,7 @@ export default function ProjectBekijkenPage() {
   const [locatie, setLocatie] = useState<Locatie>();
   const [bouwdeelTree, setBouwdeelTree] = useState<BouwdeelNode[]>([]);
   const [kamervloeren, setKamervloeren] = useState<VloerNode[]>([]);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
   interface ProjectBusData {
     id: string;
@@ -413,6 +418,37 @@ export default function ProjectBekijkenPage() {
   const [reinigmethodeData, setReinigmethodeData] = useState<
     { label: string; value: number; m2: number }[]
   >([]);
+
+  async function handleDelete() {
+    const { data: bussen } = await supabase
+      .from("project_bussen")
+      .select("id")
+      .eq("project_id", id);
+
+    if (bussen?.length) {
+      await supabase
+        .from("project_bus_medewerkers")
+        .delete()
+        .in(
+          "project_bus_id",
+          bussen.map((b) => b.id),
+        );
+    }
+
+    await supabase.from("project_bussen").delete().eq("project_id", id);
+    await supabase.from("project_vloeren").delete().eq("project_id", id);
+    await supabase.from("gewassen_vloeren").delete().eq("project_id", id);
+    await supabase.from("steekproeven").delete().eq("project_id", id);
+
+    const { error } = await supabase.from("projecten").delete().eq("id", id);
+    if (error) {
+      showToast("Project kon niet worden verwijderd", "error");
+      return;
+    }
+
+    showToast("Project verwijderd", "success");
+    setTimeout(() => router.push("/projecten"), 1000);
+  }
 
   useEffect(() => {
     async function getProjectData() {
@@ -580,7 +616,6 @@ export default function ProjectBekijkenPage() {
     0,
   );
 
-  // Sidebar content — shared between desktop sidebar and mobile bottom section
   const sidebarContent = (
     <div className="space-y-4 md:space-y-5">
       {uniqueVloerTypes.length === 1 && (
@@ -742,6 +777,57 @@ export default function ProjectBekijkenPage() {
     </div>
   );
 
+  function DeleteModal({
+    naam,
+    onConfirm,
+    onClose,
+  }: {
+    naam: string;
+    onConfirm: () => void;
+    onClose: () => void;
+  }) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4">
+        <div className="bg-white rounded-2xl shadow-xl border border-slate-100 w-full max-w-sm overflow-hidden">
+          {/* Icon */}
+          <div className="flex flex-col items-center px-6 pt-8 pb-4 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-red-50 border border-red-100 flex items-center justify-center mb-4">
+              <TrashIcon className="w-6 h-6 text-red-500" />
+            </div>
+            <h2 className="text-base font-bold text-slate-900">
+              Project verwijderen
+            </h2>
+            <p className="text-sm text-slate-400 mt-2 leading-relaxed">
+              Weet je zeker dat je{" "}
+              <span className="font-semibold text-slate-600">{naam}</span> wilt
+              verwijderen? Dit kan niet ongedaan worden gemaakt.
+            </p>
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-3 px-6 py-5">
+            <button
+              onClick={onClose}
+              className="flex-1 px-4 py-2.5 text-sm font-semibold text-slate-500 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all cursor-pointer"
+            >
+              Annuleren
+            </button>
+            <button
+              onClick={() => {
+                onConfirm();
+                onClose();
+              }}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-bold text-white bg-red-500 hover:bg-red-600 rounded-xl transition-all cursor-pointer shadow-sm"
+            >
+              <TrashIcon className="w-4 h-4" />
+              Verwijderen
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex bg-[#F5F6FA]">
       <Sidebar
@@ -751,6 +837,13 @@ export default function ProjectBekijkenPage() {
       />
       {toast && (
         <Toast message={toast.message} type={toast.type} onClose={hideToast} />
+      )}
+      {deleteModalOpen && (
+        <DeleteModal
+          naam={project?.naam ?? "dit project"}
+          onConfirm={handleDelete}
+          onClose={() => setDeleteModalOpen(false)}
+        />
       )}
 
       <div className="flex flex-col flex-1 h-screen">
@@ -762,17 +855,38 @@ export default function ProjectBekijkenPage() {
         <main className="flex-1 overflow-auto p-3 md:p-8">
           <div className="space-y-4 md:space-y-7">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-p/60 mb-1">
-                Project
-              </p>
-              <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
-                {project?.naam ?? "—"}
-              </h1>
-              {project?.beschrijving && (
-                <p className="text-base text-slate-500 mt-1.5">
-                  {project.beschrijving}
-                </p>
-              )}
+              <div className="flex flex-row justify-between">
+                <div className="">
+                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-p/60 mb-1">
+                    Project
+                  </p>
+                  <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
+                    {project?.naam ?? "—"}
+                  </h1>
+                  {project?.beschrijving && (
+                    <p className="text-base text-slate-500 mt-1.5">
+                      {project.beschrijving}
+                    </p>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => router.push(`/projecten/wijzigen/${id}`)}
+                    className="inline-flex items-center gap-2 px-4 h-10 bg-white hover:bg-slate-50 text-slate-500 hover:text-slate-700 text-sm font-semibold rounded-xl border border-slate-200 hover:border-slate-300 shadow-sm transition-all cursor-pointer"
+                  >
+                    <PencilSquareIcon className="w-4 h-4" />
+                    Project wijzigen
+                  </button>
+
+                  <button
+                    onClick={() => setDeleteModalOpen(true)}
+                    className="inline-flex items-center gap-2 px-4 h-10 bg-white hover:bg-red-50 text-red-400 hover:text-red-600 text-sm font-semibold rounded-xl border border-red-100 hover:border-red-200 shadow-sm transition-all cursor-pointer"
+                  >
+                    <TrashIcon className="w-4 h-4" />
+                    Verwijderen
+                  </button>
+                </div>
+              </div>
               <div className="md:flex flex-wrap gap-2 md:gap-3 mt-3 md:mt-4 hidden">
                 <InfoChip
                   icon={<MapPinIcon className="w-4 h-4" />}

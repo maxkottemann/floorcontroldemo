@@ -20,6 +20,7 @@ import {
   XMarkIcon,
   ArrowLeftIcon,
   BuildingOfficeIcon,
+  ChatBubbleBottomCenterTextIcon,
 } from "@heroicons/react/24/outline";
 import SidebarClient from "@/components/layout/sidebarclient";
 
@@ -29,6 +30,7 @@ interface VloerRij {
   vierkante_meter: number;
   status: string;
   kamer_naam: string;
+  kamer_ruimtefunctie: string | null;
   verdieping_naam: string;
   bouwdeel_naam: string;
   laatste_wasbeurt: string | null;
@@ -131,6 +133,7 @@ function LocatiePicker({
         </p>
       </div>
 
+      {/* Search + filters */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-3 md:px-4 py-3 flex flex-col md:flex-row items-stretch md:items-center gap-2 md:gap-3 md:flex-wrap shrink-0">
         <div className="relative flex-1 min-w-0 md:min-w-[220px]">
           <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
@@ -184,7 +187,6 @@ function LocatiePicker({
         </div>
       </div>
 
-      {/* Locatie grid */}
       <div className="flex-1 overflow-y-auto space-y-5 md:space-y-6 pb-4">
         {Object.entries(grouped)
           .sort(([a], [b]) => a.localeCompare(b))
@@ -193,7 +195,6 @@ function LocatiePicker({
               <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3 px-1">
                 {perceel}
               </p>
-              {/* Mobile: 1 col, tablet: 2 col, desktop: 3-4 col */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                 {locs.map((l) => (
                   <div
@@ -324,8 +325,7 @@ function VloerTable({
 
   return (
     <div className="h-full flex flex-col gap-4 md:gap-5">
-      {/* Header */}
-      <div className="flex items-center  gap-3 md:gap-4">
+      <div className="flex items-center gap-3 md:gap-4">
         <button
           onClick={onBack}
           className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-600 transition-colors cursor-pointer shrink-0"
@@ -335,18 +335,33 @@ function VloerTable({
         </button>
         <div className="w-px h-5 bg-slate-200 hidden sm:block" />
         <div className="min-w-0 flex-1">
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-p/60 hidden sm:block">
-            Vloerpaspoort
-          </p>
-          <h1 className="text-lg md:text-2xl font-bold text-slate-900 tracking-tight truncate">
-            {locatie.naam}
-          </h1>
-          {locatie.plaats && (
-            <p className="text-sm text-slate-400 hidden sm:block">
-              {locatie.plaats}
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-p/60 hidden sm:block">
+              Vloerpaspoort
             </p>
-          )}
+            <h1 className="text-lg md:text-2xl font-bold text-slate-900 tracking-tight truncate">
+              {locatie.naam}
+            </h1>
+            {locatie.plaats && (
+              <p className="text-sm text-slate-400 hidden sm:block">
+                {locatie.plaats}
+              </p>
+            )}
+          </div>
         </div>
+        {locatie.extra_checkin && (
+          <div className=" items-center gap-2 px-3 h-10 mt-0 bg-amber-50 border border-amber-100 rounded-lg shadow-sm hidden md:inline-flex">
+            <ChatBubbleBottomCenterTextIcon className="w-4 h-4 text-amber-500 shrink-0" />
+            <div className="flex flex-col">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-amber-600">
+                Aanmeldprocedure
+              </span>
+              <span className="text-sm font-bold text-amber-700">
+                {locatie.extra_checkin}
+              </span>
+            </div>
+          </div>
+        )}
         <span className="text-xs text-slate-400 font-medium shrink-0">
           {filtered.length} vloeren
         </span>
@@ -429,7 +444,7 @@ function VloerTable({
           >
             <option value="naam">Naam</option>
             <option value="status">Status</option>
-            <option value="laatste_wasbeurt">Wasbeurt</option>
+            <option value="laatste_onderhoud">Wasbeurt</option>
             <option value="gebouw">Gebouw</option>
             <option value="verdieping">Verdieping</option>
           </select>
@@ -451,15 +466,15 @@ function VloerTable({
         </div>
       </div>
 
-      {/* Table / List */}
       <div className="flex-1 bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden flex flex-col min-h-0">
-        {/* Desktop table header */}
-        <div className="hidden md:grid grid-cols-[1fr_180px_100px_160px_40px] px-6 py-3 border-b border-slate-100 bg-slate-50 shrink-0">
+        <div className="hidden md:grid grid-cols-[1.2fr_0.8fr_0.7fr_0.7fr_0.9fr_140px_40px] px-6 py-3 border-b border-slate-100 bg-slate-50 shrink-0">
           {[
-            "Vloer & kamer",
+            "Vloertype",
+            "Kamer",
             "Gebouw · Verdieping",
+            "Functie",
             "Status",
-            "Laatste wasbeurt",
+            "Laatste onderhoud",
             "",
           ].map((h) => (
             <p
@@ -470,7 +485,6 @@ function VloerTable({
             </p>
           ))}
         </div>
-
         <div className="flex-1 overflow-y-auto divide-y divide-slate-50">
           {loading ? (
             <div className="flex items-center justify-center py-12">
@@ -490,28 +504,33 @@ function VloerTable({
             filtered.map((v) => (
               <div
                 key={v.id}
-                onClick={() =>
-                  router.push(`/klant/vloerenpaspoort/bekijken/${v.id}`)
-                }
+                onClick={() => router.push(`/vloerenpaspoort/bekijken/${v.id}`)}
                 className="cursor-pointer hover:bg-slate-50 active:bg-slate-100 transition-colors group"
               >
-                <div className="hidden md:grid grid-cols-[1fr_180px_100px_160px_40px] items-center px-6 py-3.5">
+                <div className="hidden md:grid grid-cols-[1.2fr_0.8fr_0.7fr_0.7fr_0.9fr_140px_40px] items-center px-6 py-3.5">
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-8 h-8 rounded-xl bg-p/10 flex items-center justify-center shrink-0 group-hover:bg-p/15 transition-colors">
                       <SwatchIcon className="w-4 h-4 text-p" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-bold text-slate-800 truncate group-hover:text-p transition-colors">
-                        {v.vloertype_naam}
-                      </p>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        <HomeModernIcon className="w-3 h-3 text-slate-300 shrink-0" />
-                        <p className="text-xs text-slate-400 truncate">
-                          {v.kamer_naam}
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-bold text-slate-800 truncate group-hover:text-p transition-colors">
+                          {v.vloertype_naam}
                         </p>
+                        <span className="text-xs font-bold text-p/70 bg-p/8 px-1.5 py-0.5 rounded shrink-0">
+                          {v.vierkante_meter}m²
+                        </span>
                       </div>
                     </div>
                   </div>
+
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <HomeModernIcon className="w-3.5 h-3.5 text-slate-300 shrink-0" />
+                    <p className="text-sm text-slate-600 font-medium truncate">
+                      {v.kamer_naam}
+                    </p>
+                  </div>
+
                   <div className="min-w-0">
                     <p className="text-sm text-slate-600 font-medium truncate">
                       {v.bouwdeel_naam}
@@ -523,7 +542,19 @@ function VloerTable({
                       </p>
                     </div>
                   </div>
+
+                  <div className="min-w-0">
+                    {v.kamer_ruimtefunctie ? (
+                      <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-600 truncate max-w-full">
+                        {v.kamer_ruimtefunctie}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-slate-300">—</span>
+                    )}
+                  </div>
+
                   <StatusBadge status={v.status} />
+
                   <div className="flex items-center gap-1.5">
                     {v.laatste_wasbeurt ? (
                       <>
@@ -535,24 +566,27 @@ function VloerTable({
                     ) : (
                       <>
                         <ClockIcon className="w-3.5 h-3.5 text-slate-300 shrink-0" />
-                        <p className="text-xs text-slate-300">
-                          Nog niet gewassen
-                        </p>
+                        <p className="text-xs text-slate-300">Nog niet</p>
                       </>
                     )}
                   </div>
-                  <ChevronRightIcon className="w-4 h-4 text-slate-200 group-hover:text-p transition-colors" />
-                </div>
 
+                  <ChevronRightIcon className="w-4 h-4 text-slate-200 group-hover:text-p transition-colors justify-self-end" />
+                </div>
                 {/* Mobile card row */}
                 <div className="md:hidden flex items-start gap-3 px-4 py-3.5">
                   <div className="w-8 h-8 rounded-xl bg-p/10 flex items-center justify-center shrink-0 mt-0.5">
                     <SwatchIcon className="w-4 h-4 text-p" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-slate-800 truncate group-hover:text-p transition-colors">
-                      {v.vloertype_naam}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-bold text-slate-800 truncate group-hover:text-p transition-colors">
+                        {v.vloertype_naam}
+                      </p>
+                      <span className="text-xs font-bold text-p/70 bg-p/8 px-1.5 py-0.5 rounded shrink-0">
+                        {v.vierkante_meter}m²
+                      </span>
+                    </div>
                     <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                       <div className="flex items-center gap-1">
                         <HomeModernIcon className="w-3 h-3 text-slate-300 shrink-0" />
@@ -566,6 +600,14 @@ function VloerTable({
                       <p className="text-xs text-slate-400">
                         {v.verdieping_naam}
                       </p>
+                      {v.kamer_ruimtefunctie && (
+                        <>
+                          <span className="text-slate-200 text-xs">·</span>
+                          <span className="text-xs text-slate-400">
+                            {v.kamer_ruimtefunctie}
+                          </span>
+                        </>
+                      )}
                     </div>
                     <div className="flex items-center gap-2 mt-1.5">
                       <StatusBadge status={v.status} />
@@ -608,7 +650,7 @@ export default function VloerenPaspoortPage() {
       const { data } = await supabase
         .from("locaties")
         .select(
-          "id,naam,type,plaats,adres,contact_persoon,telefoonnummer,percelen(naam)",
+          "id,naam,type,plaats,adres,contact_persoon,telefoonnummer,percelen(naam),extra_checkin",
         )
         .order("naam", { ascending: true });
       if (!data) return;
@@ -622,6 +664,7 @@ export default function VloerenPaspoortPage() {
           contact_persoon: d.contact_persoon,
           telefoonnummer: d.telefoonnummer,
           perceel: (d.percelen as any)?.naam,
+          extra_checkin: d.extra_checkin,
         })),
       );
     }
@@ -657,7 +700,7 @@ export default function VloerenPaspoortPage() {
       }
       const { data: kamers } = await supabase
         .from("kamers")
-        .select("id,naam,verdieping_id")
+        .select("id,naam,verdieping_id,ruimtefunctie")
         .in(
           "verdieping_id",
           verdiepingen.map((v) => v.id),
@@ -695,7 +738,11 @@ export default function VloerenPaspoortPage() {
       const kamerMap = Object.fromEntries(
         kamers.map((k) => [
           k.id,
-          { naam: k.naam, verdieping_id: k.verdieping_id },
+          {
+            naam: k.naam,
+            verdieping_id: k.verdieping_id,
+            ruimtefunctie: k.ruimtefunctie,
+          },
         ]),
       );
       const latestWasMap: Record<string, string> = {};
@@ -714,6 +761,7 @@ export default function VloerenPaspoortPage() {
             vierkante_meter: v.vierkante_meter,
             status: v.status ?? "onbekend",
             kamer_naam: kamer?.naam ?? "—",
+            kamer_ruimtefunctie: kamer?.ruimtefunctie ?? null,
             verdieping_naam: verdieping?.naam ?? "—",
             bouwdeel_naam: bouwdeel ?? "—",
             laatste_wasbeurt: latestWasMap[v.id] ?? null,

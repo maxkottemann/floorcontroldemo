@@ -130,9 +130,9 @@ export default function LocatieBekijkenPage() {
                       </span>
                     )}
                     {locatie?.extra_checkin && (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-semibold bg-amber-50 text-amber-700 border border-emerald-100">
                         <CheckBadgeIcon className="w-3.5 h-3.5" />
-                        Extra check-in
+                        Aanmeldprocedure
                       </span>
                     )}
                   </div>

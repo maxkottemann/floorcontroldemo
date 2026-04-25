@@ -7,7 +7,10 @@ import Topbar from "@/components/layout/topbar";
 import { supabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
 import MainButton from "@/components/layout/mainbutton";
-import { PlusIcon } from "@heroicons/react/24/outline";
+import {
+  ChatBubbleBottomCenterTextIcon,
+  PlusIcon,
+} from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 import DropdownString from "@/components/layout/dropdownstrings";
 
@@ -217,7 +220,8 @@ export default function locatiePage() {
                         </div>
                         {l.extra_checkin && (
                           <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-orange-50 text-orange-500 text-xs font-medium border border-orange-100">
-                            Extra check-in
+                            <ChatBubbleBottomCenterTextIcon className="w-3 h-3 mr-2"></ChatBubbleBottomCenterTextIcon>{" "}
+                            Aanmeldprocedure
                           </span>
                         )}
                       </div>
