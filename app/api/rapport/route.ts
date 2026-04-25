@@ -13,7 +13,7 @@ const supabase = createClient(
 
 const PRIMARY = rgb(0.42, 0.18, 0.58);
 const PRIMARY2 = rgb(0.32, 0.12, 0.46);
-const ACCENT = rgb(0.23, 0.72, 0.75);
+const ACCENT = rgb(0.42, 0.18, 0.58);
 const LIGHT = rgb(0.97, 0.95, 0.99);
 const DARK = rgb(0.1, 0.06, 0.16);
 const MUTED = rgb(0.45, 0.4, 0.52);

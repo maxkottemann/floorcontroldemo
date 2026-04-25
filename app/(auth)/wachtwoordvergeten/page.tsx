@@ -31,7 +31,6 @@ export default function WachtwoordVergetenPage() {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left banner — matches login page */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
         <img
           src="/logingbg.png"
