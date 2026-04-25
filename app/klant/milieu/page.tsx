@@ -2,7 +2,7 @@
 
 import Toast from "@/components/layout/toast";
 import Topbar from "@/components/layout/topbar";
-import SidebarClient from "@/components/layout/sidebarclient";
+import Sidebar from "@/components/layout/sidebar";
 import { useToast } from "@/components/hooks/usetoasts";
 import { useEffect, useState } from "react";
 import { reinigmethode } from "@/types/reinigmethodesduurzaamheid";
@@ -20,6 +20,7 @@ import { GiWaterDrop, GiWaterRecycling } from "react-icons/gi";
 import { BsLightning } from "react-icons/bs";
 import MainButton from "@/components/layout/mainbutton";
 import { useRouter } from "next/navigation";
+import SidebarClient from "@/components/layout/sidebarclient";
 
 function safenumber(v: any): number {
   return v ?? 0;
@@ -28,13 +29,17 @@ function calcSaved(oldVal: number, newVal: number): number {
   return Math.max(oldVal - newVal, 0);
 }
 function calcPercentageSave(oldVal: number, newVal: number): number {
-  if (!oldVal || oldVal === 0) return 0;
+  if (oldVal === null || oldVal === undefined) return 0;
+  if (oldVal === 0) return newVal > 0 ? -100 : 0;
   return ((oldVal - newVal) / oldVal) * 100;
 }
 function formatNumber(n: number): string {
-  if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
-  if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
-  return n.toFixed(1);
+  if (n >= 1000000)
+    return `${new Intl.NumberFormat("nl-NL", { maximumFractionDigits: 1 }).format(n / 1000000)}M`;
+  return new Intl.NumberFormat("nl-NL", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 1,
+  }).format(n);
 }
 
 function ResourceRow({
@@ -88,6 +93,7 @@ export default function MilieuPage() {
   const [totaalKGco2, setTotaalKGco2] = useState<number>(0);
   const [maxKGco2, setmaxKGco2] = useState<number>(0);
   const [co2saved, setco2saved] = useState<number>(0);
+  const [co2tonsaved, setco2Tonsaved] = useState(0);
 
   const router = useRouter();
 
@@ -100,17 +106,19 @@ export default function MilieuPage() {
         )
         .eq("status", "afgerond");
 
-      let total = 0; // actual emissions
-      let max = 0; // all diesel baseline
+      let total = 0;
+      let max = 0;
 
       (data || []).forEach((d: any) => {
+        if (!d.start_datum || !d.eind_datum) return;
         const start = new Date(d.start_datum);
         const end = new Date(d.eind_datum);
 
         const afstand = Number(d?.locaties?.afstand) || 0;
 
         const diffDays =
-          (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24) + 1;
+          Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) +
+          1;
 
         const kmDriven = afstand * diffDays * 2;
 
@@ -119,19 +127,20 @@ export default function MilieuPage() {
         buses.forEach((pb: any) => {
           const type = pb.bussen?.type;
 
-          max += kmDriven * 1;
+          max += kmDriven * 0.173;
 
           if (type === "Diesel") {
-            total += kmDriven * 0.1;
-          }
-
-          if (type === "Elektrisch") {
-            total += kmDriven * 0.00000003;
+            total += kmDriven * 0.173;
+          } else if (type === "HVO100") {
+            total += kmDriven * 0.017;
           }
         });
       });
 
-      setTotaalKGco2(total);
+      const kgsaved = Number(max - total);
+      setco2Tonsaved(kgsaved);
+      const tonssaved = Number(((max - total) / 1000).toFixed(2));
+      setco2Tonsaved(tonssaved);
 
       const co2saved = max > 0 ? ((max - total) / max) * 100 : 0;
       setco2saved(co2saved);
@@ -144,12 +153,14 @@ export default function MilieuPage() {
     async function getReinigmethodes() {
       const { data, error } = await supabase
         .from("gewassen_vloeren_per_methode")
-        .select("*");
+        .select("*")
+        .order("sort_num", { ascending: true });
       if (error) {
         showToast("Er ging iets mis, probeer het opnieuw", "error");
         setLoading(false);
         return;
       }
+
       setReinigMethodes(
         (data || []).map((d) => ({
           reinigmethode_id: d.reinigmethode_id,
@@ -162,18 +173,22 @@ export default function MilieuPage() {
           afvalwater_old: d.afvalwater_old,
           chemievebruik_old: d.chemieverbruik_old,
           stroom_old: d.stroom_old,
-          vierkante_meter: d.totaal_vierkante_meter,
+          vierkante_meter: d.vierkante_meter,
         })),
       );
       setLoading(false);
+      console.log(data);
     }
     getReinigmethodes();
   }, []);
+
+  const fakekm2 = 200000;
 
   const totalWater = reinigmethodes.reduce(
     (s, r) => s + safenumber(r.waterverbruik) * safenumber(r.vierkante_meter),
     0,
   );
+
   const totalAfval = reinigmethodes.reduce(
     (s, r) => s + safenumber(r.afvalwater) * safenumber(r.vierkante_meter),
     0,
@@ -195,6 +210,7 @@ export default function MilieuPage() {
       s + safenumber(r.waterverbruik_old) * safenumber(r.vierkante_meter),
     0,
   );
+
   const totalAfvalOld = reinigmethodes.reduce(
     (s, r) => s + safenumber(r.afvalwater_old) * safenumber(r.vierkante_meter),
     0,
@@ -208,6 +224,11 @@ export default function MilieuPage() {
     (s, r) => s + safenumber(r.stroom_old) * safenumber(r.vierkante_meter),
     0,
   );
+  console.log(totalM2);
+  const chemieBesparing = totalChemieOld - totalChemie;
+  const waterBesparing = totalWaterOld - totalWater;
+  const afvalBesparing = totalAfvalOld - totalAfval;
+  const stroomBesparing = totalStroomOld - totalStroom;
 
   const waterSaving = calcPercentageSave(totalWaterOld, totalWater);
   const afvalSaving = calcPercentageSave(totalAfvalOld, totalAfval);
@@ -216,49 +237,59 @@ export default function MilieuPage() {
 
   const statCards = [
     {
-      icon: <GiWaterDrop className="w-5 h-5 text-blue-600" />,
-      bg: "bg-blue-100",
-      value: totalWater,
-      unit: "L",
+      icon: <GiWaterDrop className="w-4 h-4 text-blue-600" />,
+      iconBg: "bg-blue-100",
       label: "Waterverbruik",
-      color: "text-blue-700",
-      saving: waterSaving,
+      currentValue: totalWater,
+      currentUnit: "L gebruikt",
+      currentColor: "text-blue-700",
+      savedValue: waterBesparing,
+      savedUnit: "L",
+      savedPct: waterSaving,
     },
     {
-      icon: <GiWaterRecycling className="w-5 h-5 text-green-600" />,
-      bg: "bg-green-100",
-      value: totalAfval,
-      unit: "L",
+      icon: <GiWaterRecycling className="w-4 h-4 text-teal-600" />,
+      iconBg: "bg-teal-100",
       label: "Afvalwater",
-      color: "text-green-600",
-      saving: afvalSaving,
+      currentValue: totalAfval,
+      currentUnit: "L geproduceerd",
+      currentColor: "text-teal-700",
+      savedValue: afvalBesparing,
+      savedUnit: "L",
+      savedPct: afvalSaving,
     },
     {
-      icon: <BeakerIcon className="w-5 h-5 text-orange-500" />,
-      bg: "bg-orange-100",
-      value: totalChemie,
-      unit: "L",
+      icon: <BeakerIcon className="w-4 h-4 text-orange-500" />,
+      iconBg: "bg-orange-100",
       label: "Chemieverbruik",
-      color: "text-orange-500",
-      saving: chemieSaving,
+      currentValue: totalChemie,
+      currentUnit: "L gebruikt",
+      currentColor: "text-orange-600",
+      savedValue: chemieBesparing,
+      savedUnit: "L",
+      savedPct: chemieSaving,
     },
     {
-      icon: <BsLightning className="w-5 h-5 text-amber-500" />,
-      bg: "bg-yellow-100",
-      value: totalStroom,
-      unit: "kWh",
+      icon: <BsLightning className="w-4 h-4 text-amber-500" />,
+      iconBg: "bg-amber-100",
       label: "Stroomverbruik",
-      color: "text-amber-600",
-      saving: stroomSaving,
+      currentValue: totalStroom,
+      currentUnit: "kWh gebruikt",
+      currentColor: "text-amber-600",
+      savedValue: stroomBesparing,
+      savedUnit: "kWh",
+      savedPct: stroomSaving,
     },
     {
-      icon: <CloudIcon className="w-5 h-5 text-green-500" />,
-      bg: "bg-green-100",
-      value: totaalKGco2,
-      unit: "kg CO₂",
-      label: "CO₂-uitstoot",
-      color: "text-green-600",
-      saving: co2saved,
+      icon: <CloudIcon className="w-4 h-4 text-green-600" />,
+      iconBg: "bg-green-100",
+      label: "CO₂ uitstoot",
+      currentValue: totaalKGco2,
+      currentUnit: "ton uitgestoten",
+      currentColor: "text-green-700",
+      savedValue: co2tonsaved,
+      savedUnit: "ton",
+      savedPct: co2saved,
     },
   ];
 
@@ -294,40 +325,51 @@ export default function MilieuPage() {
                   {totalM2.toFixed(0)}m² totaal onderhouden
                 </p>
               </div>
+              <div className="shrink-0">
+                <MainButton
+                  onClick={() => router.push("/milieu/kernwaardes")}
+                  label="Reinigmethode toevoegen"
+                  icon={<PlusIcon />}
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
-              {statCards.map(
-                ({ icon, bg, value, unit, label, color, saving }) => (
+              {statCards.map((c, i) => (
+                <div
+                  key={i}
+                  className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 md:p-5 flex flex-col gap-3"
+                >
                   <div
-                    key={label}
-                    className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 md:p-5"
+                    className={`w-8 h-8 rounded-xl flex items-center justify-center ${c.iconBg}`}
                   >
-                    <div
-                      className={`w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center ${bg} mb-3 md:mb-4`}
-                    >
-                      {icon}
-                    </div>
+                    {c.icon}
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">
+                      {c.label}
+                    </p>
                     <p
-                      className={`text-xl md:text-2xl font-bold tracking-tight ${color}`}
+                      className={`text-xl md:text-2xl font-bold tracking-tight ${c.currentColor}`}
                     >
-                      {formatNumber(value)}
-                      <span className="text-xs md:text-sm font-medium text-slate-400 ml-1">
-                        {unit}
+                      {formatNumber(c.currentValue)}
+                      <span className="text-xs font-normal text-slate-400 ml-1">
+                        {c.currentUnit}
                       </span>
                     </p>
-                    <p className="text-xs font-semibold text-slate-500 mt-1">
-                      {label}
-                    </p>
-                    {saving > 0 && (
-                      <p className="text-[11px] text-emerald-600 font-semibold mt-2 flex items-center gap-1">
-                        <ArrowTrendingDownIcon className="w-3 h-3 shrink-0" />
-                        {saving.toFixed(0)}% minder
-                      </p>
+                  </div>
+                  <div className="border-t border-slate-100 pt-3 flex items-center justify-between gap-2">
+                    <span className="text-sm font-semibold text-emerald-700">
+                      Bespaard: {formatNumber(c.savedValue)} {c.savedUnit}
+                    </span>
+                    {c.savedPct > 0 && (
+                      <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-full px-2 py-0.5">
+                        {c.savedPct.toFixed(0)}%
+                      </span>
                     )}
                   </div>
-                ),
-              )}
+                </div>
+              ))}
             </div>
 
             {loading ? (
@@ -358,6 +400,7 @@ export default function MilieuPage() {
                   const stroom =
                     safenumber(rm.stroomverbruik) *
                     safenumber(rm.vierkante_meter);
+
                   const waterOld = rm.waterverbruik_old
                     ? rm.waterverbruik_old * safenumber(rm.vierkante_meter)
                     : undefined;
@@ -371,15 +414,24 @@ export default function MilieuPage() {
                     ? rm.stroom_old * safenumber(rm.vierkante_meter)
                     : undefined;
 
-                  const savings = [waterOld, afvalOld, chemieOld, stroomOld]
-                    .map((old, i) => {
-                      const cur = [water, afval, chemie, stroom][i];
-                      return old ? calcPercentageSave(old, cur) : 0;
-                    })
-                    .filter((s) => s > 0);
+                  const savings = [
+                    waterOld,
+                    afvalOld,
+                    chemieOld,
+                    stroomOld,
+                  ].map((old, i) => {
+                    const cur = [water, afval, chemie, stroom][i];
+
+                    if (old == null) return 0;
+
+                    return calcPercentageSave(old, cur);
+                  });
+                  const validSavings = savings.filter((s) => !isNaN(s));
+
                   const avgSaving =
-                    savings.length > 0
-                      ? savings.reduce((a, b) => a + b, 0) / savings.length
+                    validSavings.length > 0
+                      ? validSavings.reduce((a, b) => a + b, 0) /
+                        validSavings.length
                       : 0;
 
                   return (

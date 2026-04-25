@@ -33,9 +33,12 @@ function calcPercentageSave(oldVal: number, newVal: number): number {
   return ((oldVal - newVal) / oldVal) * 100;
 }
 function formatNumber(n: number): string {
-  if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
-  if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
-  return n.toFixed(1);
+  if (n >= 1000000)
+    return `${new Intl.NumberFormat("nl-NL", { maximumFractionDigits: 1 }).format(n / 1000000)}M`;
+  return new Intl.NumberFormat("nl-NL", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 1,
+  }).format(n);
 }
 
 function ResourceRow({
@@ -156,6 +159,7 @@ export default function MilieuPage() {
         setLoading(false);
         return;
       }
+
       setReinigMethodes(
         (data || []).map((d) => ({
           reinigmethode_id: d.reinigmethode_id,
@@ -168,7 +172,7 @@ export default function MilieuPage() {
           afvalwater_old: d.afvalwater_old,
           chemievebruik_old: d.chemieverbruik_old,
           stroom_old: d.stroom_old,
-          vierkante_meter: d.totaal_vierkante_meter,
+          vierkante_meter: d.vierkante_meter,
         })),
       );
       setLoading(false);
@@ -176,6 +180,8 @@ export default function MilieuPage() {
     }
     getReinigmethodes();
   }, []);
+
+  const fakekm2 = 200000;
 
   const totalWater = reinigmethodes.reduce(
     (s, r) => s + safenumber(r.waterverbruik) * safenumber(r.vierkante_meter),
@@ -217,7 +223,7 @@ export default function MilieuPage() {
     (s, r) => s + safenumber(r.stroom_old) * safenumber(r.vierkante_meter),
     0,
   );
-
+  console.log(totalM2);
   const chemieBesparing = totalChemieOld - totalChemie;
   const waterBesparing = totalWaterOld - totalWater;
   const afvalBesparing = totalAfvalOld - totalAfval;
