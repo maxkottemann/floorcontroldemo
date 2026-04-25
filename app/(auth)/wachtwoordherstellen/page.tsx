@@ -95,10 +95,7 @@ export default function SetupPaswoordPage() {
         </div>
       </div>
 
-      {/* Right panel */}
       <div className="flex-1 flex flex-col justify-center items-center p-6 md:p-12 bg-[#F5F6FA]">
-        {/* Mobile logo */}
-
         <div className="w-full max-w-sm">
           <div className="mb-8">
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#154273]/60 mb-2">

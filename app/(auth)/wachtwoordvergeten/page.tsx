@@ -19,7 +19,7 @@ export default function WachtwoordVergetenPage() {
     setLoading(true);
     setError("");
     const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: "https://floor-control.vercel.app/wachtwoordherstellen",
+      redirectTo: "https://rso-floorcontrol.nl/wachtwoordherstellen",
     });
     setLoading(false);
     if (err) {

@@ -86,13 +86,9 @@ export default function SetupPaswoordPage() {
         </div>
       </div>
 
-      {/* Right panel */}
       <div className="flex-1 flex flex-col justify-center items-center p-6 md:p-12 bg-[#F5F6FA]">
-        {/* Mobile logo */}
-
         <div className="w-full max-w-sm">
           {done ? (
-            /* Success state */
             <div className="text-center">
               <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center">
                 <CheckCircleIcon className="w-7 h-7 text-emerald-500" />

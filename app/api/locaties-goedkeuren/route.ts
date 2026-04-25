@@ -1,4 +1,3 @@
-
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -56,7 +55,7 @@ export async function POST(req: NextRequest) {
 
   const { data: linkData, error: linkError } =
     await supabaseAdmin.auth.resetPasswordForEmail(email, {
-      redirectTo: "https://floor-control.vercel.app/wachtwoordveranderen",
+      redirectTo: "https://rso-floorcontrol.nl/wachtwoordveranderen",
     });
 
   if (linkError) {

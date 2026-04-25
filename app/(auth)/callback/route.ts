@@ -28,7 +28,6 @@ export async function GET(req: NextRequest) {
 
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      // Redirect to locaties-kiezen since new user has no profiel yet
       return NextResponse.redirect(new URL("/locaties-kiezen", req.url));
     }
   }

@@ -34,16 +34,13 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex">
-      {/* ── Left banner — image ── */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
         <img
           src="/logingbg.png"
           alt="FloorControl"
           className="absolute inset-0 w-full h-full object-cover"
         />
-        {/* Dark overlay for text readability */}
         <div className="absolute inset-0 bg-gradient-to-br from-[#154273]/80 via-[#154273]/40 to-transparent" />
-        {/* Content on image */}
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
           <div>
             <img
