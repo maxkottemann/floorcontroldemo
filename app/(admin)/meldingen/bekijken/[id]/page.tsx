@@ -829,9 +829,6 @@ export default function MeldingBekijkenPage() {
             </button>
           </div>
         </div>
-        <p className="text-xs text-slate-300 mt-2 ml-10">
-          ⌘ + Enter om te versturen
-        </p>
       </div>
     </div>
   );
