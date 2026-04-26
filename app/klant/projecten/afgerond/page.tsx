@@ -146,10 +146,10 @@ export default function FinishedProjectsPage() {
                 </button>
                 <button
                   onClick={() => router.push("/klant/projecten/agenda")}
-                  className="flex items-center gap-2 px-3 md:px-4 py-2.5 bg-white text-p text-sm font-bold rounded-xl shadow-sm border border-p/20 hover:bg-p/5 transition-colors cursor-pointer whitespace-nowrap"
+                  className="inline-flex items-center gap-2 px-3 md:px-4 py-2.5 bg-p hover:bg-p/90 text-white text-sm font-semibold rounded-xl shadow-sm transition-all cursor-pointer whitespace-nowrap"
                 >
                   <CalendarDaysIcon className="w-4 h-4 shrink-0" />
-                  <span className="hidden sm:inline">Agenda</span>
+                  <span className="hidden sm:inline">Agenda bekijken</span>
                 </button>
               </div>
             </div>
