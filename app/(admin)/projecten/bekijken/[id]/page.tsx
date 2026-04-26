@@ -9,7 +9,7 @@ import { supabase } from "@/lib/supabase";
 import { useParams, useRouter } from "next/navigation";
 import { project } from "@/types/project";
 import { Locatie } from "@/types/locatie";
-import { kamervloer } from "@/types/kamervloer";
+import { formatNumber } from "@/lib/utils";
 import {
   MapPinIcon,
   PhoneIcon,
@@ -27,12 +27,6 @@ import {
   PencilSquareIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
-import { BsType } from "react-icons/bs";
-import { BiSortAZ } from "react-icons/bi";
-import { GrGroup } from "react-icons/gr";
-import { HiOfficeBuilding } from "react-icons/hi";
-import MainButton from "@/components/layout/mainbutton";
-import { ClipboardDocumentIcon } from "@heroicons/react/16/solid";
 
 function formatDate(d?: string) {
   if (!d) return "—";
@@ -173,7 +167,7 @@ function PieChart({
               fontSize="10"
               fontWeight="600"
             >
-              TOTAAL
+              TOTAAL m²
             </text>
             <text
               x="80"
@@ -183,7 +177,7 @@ function PieChart({
               fontSize="17"
               fontWeight="800"
             >
-              {total}m²
+              {formatNumber(total)}
             </text>
           </svg>
         </div>
@@ -201,7 +195,7 @@ function PieChart({
                 </p>
 
                 <span className="text-xs font-bold text-slate-700 shrink-0 w-20 text-right tabular-nums">
-                  {d.m2 ?? d.value}m²
+                  {formatNumber(d.m2 ?? d.value)}m²
                 </span>
               </div>
             );
@@ -254,7 +248,7 @@ function VloerRij({ v, onClick }: { v: VloerNode; onClick: () => void }) {
       )}
       {v.vierkante_meter && (
         <span className="text-sm font-bold text-slate-600 shrink-0">
-          {v.vierkante_meter}m²
+          {formatNumber(v.vierkante_meter)}m²
         </span>
       )}
       {v.status && (
@@ -406,6 +400,15 @@ export default function ProjectBekijkenPage() {
   const [bouwdeelTree, setBouwdeelTree] = useState<BouwdeelNode[]>([]);
   const [kamervloeren, setKamervloeren] = useState<VloerNode[]>([]);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+
+  function formatNumber(n: number): string {
+    if (n >= 1000000)
+      return `${new Intl.NumberFormat("nl-NL", { maximumFractionDigits: 1 }).format(n / 1000000)}M`;
+    return new Intl.NumberFormat("nl-NL", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 1,
+    }).format(n);
+  }
 
   interface ProjectBusData {
     id: string;
@@ -641,9 +644,11 @@ export default function ProjectBekijkenPage() {
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-sm font-bold text-p">
-                  {kamervloeren.reduce(
-                    (s, v) => s + (v.vierkante_meter ?? 0),
-                    0,
+                  {formatNumber(
+                    kamervloeren.reduce(
+                      (s, v) => s + (v.vierkante_meter ?? 0),
+                      0,
+                    ),
                   )}
                   m²
                 </span>
@@ -964,7 +969,7 @@ export default function ProjectBekijkenPage() {
               <StatCard label="Kamers" value={totalKamers} sub="geselecteerd" />
               <StatCard
                 label="Totaal m²"
-                value={`${totalM2}m²`}
+                value={`${formatNumber(totalM2)}m²`}
                 sub="totaal vloeroppervlak"
               />
               <StatCard

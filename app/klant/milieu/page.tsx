@@ -20,6 +20,7 @@ import { GiWaterDrop, GiWaterRecycling } from "react-icons/gi";
 import { BsLightning } from "react-icons/bs";
 import MainButton from "@/components/layout/mainbutton";
 import { useRouter } from "next/navigation";
+import { formatNumber } from "@/lib/utils";
 import SidebarClient from "@/components/layout/sidebarclient";
 
 function safenumber(v: any): number {
@@ -32,14 +33,6 @@ function calcPercentageSave(oldVal: number, newVal: number): number {
   if (oldVal === null || oldVal === undefined) return 0;
   if (oldVal === 0) return newVal > 0 ? -100 : 0;
   return ((oldVal - newVal) / oldVal) * 100;
-}
-function formatNumber(n: number): string {
-  if (n >= 1000000)
-    return `${new Intl.NumberFormat("nl-NL", { maximumFractionDigits: 1 }).format(n / 1000000)}M`;
-  return new Intl.NumberFormat("nl-NL", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 1,
-  }).format(n);
 }
 
 function ResourceRow({
@@ -182,8 +175,6 @@ export default function MilieuPage() {
     getReinigmethodes();
   }, []);
 
-  const fakekm2 = 200000;
-
   const totalWater = reinigmethodes.reduce(
     (s, r) => s + safenumber(r.waterverbruik) * safenumber(r.vierkante_meter),
     0,
@@ -322,7 +313,7 @@ export default function MilieuPage() {
                 </h1>
                 <p className="text-sm text-slate-400 mt-0.5">
                   Verbruik en besparing per reinigingsmethode ·{" "}
-                  {totalM2.toFixed(0)}m² totaal onderhouden
+                  {formatNumber(totalM2)}m² totaal onderhouden
                 </p>
               </div>
               <div className="shrink-0">
@@ -364,7 +355,7 @@ export default function MilieuPage() {
                     </span>
                     {c.savedPct > 0 && (
                       <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-full px-2 py-0.5">
-                        {c.savedPct.toFixed(0)}%
+                        {formatNumber(c.savedPct)}%
                       </span>
                     )}
                   </div>
@@ -449,7 +440,7 @@ export default function MilieuPage() {
                               {rm.reinigmethode_naam}
                             </p>
                             <p className="text-xs text-slate-400">
-                              {safenumber(rm.vierkante_meter).toFixed(0)}m²
+                              {formatNumber(safenumber(rm.vierkante_meter))}m²
                               onderhouden
                             </p>
                           </div>
@@ -458,10 +449,10 @@ export default function MilieuPage() {
                           <div className="flex items-center gap-1.5 px-2.5 md:px-3 py-1.5 bg-emerald-50 border border-emerald-100 rounded-xl shrink-0">
                             <CheckBadgeIcon className="w-3.5 h-3.5 text-emerald-600" />
                             <span className="text-xs font-bold text-emerald-700 hidden sm:inline">
-                              Gem. {avgSaving.toFixed(0)}% bespaard
+                              Gem. {formatNumber(avgSaving)}% bespaard
                             </span>
                             <span className="text-xs font-bold text-emerald-700 sm:hidden">
-                              {avgSaving.toFixed(0)}%
+                              {formatNumber(avgSaving)}%
                             </span>
                           </div>
                         )}
@@ -514,25 +505,34 @@ export default function MilieuPage() {
                           {[
                             {
                               label: "Water",
-                              value: safenumber(rm.waterverbruik).toFixed(3),
+                              value: formatNumber(
+                                safenumber(rm.waterverbruik),
+                                3,
+                              ),
                               unit: "L",
                               color: "text-blue-600",
                             },
                             {
                               label: "Afval",
-                              value: safenumber(rm.afvalwater).toFixed(3),
+                              value: formatNumber(safenumber(rm.afvalwater), 3),
                               unit: "L",
                               color: "text-green-600",
                             },
                             {
                               label: "Chemie",
-                              value: safenumber(rm.chemieverbruik).toFixed(3),
+                              value: formatNumber(
+                                safenumber(rm.chemieverbruik),
+                                3,
+                              ),
                               unit: "L",
                               color: "text-orange-500",
                             },
                             {
                               label: "Stroom",
-                              value: safenumber(rm.stroomverbruik).toFixed(3),
+                              value: formatNumber(
+                                safenumber(rm.stroomverbruik),
+                                3,
+                              ),
                               unit: "kWh",
                               color: "text-amber-600",
                             },

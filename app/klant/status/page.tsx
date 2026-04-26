@@ -2,13 +2,13 @@
 
 import Toast from "@/components/layout/toast";
 import Topbar from "@/components/layout/topbar";
-import Sidebar from "@/components/layout/sidebar";
 import { useToast } from "@/components/hooks/usetoasts";
 import { useEffect, useRef, useState } from "react";
 import { project } from "@/types/project";
 import { supabase } from "@/lib/supabase";
 import { kamervloer } from "@/types/kamervloer";
 import { gewassenvloer } from "@/types/gewassenvloer";
+import { formatNumber } from "@/lib/utils";
 import {
   MapPinIcon,
   TruckIcon,
@@ -445,7 +445,6 @@ export default function StatusPage() {
               </div>
             ) : (
               <>
-                {/* Project meta */}
                 <div className="flex flex-wrap gap-3">
                   {activeProject.start_datum && (
                     <div className="inline-flex items-center gap-2 px-3 py-2 bg-white border border-slate-100 rounded-xl shadow-sm w-full md:w-fit">
@@ -474,7 +473,7 @@ export default function StatusPage() {
                     {
                       label: "Voortgang",
                       value: `${progressPct}%`,
-                      sub: `${washedM2} / ${totalM2}m²`,
+                      sub: `${formatNumber(washedM2)} / ${formatNumber(totalM2)}m²`,
                       accent: true,
                     },
                     {
@@ -523,7 +522,6 @@ export default function StatusPage() {
                   ))}
                 </div>
 
-                {/* Progress bar — slim separator row */}
                 <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-6 py-4 hidden md:flex">
                   <div className="flex items-center gap-4">
                     <p className="text-xs font-bold text-slate-500 shrink-0">
@@ -536,7 +534,7 @@ export default function StatusPage() {
                       />
                     </div>
                     <p className="text-xs font-bold text-slate-500 shrink-0">
-                      {washedM2}m² / {totalM2}m²
+                      {formatNumber(washedM2)}m² / {formatNumber(totalM2)}m²
                     </p>
                     <p className="text-xs font-bold text-p shrink-0">
                       {progressPct}%
@@ -544,9 +542,7 @@ export default function StatusPage() {
                   </div>
                 </div>
 
-                {/* Row 1 — 3 charts, equal height */}
                 <div className="grid grid-cols-1 xl:grid-cols-3 gap-5 items-stretch">
-                  {/* Vloertype donut */}
                   <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 flex flex-col">
                     <p className="text-sm font-bold text-slate-800 mb-5">
                       Vloerverdeling
@@ -733,7 +729,8 @@ export default function StatusPage() {
                                 {f.kamervloernaam}
                               </p>
                               <p className="text-xs text-slate-400">
-                                {f.reinigMethode_naam} · {f.vierkante_meter}m²
+                                {f.reinigMethode_naam} ·{" "}
+                                {formatNumber(f.vierkante_meter)}m²
                               </p>
                             </div>
                             <p className="text-[10px] text-slate-300 shrink-0 mt-0.5">
@@ -745,7 +742,6 @@ export default function StatusPage() {
                     </div>
                   </div>
 
-                  {/* Laatste opmerkingen */}
                   <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden flex flex-col">
                     <div className="flex items-center gap-2.5 px-5 py-4 border-b border-slate-50">
                       <div className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
@@ -792,7 +788,6 @@ export default function StatusPage() {
                     </div>
                   </div>
 
-                  {/* Wagens & bezetting */}
                   <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden flex flex-col">
                     <div className="flex items-center gap-2.5 px-5 py-4 border-b border-slate-50">
                       <TruckIcon className="w-4 h-4 text-p" />

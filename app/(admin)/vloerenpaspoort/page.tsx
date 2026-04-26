@@ -8,6 +8,7 @@ import { supabase } from "@/lib/supabase";
 import { Locatie } from "@/types/locatie";
 import { useRouter } from "next/navigation";
 import MultiSelect from "@/components/layout/multiselect";
+import { formatNumber } from "@/lib/utils";
 import {
   MapPinIcon,
   SwatchIcon,
@@ -517,7 +518,7 @@ function VloerTable({
                           {v.vloertype_naam}
                         </p>
                         <span className="text-xs font-bold text-p/70 bg-p/8 px-1.5 py-0.5 rounded shrink-0">
-                          {v.vierkante_meter}m²
+                          {formatNumber(v.vierkante_meter)}m²
                         </span>
                       </div>
                     </div>
@@ -572,7 +573,6 @@ function VloerTable({
 
                   <ChevronRightIcon className="w-4 h-4 text-slate-200 group-hover:text-p transition-colors justify-self-end" />
                 </div>
-                {/* Mobile card row */}
                 <div className="md:hidden flex items-start gap-3 px-4 py-3.5">
                   <div className="w-8 h-8 rounded-xl bg-p/10 flex items-center justify-center shrink-0 mt-0.5">
                     <SwatchIcon className="w-4 h-4 text-p" />
@@ -583,7 +583,7 @@ function VloerTable({
                         {v.vloertype_naam}
                       </p>
                       <span className="text-xs font-bold text-p/70 bg-p/8 px-1.5 py-0.5 rounded shrink-0">
-                        {v.vierkante_meter}m²
+                        {formatNumber(v.vierkante_meter)}m²
                       </span>
                     </div>
                     <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">

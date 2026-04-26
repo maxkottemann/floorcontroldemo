@@ -2,14 +2,13 @@
 
 import Toast from "@/components/layout/toast";
 import Topbar from "@/components/layout/topbar";
-import Sidebar from "@/components/layout/sidebar";
 import { useToast } from "@/components/hooks/usetoasts";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useParams, useRouter } from "next/navigation";
 import { project } from "@/types/project";
 import { Locatie } from "@/types/locatie";
-import { kamervloer } from "@/types/kamervloer";
+import { formatNumber, formatNumberBig } from "@/lib/utils";
 import {
   MapPinIcon,
   PhoneIcon,
@@ -170,7 +169,7 @@ function PieChart({
               fontSize="10"
               fontWeight="600"
             >
-              TOTAAL
+              TOTAAL m²
             </text>
             <text
               x="80"
@@ -180,7 +179,7 @@ function PieChart({
               fontSize="17"
               fontWeight="800"
             >
-              {total}m²
+              {formatNumber(total)}
             </text>
           </svg>
         </div>
@@ -198,7 +197,7 @@ function PieChart({
                 </p>
 
                 <span className="text-xs font-bold text-slate-700 shrink-0 w-20 text-right tabular-nums">
-                  {d.m2 ?? d.value}m²
+                  {formatNumber(d.m2 ?? d.value)}m²
                 </span>
               </div>
             );
@@ -251,7 +250,7 @@ function VloerRij({ v, onClick }: { v: VloerNode; onClick: () => void }) {
       )}
       {v.vierkante_meter && (
         <span className="text-sm font-bold text-slate-600 shrink-0">
-          {v.vierkante_meter}m²
+          {formatNumber(v.vierkante_meter)}m²
         </span>
       )}
       {v.status && (
@@ -801,7 +800,7 @@ export default function ProjectBekijkenPage() {
               <StatCard label="Kamers" value={totalKamers} sub="geselecteerd" />
               <StatCard
                 label="Totaal m²"
-                value={`${totalM2}m²`}
+                value={`${formatNumber(totalM2)}m²`}
                 sub="totaal vloeroppervlak"
               />
               <StatCard

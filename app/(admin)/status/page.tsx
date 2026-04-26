@@ -9,6 +9,7 @@ import { project } from "@/types/project";
 import { supabase } from "@/lib/supabase";
 import { kamervloer } from "@/types/kamervloer";
 import { gewassenvloer } from "@/types/gewassenvloer";
+import { formatNumber, formatNumberBig } from "@/lib/utils";
 import {
   MapPinIcon,
   TruckIcon,
@@ -473,7 +474,7 @@ export default function StatusPage() {
                     {
                       label: "Voortgang",
                       value: `${progressPct}%`,
-                      sub: `${washedM2} / ${totalM2}m²`,
+                      sub: `${formatNumber(washedM2)} / ${formatNumber(totalM2)}m²`,
                       accent: true,
                     },
                     {
@@ -535,7 +536,7 @@ export default function StatusPage() {
                       />
                     </div>
                     <p className="text-xs font-bold text-slate-500 shrink-0">
-                      {washedM2}m² / {totalM2}m²
+                      {formatNumber(washedM2)}m² / {formatNumber(totalM2)}m²
                     </p>
                     <p className="text-xs font-bold text-p shrink-0">
                       {progressPct}%
@@ -732,7 +733,8 @@ export default function StatusPage() {
                                 {f.kamervloernaam}
                               </p>
                               <p className="text-xs text-slate-400">
-                                {f.reinigMethode_naam} · {f.vierkante_meter}m²
+                                {f.reinigMethode_naam} ·{" "}
+                                {formatNumberBig(f.vierkante_meter)}m²
                               </p>
                             </div>
                             <p className="text-[10px] text-slate-300 shrink-0 mt-0.5">

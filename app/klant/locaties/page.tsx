@@ -113,11 +113,6 @@ export default function locatiePage() {
                     </span>
                   </div>
                 </div>
-                <MainButton
-                  icon={<PlusIcon />}
-                  href="/locaties/toevoegen"
-                  label="Locatie toevoegen"
-                />
               </div>
 
               <div className="border-t border-gray-100 mb-5" />
@@ -226,7 +221,7 @@ export default function locatiePage() {
                           </span>
                         )}
                       </div>
-                      <a href={`/locaties/bekijken/${l.id}`}>
+                      <a href={`/klant/locaties/bekijken/${l.id}`}>
                         <button className="text-xs font-medium text-gray-400 border border-gray-200 rounded-md px-3 py-1 opacity-0 group-hover:opacity-100 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50 active:scale-95 transition-all duration-150 cursor-pointer">
                           Bekijk
                         </button>

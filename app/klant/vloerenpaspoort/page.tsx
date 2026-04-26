@@ -8,6 +8,7 @@ import { supabase } from "@/lib/supabase";
 import { Locatie } from "@/types/locatie";
 import { useRouter } from "next/navigation";
 import MultiSelect from "@/components/layout/multiselect";
+import { formatNumber } from "@/lib/utils";
 import {
   MapPinIcon,
   SwatchIcon,
@@ -504,7 +505,9 @@ function VloerTable({
             filtered.map((v) => (
               <div
                 key={v.id}
-                onClick={() => router.push(`/vloerenpaspoort/bekijken/${v.id}`)}
+                onClick={() =>
+                  router.push(`/klant/vloerenpaspoort/bekijken/${v.id}`)
+                }
                 className="cursor-pointer hover:bg-slate-50 active:bg-slate-100 transition-colors group"
               >
                 <div className="hidden md:grid grid-cols-[1.2fr_0.8fr_0.7fr_0.7fr_0.9fr_140px_40px] items-center px-6 py-3.5">
@@ -518,7 +521,7 @@ function VloerTable({
                           {v.vloertype_naam}
                         </p>
                         <span className="text-xs font-bold text-p/70 bg-p/8 px-1.5 py-0.5 rounded shrink-0">
-                          {v.vierkante_meter}m²
+                          {formatNumber(v.vierkante_meter)}m²
                         </span>
                       </div>
                     </div>
@@ -584,7 +587,7 @@ function VloerTable({
                         {v.vloertype_naam}
                       </p>
                       <span className="text-xs font-bold text-p/70 bg-p/8 px-1.5 py-0.5 rounded shrink-0">
-                        {v.vierkante_meter}m²
+                        {formatNumber(v.vierkante_meter)}m²
                       </span>
                     </div>
                     <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">

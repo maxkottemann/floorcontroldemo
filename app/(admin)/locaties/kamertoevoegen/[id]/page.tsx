@@ -12,6 +12,12 @@ import { useParams } from "next/navigation";
 import DropdownBig from "@/components/layout/dropdownbig";
 import InputfieldSmall from "@/components/layout/inputfieldsmall";
 import {
+  formatNumber,
+  formatDate,
+  formatDateShort,
+  safenumber,
+} from "@/lib/utils";
+import {
   PlusIcon,
   TrashIcon,
   MapPinIcon,
@@ -238,7 +244,6 @@ export default function getKamersPage({}) {
     setVloeren([{ id: "", naam: "", m2: "" }]);
   }
 
-  // ── Shared locatie header ───────────────────────────────────────────
   const locatieHeader = locatie && (
     <div>
       <p className="text-xs font-semibold tracking-widest text-[#154273] uppercase mb-1">

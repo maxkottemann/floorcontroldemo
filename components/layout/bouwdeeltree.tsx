@@ -9,6 +9,7 @@ import {
   Square3Stack3DIcon,
   SwatchIcon,
 } from "@heroicons/react/24/outline";
+import { formatNumber } from "@/lib/utils";
 
 interface SelectItem {
   id: string;
@@ -413,7 +414,11 @@ export default function BouwdeelTree({
                                                   <span
                                                     className={`font-normal ml-1 ${isVloerSelected ? "text-p/60" : "text-slate-400"}`}
                                                   >
-                                                    · {vloer.vierkante_meter}m²
+                                                    ·{" "}
+                                                    {formatNumber(
+                                                      vloer.vierkante_meter,
+                                                    )}
+                                                    m²
                                                   </span>
                                                 )}
                                               </p>

@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { gewassenvloer } from "@/types/gewassenvloer";
 import { supabase } from "@/lib/supabase";
 import { useParams, useRouter } from "next/navigation";
+import { formatNumber } from "@/lib/utils";
 import {
   MapPinIcon,
   BuildingOfficeIcon,
@@ -314,7 +315,7 @@ export default function VloerPaspoortBekijkenPage() {
             {
               label: "Oppervlak",
               value: vloerInfo?.vierkante_meter
-                ? `${vloerInfo.vierkante_meter}m²`
+                ? `${formatNumber(vloerInfo.vierkante_meter)}m²`
                 : "—",
             },
             { label: "Status", value: vloerInfo?.status },
@@ -376,7 +377,6 @@ export default function VloerPaspoortBekijkenPage() {
           )}
         </div>
       </div>
-      ;
     </div>
   );
 
@@ -412,7 +412,7 @@ export default function VloerPaspoortBekijkenPage() {
                 <div className="flex flex-wrap items-center gap-2 mt-2">
                   <StatusBadge status={vloerInfo.status} />
                   <span className="text-sm text-slate-400 font-medium">
-                    {vloerInfo.vierkante_meter}m²
+                    {formatNumber(vloerInfo.vierkante_meter)}m²
                   </span>
                 </div>
               )}
@@ -451,9 +451,11 @@ export default function VloerPaspoortBekijkenPage() {
                         Totaal onderhouden
                       </p>
                       <p className="text-3xl font-bold text-p">
-                        {wasbeurten.reduce(
-                          (sum, w) => sum + (w.vierkante_meter ?? 0),
-                          0,
+                        {formatNumber(
+                          wasbeurten.reduce(
+                            (sum, w) => sum + (w.vierkante_meter ?? 0),
+                            0,
+                          ),
                         )}
                         m²
                       </p>
@@ -502,9 +504,11 @@ export default function VloerPaspoortBekijkenPage() {
                       Totaal onderhouden
                     </p>
                     <p className="text-3xl font-bold text-p">
-                      {wasbeurten.reduce(
-                        (sum, w) => sum + (w.vierkante_meter ?? 0),
-                        0,
+                      {formatNumber(
+                        wasbeurten.reduce(
+                          (sum, w) => sum + (w.vierkante_meter ?? 0),
+                          0,
+                        ),
                       )}
                       m²
                     </p>
@@ -604,7 +608,7 @@ export default function VloerPaspoortBekijkenPage() {
                       <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-lg">
                         <SwatchIcon className="w-3.5 h-3.5 text-slate-400" />
                         <span className="text-xs font-semibold text-slate-600">
-                          {w.vierkante_meter}m² onderhouden
+                          {formatNumber(w.vierkante_meter)}m² onderhouden
                         </span>
                       </div>
                     </div>

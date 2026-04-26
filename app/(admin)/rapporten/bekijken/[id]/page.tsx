@@ -9,6 +9,7 @@ import { gewassenvloer } from "@/types/gewassenvloer";
 import { kamervloer } from "@/types/kamervloer";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { formatNumber, formatNumberBig } from "@/lib/utils";
 import {
   ArrowDownTrayIcon,
   ArrowTopRightOnSquareIcon,
@@ -278,8 +279,7 @@ export default function RapportBekijkenPage() {
             {allFinishedFloors[0]?.project_naam ?? "—"}
           </p>
           <p className="text-xs text-slate-400 mt-1">
-            {allFinishedFloors.length} onderhoudsbeurten · {totalCount} vloeren
-            gepland
+            {totalCount} vloeren gepland
           </p>
         </div>
         <div className="px-5 py-4 border-b border-slate-50">
@@ -335,7 +335,7 @@ export default function RapportBekijkenPage() {
           <div className="flex items-center justify-between">
             <p className="text-sm text-slate-600">Totaal gereden</p>
             <p className="text-sm font-bold text-p">
-              {Math.round(kmDriven)} km
+              {formatNumber(kmDriven)} km
             </p>
           </div>
           <p className="text-xs text-slate-400 mt-1">
@@ -386,8 +386,8 @@ export default function RapportBekijkenPage() {
   const statCards = [
     {
       label: "Totaal m² onderhouden",
-      value: `${washedM2}m²`,
-      sub: `van ${totalM2}m² gepland`,
+      value: `${formatNumber(washedM2)}m²`,
+      sub: `van ${formatNumber(totalM2)}m² gepland`,
       accent: true,
     },
     {
@@ -410,7 +410,7 @@ export default function RapportBekijkenPage() {
     },
     {
       label: "Gereden km",
-      value: `${kmDriven}km`,
+      value: `${formatNumber(kmDriven)}km`,
       sub: "totaal heen en terug",
       accent: false,
     },
@@ -472,8 +472,8 @@ export default function RapportBekijkenPage() {
           {
             title: "Vloerverdeling",
             segments: vloertypeSegments,
-            centerLabel: `${washedM2}m²`,
-            centerSub: "onderhouden",
+            centerLabel: `${formatNumberBig(washedM2)} `,
+            centerSub: "m² onderhouden",
           },
           {
             title: "Reinigingsmethodes",
@@ -590,7 +590,7 @@ export default function RapportBekijkenPage() {
                     {f.reinigMethode_naam}
                   </p>
                   <p className="text-sm font-semibold text-slate-700">
-                    {f.vierkante_meter}m²
+                    {formatNumber(f.vierkante_meter)}m²
                   </p>
                   <p className="text-sm text-slate-400">
                     {formatDate(f.aangemaakt_op)}

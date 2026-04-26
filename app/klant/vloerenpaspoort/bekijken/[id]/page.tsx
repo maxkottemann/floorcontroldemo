@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { gewassenvloer } from "@/types/gewassenvloer";
 import { supabase } from "@/lib/supabase";
 import { useParams, useRouter } from "next/navigation";
+import { formatNumber } from "@/lib/utils";
 import {
   MapPinIcon,
   BuildingOfficeIcon,
@@ -315,7 +316,7 @@ export default function VloerPaspoortBekijkenPage() {
             {
               label: "Oppervlak",
               value: vloerInfo?.vierkante_meter
-                ? `${vloerInfo.vierkante_meter}m²`
+                ? `${formatNumber(vloerInfo.vierkante_meter)}m²`
                 : "—",
             },
             { label: "Status", value: vloerInfo?.status },
@@ -503,9 +504,11 @@ export default function VloerPaspoortBekijkenPage() {
                       Totaal onderhouden
                     </p>
                     <p className="text-3xl font-bold text-p">
-                      {wasbeurten.reduce(
-                        (sum, w) => sum + (w.vierkante_meter ?? 0),
-                        0,
+                      {formatNumber(
+                        wasbeurten.reduce(
+                          (sum, w) => sum + (w.vierkante_meter ?? 0),
+                          0,
+                        ),
                       )}
                       m²
                     </p>
@@ -605,7 +608,7 @@ export default function VloerPaspoortBekijkenPage() {
                       <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-lg">
                         <SwatchIcon className="w-3.5 h-3.5 text-slate-400" />
                         <span className="text-xs font-semibold text-slate-600">
-                          {w.vierkante_meter}m² onderhouden
+                          {formatNumber(w.vierkante_meter)}m² onderhouden
                         </span>
                       </div>
                     </div>
@@ -717,7 +720,7 @@ export default function VloerPaspoortBekijkenPage() {
             {meldingen.map((m) => (
               <div
                 key={m.id}
-                onClick={() => router.push(`/meldingen/bekijken/${m.id}`)}
+                onClick={() => router.push(`/klant/meldingen/bekijken/${m.id}`)}
                 className="flex items-start gap-3 px-4 md:px-6 py-3.5 cursor-pointer hover:bg-slate-50 active:bg-slate-100 transition-colors"
               >
                 <div

@@ -15,6 +15,7 @@ import {
   CheckBadgeIcon,
   ChevronRightIcon,
   PencilSquareIcon,
+  SwatchIcon,
 } from "@heroicons/react/24/outline";
 import { BsHouse, BsHouseAdd, BsPassport } from "react-icons/bs";
 
@@ -45,6 +46,7 @@ export default function LocatieBekijkenPage() {
   const { id } = useParams();
   const [locatie, setLocatie] = useState<Locatie>();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [totalM2, setTotalM2] = useState<number | null>(null);
 
   useEffect(() => {
     async function getData() {
@@ -74,6 +76,50 @@ export default function LocatieBekijkenPage() {
       });
     }
     getData();
+  }, [id]);
+
+  useEffect(() => {
+    async function getTotalM2() {
+      if (!id) return;
+
+      // Step down hierarchy to get all kamer_vloeren for this locatie
+      const { data: bouwdelen } = await supabase
+        .from("bouwdeel")
+        .select("id")
+        .eq("locatie_id", id);
+      if (!bouwdelen?.length) return;
+
+      const { data: verdiepingen } = await supabase
+        .from("verdiepingen")
+        .select("id")
+        .in(
+          "bouwdeel_id",
+          bouwdelen.map((b) => b.id),
+        );
+      if (!verdiepingen?.length) return;
+
+      const { data: kamers } = await supabase
+        .from("kamers")
+        .select("id")
+        .in(
+          "verdieping_id",
+          verdiepingen.map((v) => v.id),
+        );
+      if (!kamers?.length) return;
+
+      const { data: vloeren } = await supabase
+        .from("kamer_vloeren")
+        .select("vierkante_meter")
+        .in(
+          "kamer_id",
+          kamers.map((k) => k.id),
+        );
+      if (!vloeren?.length) return;
+
+      const total = vloeren.reduce((s, v) => s + (v.vierkante_meter ?? 0), 0);
+      setTotalM2(total);
+    }
+    getTotalM2();
   }, [id]);
 
   const relatedLinks = [
@@ -137,8 +183,21 @@ export default function LocatieBekijkenPage() {
                     )}
                   </div>
 
-                  {/* Info chips — wrap on mobile */}
                   <div className="flex flex-wrap gap-2 mt-3 md:mt-4">
+                    {totalM2 !== null && (
+                      <div className="inline-flex items-center gap-2 px-3 py-2 bg-p/5 border border-p/15 rounded-lg shadow-sm text-sm">
+                        <SwatchIcon className="w-4 h-4 text-[#154273] shrink-0" />
+                        <span className="font-bold text-[#154273]">
+                          {new Intl.NumberFormat("nl-NL", {
+                            maximumFractionDigits: 1,
+                          }).format(totalM2)}
+                          m²
+                        </span>
+                        <span className="text-gray-400 text-xs">
+                          totaal vloeroppervlak
+                        </span>
+                      </div>
+                    )}
                     {locatie?.adres && (
                       <div className="inline-flex items-center gap-2 px-3 py-2 bg-white border border-gray-100 rounded-lg shadow-sm text-sm text-gray-700">
                         <MapPinIcon className="w-4 h-4 text-[#154273] shrink-0" />
@@ -150,6 +209,7 @@ export default function LocatieBekijkenPage() {
                         )}
                       </div>
                     )}
+
                     {locatie?.perceel && (
                       <div className="inline-flex items-center gap-2 px-3 py-2 bg-white border border-gray-100 rounded-lg shadow-sm text-sm text-gray-700">
                         <BuildingOfficeIcon className="w-4 h-4 text-[#154273] shrink-0" />
