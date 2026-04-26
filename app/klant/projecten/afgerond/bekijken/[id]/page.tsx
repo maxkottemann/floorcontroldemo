@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
+import { formatNumber } from "@/lib/utils";
 import {
   CheckCircleIcon,
   MapPinIcon,
@@ -238,7 +239,7 @@ export default function AfgerondProjectBekijkenPage() {
   const projectId = Array.isArray(id) ? id[0] : (id as string);
   const { toast, showToast, hideToast } = useToast();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [kmDriven, setKmDriven] = useState(1);
+  const [kmDriven, setKmDriven] = useState(0);
 
   const [project, setProject] = useState<ProjectDetail | null>(null);
   const [vloerStats, setVloerStats] = useState<VloerStat[]>([]);
@@ -358,10 +359,46 @@ export default function AfgerondProjectBekijkenPage() {
           Math.ceil(
             (new Date(project.eind_datum).getTime() -
               new Date(project.start_datum).getTime()) /
-              (1000 * 60 * 60 * 24),
+              (1000 * 60 * 60 * 24) +
+              1,
           ),
         )
       : 0;
+
+  useEffect(() => {
+    async function getKMs() {
+      if (!id) return;
+      const { data } = await supabase
+        .from("projecten")
+        .select(
+          "start_datum,eind_datum,project_bussen(bussen(type)),locaties(afstand)",
+        )
+        .eq("id", id);
+
+      let kmDrivenTemp = 0;
+
+      (data || []).forEach((d: any) => {
+        if (!d.start_datum || !d.eind_datum) return;
+        const start = new Date(d.start_datum);
+        const end = new Date(d.eind_datum);
+
+        const afstand = Number(d?.locaties?.afstand) || 0;
+
+        const diffDays =
+          Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) +
+          1;
+
+        const buses = d.project_bussen || [];
+
+        buses.forEach((d: any) => {
+          console.log("i ruin");
+          kmDrivenTemp += afstand * diffDays * 2;
+        });
+      });
+      setKmDriven(kmDrivenTemp);
+    }
+    getKMs();
+  }, [id]);
 
   return (
     <div className="min-h-screen flex bg-[#F5F6FA]">
@@ -430,17 +467,16 @@ export default function AfgerondProjectBekijkenPage() {
                 </a>
               </div>
 
-              {/* KPI cards — 2 col mobile, 5 col lg */}
               <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4">
                 <StatCard
                   label="Gepland oppervlak"
-                  value={`${totaalGepland.toFixed(0)}m²`}
+                  value={`${formatNumber(totaalGepland)}m²`}
                   color="bg-p/10"
                   icon={<SwatchIcon className="w-5 h-5 text-p" />}
                 />
                 <StatCard
                   label="Gewassen oppervlak"
-                  value={`${totaalGewassen.toFixed(0)}m²`}
+                  value={`${formatNumber(totaalGewassen)}m²`}
                   sub={`${pctGedaan.toFixed(0)}% van gepland`}
                   color="bg-emerald-100"
                   icon={
@@ -477,14 +513,13 @@ export default function AfgerondProjectBekijkenPage() {
                 />
                 <StatCard
                   label="Gereden km"
-                  value={`${Math.round(kmDriven)}km`}
+                  value={`${formatNumber(kmDriven)}km`}
                   sub="totaal heen en terug"
                   color="bg-blue-100"
                   icon={<TruckIcon className="w-5 h-5 text-blue-600" />}
                 />
               </div>
 
-              {/* Charts — 1 col mobile, 2 col xl */}
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6">
                 <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                   <div className="px-4 md:px-5 py-4 border-b border-slate-50">
@@ -523,9 +558,7 @@ export default function AfgerondProjectBekijkenPage() {
                 </div>
               </div>
 
-              {/* Bottom row — 1 col mobile, 2 col xl */}
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6">
-                {/* Vloertypes table */}
                 <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                   <div className="px-4 md:px-5 py-4 border-b border-slate-50">
                     <p className="text-sm font-bold text-slate-800">
@@ -553,8 +586,8 @@ export default function AfgerondProjectBekijkenPage() {
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
                             <span className="text-xs text-slate-400">
-                              {v.gewassen_m2.toFixed(0)}/
-                              {v.totaal_m2.toFixed(0)}m²
+                              {formatNumber(v.gewassen_m2)}/
+                              {formatNumber(v.totaal_m2)}m²
                             </span>
                             <span
                               className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${v.status === "Goed" ? "bg-emerald-50 text-emerald-600" : v.status === "Matig" ? "bg-amber-50 text-amber-600" : "bg-red-50 text-red-500"}`}
@@ -781,11 +814,11 @@ export default function AfgerondProjectBekijkenPage() {
                     },
                     {
                       label: "Gepland oppervlak",
-                      value: `${totaalGepland.toFixed(0)} m²`,
+                      value: `${formatNumber(totaalGepland)} m²`,
                     },
                     {
                       label: "Gewassen oppervlak",
-                      value: `${totaalGewassen.toFixed(0)} m²`,
+                      value: `${formatNumber(totaalGewassen)} m²`,
                     },
                     {
                       label: "Voltooiingspercentage",
@@ -811,7 +844,7 @@ export default function AfgerondProjectBekijkenPage() {
                     },
                     {
                       label: "Gereden km",
-                      value: `${Math.round(kmDriven)} km`,
+                      value: `${formatNumber(kmDriven)} km`,
                     },
                   ].map((row) => (
                     <div

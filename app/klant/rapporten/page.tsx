@@ -245,7 +245,9 @@ export default function RapportenPage() {
                     <div className="px-5 py-4 border-b border-slate-50">
                       <button
                         onClick={() =>
-                          router.push(`/rapporten/bekijken/${selected.id}`)
+                          router.push(
+                            `/klant/rapporten/bekijken/${selected.id}`,
+                          )
                         }
                         className="w-full cursor-pointer flex items-center gap-3 px-4 py-3 rounded-xl bg-p/5 hover:bg-p/10 border border-p/15 transition-all duration-150 group"
                       >

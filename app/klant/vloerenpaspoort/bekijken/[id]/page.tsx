@@ -378,7 +378,6 @@ export default function VloerPaspoortBekijkenPage() {
           )}
         </div>
       </div>
-      ;
     </div>
   );
 
@@ -414,7 +413,7 @@ export default function VloerPaspoortBekijkenPage() {
                 <div className="flex flex-wrap items-center gap-2 mt-2">
                   <StatusBadge status={vloerInfo.status} />
                   <span className="text-sm text-slate-400 font-medium">
-                    {vloerInfo.vierkante_meter}m²
+                    {formatNumber(vloerInfo.vierkante_meter)}m²
                   </span>
                 </div>
               )}
@@ -453,9 +452,11 @@ export default function VloerPaspoortBekijkenPage() {
                         Totaal onderhouden
                       </p>
                       <p className="text-3xl font-bold text-p">
-                        {wasbeurten.reduce(
-                          (sum, w) => sum + (w.vierkante_meter ?? 0),
-                          0,
+                        {formatNumber(
+                          wasbeurten.reduce(
+                            (sum, w) => sum + (w.vierkante_meter ?? 0),
+                            0,
+                          ),
                         )}
                         m²
                       </p>

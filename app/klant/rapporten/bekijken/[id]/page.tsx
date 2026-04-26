@@ -9,6 +9,7 @@ import { gewassenvloer } from "@/types/gewassenvloer";
 import { kamervloer } from "@/types/kamervloer";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { formatNumber, formatNumberBig } from "@/lib/utils";
 import {
   ArrowDownTrayIcon,
   ArrowTopRightOnSquareIcon,
@@ -279,13 +280,12 @@ export default function RapportBekijkenPage() {
             {allFinishedFloors[0]?.project_naam ?? "—"}
           </p>
           <p className="text-xs text-slate-400 mt-1">
-            {allFinishedFloors.length} onderhoudsbeurten · {totalCount} vloeren
-            gepland
+            {totalCount} vloeren gepland
           </p>
         </div>
         <div className="px-5 py-4 border-b border-slate-50">
           <button
-            onClick={() => router.push(`/projecten/bekijken/${id}`)}
+            onClick={() => router.push(`/klant/projecten/bekijken/${id}`)}
             className="w-full cursor-pointer flex items-center gap-3 px-4 py-3 rounded-xl bg-p/5 hover:bg-p/10 border border-p/15 transition-all duration-150 group"
           >
             <div className="w-8 h-8 rounded-lg bg-p/15 flex items-center justify-center shrink-0">
@@ -302,29 +302,26 @@ export default function RapportBekijkenPage() {
           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">
             Rapport genereren
           </p>
-          {[
-            { label: "Vloerrapport", sub: "Overzicht van alle vloeren en m²" },
-            { label: "Projectrapport", sub: "Volledig projectoverzicht" },
-          ].map(({ label, sub }) => (
-            <button
-              key={label}
-              onClick={() =>
-                router.push(`/rapporten/${id}?type=${label.toLowerCase()}`)
-              }
-              className="w-full cursor-pointer flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-100 hover:border-p/30 hover:bg-p/5 transition-all duration-150 group text-left"
-            >
-              <div className="w-8 h-8 rounded-lg bg-slate-100 group-hover:bg-p/10 flex items-center justify-center shrink-0 transition-colors">
-                <ArrowDownTrayIcon className="w-4 h-4 text-slate-400 group-hover:text-p transition-colors" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-slate-700 group-hover:text-p transition-colors">
-                  {label}
-                </p>
-                <p className="text-xs text-slate-400">{sub}</p>
-              </div>
-              <ChevronRightIcon className="w-4 h-4 text-slate-200 group-hover:text-p shrink-0 transition-colors" />
-            </button>
-          ))}
+          {[{ label: "Projectrapport", sub: "Volledig projectoverzicht" }].map(
+            ({ label, sub }) => (
+              <a
+                key={label}
+                href={`/api/rapport?project_id=${id}`}
+                className="w-full cursor-pointer flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-100 hover:border-p/30 hover:bg-p/5 transition-all duration-150 group text-left"
+              >
+                <div className="w-8 h-8 rounded-lg bg-slate-100 group-hover:bg-p/10 flex items-center justify-center shrink-0 transition-colors">
+                  <ArrowDownTrayIcon className="w-4 h-4 text-slate-400 group-hover:text-p transition-colors" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-slate-700 group-hover:text-p transition-colors">
+                    {label}
+                  </p>
+                  <p className="text-xs text-slate-400">{sub}</p>
+                </div>
+                <ChevronRightIcon className="w-4 h-4 text-slate-200 group-hover:text-p shrink-0 transition-colors" />
+              </a>
+            ),
+          )}
         </div>
       </div>
 
@@ -336,7 +333,7 @@ export default function RapportBekijkenPage() {
           <div className="flex items-center justify-between">
             <p className="text-sm text-slate-600">Totaal gereden</p>
             <p className="text-sm font-bold text-p">
-              {Math.round(kmDriven)} km
+              {formatNumber(kmDriven)} km
             </p>
           </div>
           <p className="text-xs text-slate-400 mt-1">
@@ -357,7 +354,7 @@ export default function RapportBekijkenPage() {
           <div className="divide-y divide-slate-50 max-h-52 overflow-y-auto">
             {opmerkingen.map((f) => (
               <a
-                href={`/vloerenpaspoort/bekijken/${f.kamervloer_id}`}
+                href={`/klant/vloerenpaspoort/bekijken/${f.kamervloer_id}`}
                 key={f.id}
               >
                 <div className="flex items-start gap-3 px-5 py-3">
@@ -387,8 +384,8 @@ export default function RapportBekijkenPage() {
   const statCards = [
     {
       label: "Totaal m² onderhouden",
-      value: `${washedM2}m²`,
-      sub: `van ${totalM2}m² gepland`,
+      value: `${formatNumber(washedM2)}m²`,
+      sub: `van ${formatNumber(totalM2)}m² gepland`,
       accent: true,
     },
     {
@@ -411,7 +408,7 @@ export default function RapportBekijkenPage() {
     },
     {
       label: "Gereden km",
-      value: `${kmDriven}km`,
+      value: `${formatNumber(kmDriven)}km`,
       sub: "totaal heen en terug",
       accent: false,
     },
@@ -473,8 +470,8 @@ export default function RapportBekijkenPage() {
           {
             title: "Vloerverdeling",
             segments: vloertypeSegments,
-            centerLabel: `${washedM2}m²`,
-            centerSub: "onderhouden",
+            centerLabel: `${formatNumberBig(washedM2)} `,
+            centerSub: "m² onderhouden",
           },
           {
             title: "Reinigingsmethodes",
@@ -591,7 +588,7 @@ export default function RapportBekijkenPage() {
                     {f.reinigMethode_naam}
                   </p>
                   <p className="text-sm font-semibold text-slate-700">
-                    {f.vierkante_meter}m²
+                    {formatNumber(f.vierkante_meter)}m²
                   </p>
                   <p className="text-sm text-slate-400">
                     {formatDate(f.aangemaakt_op)}

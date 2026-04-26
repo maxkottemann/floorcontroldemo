@@ -301,29 +301,26 @@ export default function RapportBekijkenPage() {
           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">
             Rapport genereren
           </p>
-          {[
-            { label: "Vloerrapport", sub: "Overzicht van alle vloeren en m²" },
-            { label: "Projectrapport", sub: "Volledig projectoverzicht" },
-          ].map(({ label, sub }) => (
-            <button
-              key={label}
-              onClick={() =>
-                router.push(`/rapporten/${id}?type=${label.toLowerCase()}`)
-              }
-              className="w-full cursor-pointer flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-100 hover:border-p/30 hover:bg-p/5 transition-all duration-150 group text-left"
-            >
-              <div className="w-8 h-8 rounded-lg bg-slate-100 group-hover:bg-p/10 flex items-center justify-center shrink-0 transition-colors">
-                <ArrowDownTrayIcon className="w-4 h-4 text-slate-400 group-hover:text-p transition-colors" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-slate-700 group-hover:text-p transition-colors">
-                  {label}
-                </p>
-                <p className="text-xs text-slate-400">{sub}</p>
-              </div>
-              <ChevronRightIcon className="w-4 h-4 text-slate-200 group-hover:text-p shrink-0 transition-colors" />
-            </button>
-          ))}
+          {[{ label: "Projectrapport", sub: "Volledig projectoverzicht" }].map(
+            ({ label, sub }) => (
+              <a
+                key={label}
+                href={`/api/rapport?project_id=${id}`}
+                className="w-full cursor-pointer flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-100 hover:border-p/30 hover:bg-p/5 transition-all duration-150 group text-left"
+              >
+                <div className="w-8 h-8 rounded-lg bg-slate-100 group-hover:bg-p/10 flex items-center justify-center shrink-0 transition-colors">
+                  <ArrowDownTrayIcon className="w-4 h-4 text-slate-400 group-hover:text-p transition-colors" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-slate-700 group-hover:text-p transition-colors">
+                    {label}
+                  </p>
+                  <p className="text-xs text-slate-400">{sub}</p>
+                </div>
+                <ChevronRightIcon className="w-4 h-4 text-slate-200 group-hover:text-p shrink-0 transition-colors" />
+              </a>
+            ),
+          )}
         </div>
       </div>
 

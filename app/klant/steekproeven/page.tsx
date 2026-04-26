@@ -117,7 +117,7 @@ export default function SteekproevenPage() {
         />
 
         <main className="flex-1 overflow-auto p-8">
-          <div className="space-y-6 max-w-3xl mx-auto">
+          <div className="space-y-6  mx-auto">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.14em] text-p/60 mb-1">
                 Kwaliteitscontrole
