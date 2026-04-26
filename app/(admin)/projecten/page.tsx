@@ -13,6 +13,7 @@ import {
   PlusIcon,
   MagnifyingGlassIcon,
   CalendarDaysIcon,
+  ClipboardDocumentCheckIcon,
 } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 
@@ -60,10 +61,10 @@ export default function ProjectenOverzichtPage() {
   const { toast, showToast, hideToast } = useToast();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
   const [projecten, setProjecten] = useState<ProjectRow[]>([]);
   const [zoekterm, setZoekterm] = useState("");
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<"actief" | "afgerond">("actief");
 
   useEffect(() => {
     async function getProjecten() {
@@ -73,9 +74,8 @@ export default function ProjectenOverzichtPage() {
         .select(
           "id, naam, beschrijving, start_datum, eind_datum, status, locaties!projecten_locatie_id_fkey(naam)",
         )
-        .in("status", ["bezig", "gepland"])
-        .order("start_datum", { ascending: false })
-        .limit(100);
+        .order("start_datum", { ascending: true })
+        .limit(200);
 
       if (error || !data) {
         showToast("Projecten niet geladen, probeer het opnieuw", "error");
@@ -99,7 +99,12 @@ export default function ProjectenOverzichtPage() {
     getProjecten();
   }, []);
 
-  const filtered = projecten.filter((p) =>
+  const actief = projecten.filter((p) =>
+    ["bezig", "gepland"].includes(p.status ?? ""),
+  );
+  const afgerond = projecten.filter((p) => p.status === "afgerond");
+
+  const filtered = (activeTab === "actief" ? actief : afgerond).filter((p) =>
     [p.naam, p.locatie_naam, p.beschrijving].some((f) =>
       f?.toLowerCase().includes(zoekterm.toLowerCase()),
     ),
@@ -134,26 +139,35 @@ export default function ProjectenOverzichtPage() {
                   Projecten
                 </h1>
                 <p className="text-sm text-slate-400 mt-0.5">
-                  {projecten.length} projecten gevonden
+                  {actief.length} actief · {afgerond.length} afgerond
                 </p>
               </div>
 
-              {/* Actions — scroll horizontally on mobile */}
+              {/* Action bar — logical grouping */}
               <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 shrink-0">
-                <button
-                  onClick={() => router.push("/projecten/afgerond")}
-                  className="flex items-center gap-2 px-3 md:px-4 py-2.5 bg-white text-slate-600 text-sm font-bold rounded-xl shadow-sm border border-slate-200 hover:bg-slate-50 transition-colors cursor-pointer whitespace-nowrap"
-                >
-                  <ClipboardDocumentListIcon className="w-4 h-4 shrink-0" />
-                  <span className="hidden sm:inline">Afgerond</span>
-                </button>
+                {/* View actions */}
                 <button
                   onClick={() => router.push("/projecten/agenda")}
-                  className="flex items-center gap-2 px-3 md:px-4 py-2.5 bg-white text-p text-sm font-bold rounded-xl shadow-sm border border-p/20 hover:bg-p/5 transition-colors cursor-pointer whitespace-nowrap"
+                  className="flex items-center gap-2 px-3 md:px-4 py-2.5 bg-white text-slate-600 text-sm font-bold rounded-xl shadow-sm border border-slate-200 hover:bg-slate-50 transition-colors cursor-pointer whitespace-nowrap"
                 >
                   <CalendarDaysIcon className="w-4 h-4 shrink-0" />
                   <span className="hidden sm:inline">Agenda</span>
                 </button>
+
+                {/* Divider */}
+                <div className="w-px h-6 bg-slate-200 shrink-0" />
+
+                <button
+                  onClick={() => router.push("projecten/vloerscan")}
+                  className="flex items-center gap-2 px-3 md:px-4 py-2.5 bg-white text-slate-600 text-sm font-bold rounded-xl shadow-sm border border-slate-200 hover:bg-slate-50 transition-colors cursor-pointer whitespace-nowrap"
+                >
+                  <ClipboardDocumentCheckIcon className="w-4 h-4 shrink-0" />
+                  <span className="hidden sm:inline">Vloerscans</span>
+                </button>
+                {/* Divider */}
+                <div className="w-px h-6 bg-slate-200 shrink-0" />
+
+                {/* Create actions */}
                 <button
                   onClick={() => router.push("/projecten/aanmaken")}
                   className="flex items-center gap-2 px-3 md:px-4 py-2.5 bg-p text-white text-sm font-bold rounded-xl shadow-sm hover:bg-p/90 transition-colors cursor-pointer whitespace-nowrap"
@@ -164,15 +178,31 @@ export default function ProjectenOverzichtPage() {
               </div>
             </div>
 
-            {/* Search */}
-            <div className="relative">
-              <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
-              <input
-                value={zoekterm}
-                onChange={(e) => setZoekterm(e.target.value)}
-                placeholder="Zoek op projectnaam, locatie..."
-                className="w-full pl-11 pr-4 py-3 text-slate-700 text-sm bg-white rounded-2xl border border-slate-100 shadow-sm outline-none focus:border-p/30 focus:ring-2 focus:ring-p/10 placeholder:text-slate-300 transition-all"
-              />
+            {/* Tabs + search */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <div className="flex items-center bg-white rounded-xl border border-slate-100 shadow-sm p-1 shrink-0">
+                {(["actief", "afgerond"] as const).map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`px-4 py-2 text-sm font-bold rounded-lg transition-all cursor-pointer ${activeTab === tab ? "bg-p text-white shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+                  >
+                    {tab === "actief"
+                      ? `Actief (${actief.length})`
+                      : `Afgerond (${afgerond.length})`}
+                  </button>
+                ))}
+              </div>
+
+              <div className="relative flex-1">
+                <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
+                <input
+                  value={zoekterm}
+                  onChange={(e) => setZoekterm(e.target.value)}
+                  placeholder="Zoek op projectnaam, locatie..."
+                  className="w-full pl-11 pr-4 py-2.5 text-slate-700 text-sm bg-white rounded-xl border border-slate-100 shadow-sm outline-none focus:border-p/30 focus:ring-2 focus:ring-p/10 placeholder:text-slate-300 transition-all"
+                />
+              </div>
             </div>
 
             {/* Content */}
@@ -186,7 +216,11 @@ export default function ProjectenOverzichtPage() {
                   <ClipboardDocumentListIcon className="w-6 h-6 text-slate-300" />
                 </div>
                 <p className="text-sm font-semibold text-slate-400">
-                  Geen projecten gevonden
+                  {zoekterm
+                    ? "Geen projecten gevonden"
+                    : activeTab === "actief"
+                      ? "Geen actieve projecten"
+                      : "Geen afgeronde projecten"}
                 </p>
                 <p className="text-xs text-slate-300 mt-1">
                   {zoekterm
@@ -196,7 +230,7 @@ export default function ProjectenOverzichtPage() {
               </div>
             ) : (
               <>
-                {/* Desktop table — hidden on mobile */}
+                {/* Desktop table */}
                 <div className="hidden md:block bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                   <table className="w-full">
                     <thead>
@@ -236,7 +270,7 @@ export default function ProjectenOverzichtPage() {
                             className="cursor-pointer transition-colors group hover:bg-blue-50/40 bg-white"
                           >
                             <td className="pl-5 py-4">
-                              <div className="w-8 ml-3 h-8 rounded-xl bg-p/10 group-hover:bg-p/20 flex items-center justify-center transition-colors shrink-0">
+                              <div className="w-8 h-8 ml-3 rounded-xl bg-p/10 group-hover:bg-p/20 flex items-center justify-center transition-colors shrink-0">
                                 <ClipboardDocumentListIcon className="w-4 h-4 text-p" />
                               </div>
                             </td>
@@ -291,7 +325,7 @@ export default function ProjectenOverzichtPage() {
                   </div>
                 </div>
 
-                {/* Mobile card list — hidden on md+ */}
+                {/* Mobile cards */}
                 <div className="md:hidden space-y-2">
                   {filtered.map((p) => {
                     const sc = STATUS_CONFIG[p.status ?? ""] ?? {
@@ -338,8 +372,6 @@ export default function ProjectenOverzichtPage() {
                             <ChevronRightIcon className="w-4 h-4 text-slate-300" />
                           </div>
                         </div>
-
-                        {/* Date row */}
                         <div className="flex items-center gap-3 mt-3 pt-3 border-t border-slate-50">
                           <CalendarDaysIcon className="w-3.5 h-3.5 text-slate-300 shrink-0" />
                           <p className="text-xs text-slate-400">
@@ -352,13 +384,9 @@ export default function ProjectenOverzichtPage() {
                       </div>
                     );
                   })}
-
-                  <div className="pt-1 pb-2">
-                    <p className="text-xs text-slate-400 text-center">
-                      {filtered.length} project
-                      {filtered.length !== 1 ? "en" : ""}
-                    </p>
-                  </div>
+                  <p className="text-xs text-slate-400 text-center pt-1 pb-2">
+                    {filtered.length} project{filtered.length !== 1 ? "en" : ""}
+                  </p>
                 </div>
               </>
             )}

@@ -16,9 +16,8 @@ import {
   UserGroupIcon,
   Squares2X2Icon,
   ViewColumnsIcon,
-  ChatBubbleBottomCenterIcon,
-  DocumentTextIcon,
   ChatBubbleLeftEllipsisIcon,
+  ClipboardDocumentCheckIcon,
 } from "@heroicons/react/24/outline";
 
 interface AgendaProject {
@@ -30,6 +29,7 @@ interface AgendaProject {
   status: string;
   locatie_naam: string;
   locatie_plaats: string;
+  type: "project" | "vloerscan";
   bussen: {
     id: string;
     naam: string;
@@ -86,15 +86,21 @@ function isSameDay(a: Date, b: Date) {
 function toDateStr(date: Date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
-function projectOnDay(project: AgendaProject, day: Date) {
+function itemOnDay(item: AgendaProject, day: Date) {
   const dayStr = toDateStr(day);
   return (
-    dayStr >= project.start_datum.split("T")[0] &&
-    dayStr <= project.eind_datum.split("T")[0]
+    dayStr >= item.start_datum.split("T")[0] &&
+    dayStr <= item.eind_datum.split("T")[0]
   );
 }
 
-function StatusPill({ status }: { status: string }) {
+function StatusPill({
+  status,
+  type,
+}: {
+  status: string;
+  type: "project" | "vloerscan";
+}) {
   const config: Record<string, string> = {
     gepland: "bg-blue-50 text-blue-700 border-blue-100",
     bezig: "bg-amber-50 text-amber-700 border-amber-100",
@@ -102,53 +108,62 @@ function StatusPill({ status }: { status: string }) {
   };
   return (
     <span
-      className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold border ${config[status] ?? "bg-slate-100 text-slate-500 border-slate-200"}`}
+      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold border ${config[status] ?? "bg-slate-100 text-slate-500 border-slate-200"}`}
     >
+      {type === "vloerscan" && (
+        <ClipboardDocumentCheckIcon className="w-3 h-3" />
+      )}
       {status}
     </span>
   );
 }
 
-function ProjectCard({
-  project,
+function ItemCard({
+  item,
   compact = false,
   onClick,
 }: {
-  project: AgendaProject;
+  item: AgendaProject;
   compact?: boolean;
   onClick?: () => void;
 }) {
+  const isVloerscan = item.type === "vloerscan";
   return (
     <div
       onClick={onClick}
-      className={`bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden ${onClick ? "cursor-pointer hover:border-p/30 hover:shadow-md transition-all active:bg-slate-50" : ""}`}
+      className={`rounded-xl border shadow-sm overflow-hidden ${onClick ? "cursor-pointer hover:border-p/30 hover:shadow-md transition-all active:bg-slate-50" : ""}
+        ${isVloerscan ? "bg-emerald-50/40 border-emerald-100" : "bg-white border-slate-100"}`}
     >
       <div className="px-3 py-2.5 border-b border-slate-50 flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <p className="text-sm font-bold text-slate-800 truncate">
-            {project.naam}
-          </p>
-          <div className="flex items-center gap-1 mt-0.5">
-            <MapPinIcon className="w-3 h-3 text-slate-300 shrink-0" />
-            <p className="text-xs text-slate-400 truncate">
-              {project.locatie_naam}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5 mb-0.5">
+            {isVloerscan && (
+              <ClipboardDocumentCheckIcon className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+            )}
+            <p className="text-sm font-bold text-slate-800 truncate">
+              {item.naam}
             </p>
           </div>
-
-          {project.opmerkingen && (
+          <div className="flex items-center gap-1">
+            <MapPinIcon className="w-3 h-3 text-slate-300 shrink-0" />
+            <p className="text-xs text-slate-400 truncate">
+              {item.locatie_naam}
+            </p>
+          </div>
+          {item.opmerkingen && (
             <div className="flex items-center gap-1 mt-0.5">
-              <ChatBubbleLeftEllipsisIcon className="w-4 h-4 text-slate-300 shrink-0" />
-              <p className="text-sm text-slate-400 truncate">
-                {project?.opmerkingen}
+              <ChatBubbleLeftEllipsisIcon className="w-3 h-3 text-slate-300 shrink-0" />
+              <p className="text-xs text-slate-400 truncate">
+                {item.opmerkingen}
               </p>
             </div>
           )}
         </div>
-        <StatusPill status={project.status} />
+        <StatusPill status={item.status} type={item.type} />
       </div>
       {!compact && (
         <div className="px-3 py-2 space-y-1.5">
-          {project.bussen.map((b) => (
+          {item.bussen.map((b) => (
             <div key={b.id} className="flex items-start gap-2">
               <div className="w-5 h-5 rounded-md bg-p/10 flex items-center justify-center shrink-0 mt-0.5">
                 <TruckIcon className="w-3 h-3 text-p" />
@@ -167,7 +182,7 @@ function ProjectCard({
               </div>
             </div>
           ))}
-          {project.bussen.length === 0 && (
+          {item.bussen.length === 0 && (
             <p className="text-xs text-slate-300 italic">Geen wagens</p>
           )}
         </div>
@@ -190,8 +205,10 @@ export default function AgendaPage() {
   const [dayWindowStart, setDayWindowStart] = useState(() =>
     addDays(getMondayOf(new Date()), -3),
   );
-  const [projecten, setProjecten] = useState<AgendaProject[]>([]);
+  const [items, setItems] = useState<AgendaProject[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showVloerscans, setShowVloerscans] = useState(true);
+  const [showProjecten, setShowProjecten] = useState(true);
 
   function navigateDay(newDay: Date) {
     setSelectedDay(newDay);
@@ -206,25 +223,48 @@ export default function AgendaPage() {
       const from = view === "week" ? weekStart : dayWindowStart;
       const to =
         view === "week" ? addDays(weekStart, 6) : addDays(dayWindowStart, 13);
-      const { data, error } = await supabase
-        .from("projecten")
-        .select(
-          `
-        id, naam, start_datum, eind_datum, status, opmerkingen,
-        locaties!projecten_locatie_id_fkey(naam, plaats),
-        project_bussen(bussen(id, naam, kenteken), project_bus_medewerkers(medewerkers(voornaam, achternaam)))
-      `,
-        )
-        .lte("start_datum", toDateStr(to) + "T23:59:59")
-        .gte("eind_datum", toDateStr(from))
-        .order("start_datum");
-      if (error) {
+      const fromStr = toDateStr(from);
+      const toStr = toDateStr(to) + "T23:59:59";
+
+      const [
+        { data: projectData, error: projectError },
+        { data: scanData, error: scanError },
+      ] = await Promise.all([
+        supabase
+          .from("projecten")
+          .select(
+            `
+          id, naam, start_datum, eind_datum, status, opmerkingen,
+          locaties!projecten_locatie_id_fkey(naam, plaats),
+          project_bussen(bussen(id, naam, kenteken), project_bus_medewerkers(medewerkers(voornaam, achternaam)))
+        `,
+          )
+          .lte("start_datum", toStr)
+          .gte("eind_datum", fromStr)
+          .order("start_datum"),
+
+        supabase
+          .from("vloerscans")
+          .select(
+            `
+          id, naam, beschrijving, start_datum, eind_datum, status,
+          locaties(naam, plaats),
+          medewerkers(voornaam, achternaam)
+        `,
+          )
+          .lte("start_datum", toStr)
+          .gte("eind_datum", fromStr)
+          .order("start_datum"),
+      ]);
+
+      if (projectError || scanError) {
         showToast("Kon agenda niet laden", "error");
         setLoading(false);
         return;
       }
-      setProjecten(
-        (data ?? []).map((d: any) => ({
+
+      const mappedProjects: AgendaProject[] = (projectData ?? []).map(
+        (d: any) => ({
           id: d.id,
           naam: d.naam,
           start_datum: d.start_datum,
@@ -233,6 +273,7 @@ export default function AgendaPage() {
           opmerkingen: d.opmerkingen,
           locatie_naam: d.locaties?.naam ?? "—",
           locatie_plaats: d.locaties?.plaats ?? "",
+          type: "project" as const,
           bussen: (d.project_bussen ?? []).map((pb: any) => ({
             id: pb.bussen?.id,
             naam: pb.bussen?.naam ?? "—",
@@ -241,12 +282,41 @@ export default function AgendaPage() {
               .map((pbm: any) => pbm.medewerkers)
               .filter(Boolean),
           })),
-        })),
+        }),
       );
+
+      const mappedScans: AgendaProject[] = (scanData ?? []).map((d: any) => ({
+        id: d.id,
+        naam: d.naam ?? "Naamloos",
+        start_datum: d.start_datum,
+        eind_datum: d.eind_datum,
+        status: d.status,
+        opmerkingen: d.beschrijving,
+        locatie_naam: d.locaties?.naam ?? "—",
+        locatie_plaats: d.locaties?.plaats ?? "",
+        type: "vloerscan" as const,
+        bussen: d.medewerkers
+          ? [
+              {
+                id: "m",
+                naam: "Medewerker",
+                kenteken: "",
+                medewerkers: [
+                  {
+                    voornaam: d.medewerkers.voornaam,
+                    achternaam: d.medewerkers.achternaam,
+                  },
+                ],
+              },
+            ]
+          : [],
+      }));
+
+      setItems([...mappedProjects, ...mappedScans]);
       setLoading(false);
     }
     load();
-  }, [weekStart, selectedDay, dayWindowStart, view]);
+  }, [weekStart, dayWindowStart, view]);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -260,8 +330,15 @@ export default function AgendaPage() {
   })();
 
   const dayLabel = `${DAGEN_LONG[(selectedDay.getDay() + 6) % 7]} ${selectedDay.getDate()} ${MAANDEN[selectedDay.getMonth()]} ${selectedDay.getFullYear()}`;
-  const dayProjects = (day: Date) =>
-    projecten.filter((p) => projectOnDay(p, day));
+
+  const filteredItems = items.filter(
+    (i) =>
+      (i.type === "project" && showProjecten) ||
+      (i.type === "vloerscan" && showVloerscans),
+  );
+
+  const dayItems = (day: Date) =>
+    filteredItems.filter((i) => itemOnDay(i, day));
 
   return (
     <div className="min-h-screen flex bg-[#F5F6FA]">
@@ -278,6 +355,7 @@ export default function AgendaPage() {
         <Topbar title="Agenda" onMenuToggle={() => setSidebarOpen((p) => !p)} />
 
         <main className="flex-1 overflow-hidden flex flex-col">
+          {/* Toolbar */}
           <div className="flex items-center justify-between px-3 md:px-8 py-3 md:py-4 bg-white border-b border-slate-100 shrink-0 gap-3">
             <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
               <div className="flex items-center gap-1">
@@ -300,7 +378,6 @@ export default function AgendaPage() {
                   <ChevronRightIcon className="w-4 h-4" />
                 </button>
               </div>
-
               <div className="min-w-0">
                 <p className="text-sm font-bold text-slate-800 truncate">
                   {view === "week" ? weekLabel : dayLabel}
@@ -311,7 +388,6 @@ export default function AgendaPage() {
                   </p>
                 )}
               </div>
-
               <button
                 onClick={() => {
                   const t = new Date();
@@ -324,6 +400,22 @@ export default function AgendaPage() {
               >
                 Vandaag
               </button>
+
+              {/* Filter toggles */}
+              <div className="hidden sm:flex items-center gap-2 ml-2">
+                <button
+                  onClick={() => setShowProjecten((p) => !p)}
+                  className={`px-2.5 py-1.5 text-xs font-bold rounded-lg border transition-all cursor-pointer ${showProjecten ? "bg-p/10 text-p border-p/20" : "bg-white text-slate-400 border-slate-200"}`}
+                >
+                  Projecten
+                </button>
+                <button
+                  onClick={() => setShowVloerscans((p) => !p)}
+                  className={`px-2.5 py-1.5 text-xs font-bold rounded-lg border transition-all cursor-pointer ${showVloerscans ? "bg-emerald-50 text-emerald-700 border-emerald-100" : "bg-white text-slate-400 border-slate-200"}`}
+                >
+                  Vloerscans
+                </button>
+              </div>
             </div>
 
             <div className="flex items-center gap-1 bg-slate-100 rounded-xl p-1 shrink-0">
@@ -352,11 +444,12 @@ export default function AgendaPage() {
               </div>
             ) : view === "week" ? (
               <>
+                {/* Desktop week */}
                 <div className="hidden md:flex h-full flex-col px-6 py-4 gap-3">
                   <div className="grid grid-cols-7 gap-3 shrink-0">
                     {weekDays.map((day, i) => {
                       const isToday = isSameDay(day, today);
-                      const count = dayProjects(day).length;
+                      const count = dayItems(day).length;
                       return (
                         <button
                           key={i}
@@ -389,25 +482,29 @@ export default function AgendaPage() {
                   </div>
                   <div className="grid grid-cols-7 gap-3 flex-1 min-h-0">
                     {weekDays.map((day, i) => {
-                      const projects = dayProjects(day);
+                      const dayItemList = dayItems(day);
                       const isToday = isSameDay(day, today);
                       return (
                         <div
                           key={i}
                           className={`rounded-2xl p-2 space-y-2 overflow-y-auto ${isToday ? "bg-p/5 border border-p/15" : "bg-slate-50/60 border border-slate-100"}`}
                         >
-                          {projects.length === 0 ? (
+                          {dayItemList.length === 0 ? (
                             <div className="flex items-center justify-center h-full min-h-20">
                               <p className="text-xs text-slate-300">Vrij</p>
                             </div>
                           ) : (
-                            projects.map((p) => (
-                              <ProjectCard
-                                key={p.id}
-                                project={p}
+                            dayItemList.map((item) => (
+                              <ItemCard
+                                key={item.id}
+                                item={item}
                                 compact
                                 onClick={() =>
-                                  router.push(`/projecten/bekijken/${p.id}`)
+                                  router.push(
+                                    item.type === "project"
+                                      ? `/projecten/bekijken/${item.id}`
+                                      : `/vloerscans/bekijken/${item.id}`,
+                                  )
                                 }
                               />
                             ))
@@ -418,14 +515,13 @@ export default function AgendaPage() {
                   </div>
                 </div>
 
-                {/* Mobile week view — vertical list */}
+                {/* Mobile week */}
                 <div className="md:hidden px-3 py-4 space-y-4">
                   {weekDays.map((day, i) => {
-                    const projects = dayProjects(day);
+                    const dayItemList = dayItems(day);
                     const isToday = isSameDay(day, today);
                     return (
                       <div key={i}>
-                        {/* Day header */}
                         <button
                           onClick={() => {
                             navigateDay(day);
@@ -451,26 +547,28 @@ export default function AgendaPage() {
                             <p
                               className={`text-xs ${isToday ? "text-white/70" : "text-slate-400"}`}
                             >
-                              {projects.length === 0
-                                ? "Geen projecten"
-                                : `${projects.length} project${projects.length !== 1 ? "en" : ""}`}
+                              {dayItemList.length === 0
+                                ? "Niets gepland"
+                                : `${dayItemList.length} item${dayItemList.length !== 1 ? "s" : ""}`}
                             </p>
                           </div>
                           <ChevronRightIcon
                             className={`w-4 h-4 shrink-0 ${isToday ? "text-white/60" : "text-slate-300"}`}
                           />
                         </button>
-
-                        {/* Projects */}
-                        {projects.length > 0 && (
+                        {dayItemList.length > 0 && (
                           <div className="space-y-2 pl-2">
-                            {projects.map((p) => (
-                              <ProjectCard
-                                key={p.id}
-                                project={p}
+                            {dayItemList.map((item) => (
+                              <ItemCard
+                                key={item.id}
+                                item={item}
                                 compact
                                 onClick={() =>
-                                  router.push(`/projecten/bekijken/${p.id}`)
+                                  router.push(
+                                    item.type === "project"
+                                      ? `/projecten/bekijken/${item.id}`
+                                      : `/vloerscans/bekijken/${item.id}`,
+                                  )
                                 }
                               />
                             ))}
@@ -482,9 +580,8 @@ export default function AgendaPage() {
                 </div>
               </>
             ) : (
-              /* ─── Day view ─── */
+              /* Day view */
               <div className="h-full flex flex-col px-3 md:px-6 py-4 min-h-0 w-full">
-                {/* Day picker — scrollable */}
                 <div className="overflow-x-auto mb-4 shrink-0 -mx-3 md:mx-0 px-3 md:px-0">
                   <div
                     className="flex gap-2 w-max md:grid md:w-auto"
@@ -497,7 +594,7 @@ export default function AgendaPage() {
                     ).map((day, i) => {
                       const isSelected = isSameDay(day, selectedDay);
                       const isToday = isSameDay(day, today);
-                      const count = dayProjects(day).length;
+                      const count = dayItems(day).length;
                       return (
                         <button
                           key={i}
@@ -526,47 +623,58 @@ export default function AgendaPage() {
                   </div>
                 </div>
 
-                {/* Projects for selected day */}
                 <div className="flex-1 overflow-y-auto min-h-0 w-full">
-                  {dayProjects(selectedDay).length === 0 ? (
+                  {dayItems(selectedDay).length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-center py-16">
                       <div className="w-14 h-14 rounded-2xl bg-white border border-slate-100 shadow-sm flex items-center justify-center mb-4">
                         <CalendarDaysIcon className="w-7 h-7 text-slate-300" />
                       </div>
                       <p className="text-base font-semibold text-slate-400">
-                        Geen projecten
+                        Niets gepland
                       </p>
                       <p className="text-sm text-slate-300 mt-1">
-                        Er zijn geen projecten gepland voor deze dag
+                        Er zijn geen items voor deze dag
                       </p>
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 md:gap-4 pb-4 w-full">
-                      {dayProjects(selectedDay).map((p) => (
+                      {dayItems(selectedDay).map((item) => (
                         <div
-                          key={p.id}
-                          className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden"
+                          key={item.id}
+                          className={`rounded-2xl border shadow-sm overflow-hidden ${item.type === "vloerscan" ? "bg-emerald-50/30 border-emerald-100" : "bg-white border-slate-100"}`}
                         >
                           <div className="px-4 md:px-5 py-4 border-b border-slate-50 flex items-start justify-between gap-3">
                             <div className="min-w-0 flex-1">
-                              <p className="text-base font-bold text-slate-800 truncate">
-                                {p.naam}
-                              </p>
-                              <div className="flex items-center gap-1.5 mt-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                {item.type === "vloerscan" && (
+                                  <ClipboardDocumentCheckIcon className="w-4 h-4 text-emerald-500 shrink-0" />
+                                )}
+                                <p className="text-base font-bold text-slate-800 truncate">
+                                  {item.naam}
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-1.5">
                                 <MapPinIcon className="w-3.5 h-3.5 text-slate-300 shrink-0" />
                                 <p className="text-sm text-slate-400 truncate">
-                                  {p.locatie_naam}
-                                  {p.locatie_plaats
-                                    ? ` · ${p.locatie_plaats}`
+                                  {item.locatie_naam}
+                                  {item.locatie_plaats
+                                    ? ` · ${item.locatie_plaats}`
                                     : ""}
                                 </p>
                               </div>
                             </div>
                             <div className="flex items-center gap-2 shrink-0">
-                              <StatusPill status={p.status} />
+                              <StatusPill
+                                status={item.status}
+                                type={item.type}
+                              />
                               <button
                                 onClick={() =>
-                                  router.push(`/projecten/bekijken/${p.id}`)
+                                  router.push(
+                                    item.type === "project"
+                                      ? `/projecten/bekijken/${item.id}`
+                                      : `/vloerscans/bekijken/${item.id}`,
+                                  )
                                 }
                                 className="px-3 py-1.5 text-xs font-bold text-p bg-p/8 hover:bg-p/15 rounded-lg transition-colors cursor-pointer"
                               >
@@ -576,14 +684,16 @@ export default function AgendaPage() {
                           </div>
                           <div className="p-3 md:p-4 space-y-3">
                             <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
-                              Wagens & bezetting
+                              {item.type === "vloerscan"
+                                ? "Medewerker"
+                                : "Wagens & bezetting"}
                             </p>
-                            {p.bussen.length === 0 ? (
+                            {item.bussen.length === 0 ? (
                               <p className="text-sm text-slate-300 italic">
                                 Geen wagens toegewezen
                               </p>
                             ) : (
-                              p.bussen.map((b) => (
+                              item.bussen.map((b) => (
                                 <div
                                   key={b.id}
                                   className="flex items-start gap-3 px-3 md:px-4 py-3 bg-slate-50 rounded-xl border border-slate-100"
@@ -592,12 +702,16 @@ export default function AgendaPage() {
                                     <TruckIcon className="w-4 h-4 text-p" />
                                   </div>
                                   <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-bold text-slate-700">
-                                      {b.naam}
-                                    </p>
-                                    <p className="text-xs text-slate-400">
-                                      {b.kenteken}
-                                    </p>
+                                    {b.naam !== "Medewerker" && (
+                                      <>
+                                        <p className="text-sm font-bold text-slate-700">
+                                          {b.naam}
+                                        </p>
+                                        <p className="text-xs text-slate-400">
+                                          {b.kenteken}
+                                        </p>
+                                      </>
+                                    )}
                                     {b.medewerkers.length > 0 && (
                                       <div className="flex items-center gap-1.5 mt-2 flex-wrap">
                                         <UserGroupIcon className="w-3.5 h-3.5 text-slate-300" />
