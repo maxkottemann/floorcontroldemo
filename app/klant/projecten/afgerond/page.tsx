@@ -138,30 +138,22 @@ export default function FinishedProjectsPage() {
               </div>
               <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 shrink-0">
                 <button
-                  onClick={() => router.push("/projecten")}
+                  onClick={() => router.push("/klant/projecten")}
                   className="flex items-center gap-2 px-3 md:px-4 py-2.5 bg-white text-slate-600 text-sm font-bold rounded-xl shadow-sm border border-slate-200 hover:bg-slate-50 transition-colors cursor-pointer whitespace-nowrap"
                 >
                   <ClipboardDocumentListIcon className="w-4 h-4 shrink-0" />
                   <span className="hidden sm:inline">Actieve</span>
                 </button>
                 <button
-                  onClick={() => router.push("/projecten/agenda")}
+                  onClick={() => router.push("/klant/projecten/agenda")}
                   className="flex items-center gap-2 px-3 md:px-4 py-2.5 bg-white text-p text-sm font-bold rounded-xl shadow-sm border border-p/20 hover:bg-p/5 transition-colors cursor-pointer whitespace-nowrap"
                 >
                   <CalendarDaysIcon className="w-4 h-4 shrink-0" />
                   <span className="hidden sm:inline">Agenda</span>
                 </button>
-                <button
-                  onClick={() => router.push("/projecten/aanmaken")}
-                  className="flex items-center gap-2 px-3 md:px-4 py-2.5 bg-p text-white text-sm font-bold rounded-xl shadow-sm hover:bg-p/90 transition-colors cursor-pointer whitespace-nowrap"
-                >
-                  <PlusIcon className="w-4 h-4 shrink-0" />
-                  <span>Nieuw project</span>
-                </button>
               </div>
             </div>
 
-            {/* Search */}
             <div className="relative">
               <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
               <input
@@ -228,7 +220,7 @@ export default function FinishedProjectsPage() {
                             key={p.id}
                             onClick={() =>
                               router.push(
-                                `/projecten/afgerond/bekijken/${p.id}`,
+                                `/klant/projecten/afgerond/bekijken/${p.id}`,
                               )
                             }
                             className="cursor-pointer transition-colors group hover:bg-blue-50/40 bg-white"
@@ -301,7 +293,9 @@ export default function FinishedProjectsPage() {
                       <div
                         key={p.id}
                         onClick={() =>
-                          router.push(`/projecten/afgerond/bekijken/${p.id}`)
+                          router.push(
+                            `/klant/projecten/afgerond/bekijken/${p.id}`,
+                          )
                         }
                         className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 cursor-pointer active:bg-slate-50 transition-colors"
                       >
