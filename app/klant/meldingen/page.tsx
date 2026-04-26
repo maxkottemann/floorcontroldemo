@@ -191,7 +191,7 @@ export default function MeldingenPage() {
                   <span className="sm:hidden">Melding</span>
                 </button>
                 <button
-                  onClick={() => router.push("/klant/onderhoud/aanvragen")}
+                  onClick={() => router.push("/klant/meldingen/onderhoud")}
                   className="inline-flex items-center gap-2 px-3 md:px-4 py-2.5 bg-white hover:bg-slate-50 text-p text-sm font-bold rounded-xl border border-p/20 shadow-sm transition-all cursor-pointer whitespace-nowrap"
                 >
                   <CalendarDaysIcon className="w-4 h-4" />

@@ -293,7 +293,13 @@ export default function VloerscansPage() {
                         <tr
                           key={s.id}
                           onClick={() =>
-                            router.push(`/projecten/vloerscan/bekijken/${s.id}`)
+                            s.status === "afgerond"
+                              ? router.push(
+                                  `/projecten/vloerscan/afgerond/${s.id}`,
+                                )
+                              : router.push(
+                                  `/projecten/vloerscan/bekijken/${s.id}`,
+                                )
                           }
                           className="cursor-pointer transition-colors group hover:bg-blue-50/40 bg-white"
                         >
@@ -379,7 +385,15 @@ export default function VloerscansPage() {
                   {displayed.map((s) => (
                     <div
                       key={s.id}
-                      onClick={() => router.push(`/vloerscan/afgerond/${s.id}`)}
+                      onClick={() =>
+                        s.status === "afgerond"
+                          ? router.push(
+                              `/projecten/vloerscans/afgerond/${s.id}`,
+                            )
+                          : router.push(
+                              `/projecten/vloerscans/bekijken/${s.id}`,
+                            )
+                      }
                       className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 cursor-pointer active:bg-slate-50 transition-colors"
                     >
                       <div className="flex items-start justify-between gap-3">
