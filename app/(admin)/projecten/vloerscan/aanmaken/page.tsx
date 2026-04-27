@@ -449,6 +449,19 @@ export default function VloerscanAanmaken() {
       setSubmitting(false);
       return;
     }
+
+    await fetch("/api/email-vloerscan-aangemaakt", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ scanId: scan.id }),
+    });
+    {
+      await fetch("/api/email-vloerscan-reminder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ projectId: scan.id }),
+      });
+    }
     showToast("Vloerscan ingepland", "success");
     setTimeout(() => router.push("/projecten/vloerscan"), 1000);
   }
@@ -462,7 +475,6 @@ export default function VloerscanAanmaken() {
     );
   const steps = (
     <div className="space-y-4 md:space-y-5">
-      {/* Step 1 — Gegevens + Datums combined */}
       <SectionCard
         step={1}
         icon={<ClipboardDocumentListIcon className="w-5 h-5" />}
@@ -491,22 +503,6 @@ export default function VloerscanAanmaken() {
             title="Einddatum"
             value={eindDatum}
             onChange={setEindDatum}
-          />
-        </div>
-      </SectionCard>
-
-      <SectionCard
-        step={2}
-        icon={<ShieldCheckIcon className="w-5 h-5" />}
-        title="Aanmeldprocedure"
-        subtitle="Is er een extra aanmeldprocedure vereist bij deze locatie?"
-      >
-        <div className="space-y-4">
-          <Toggle
-            enabled={extraCheckin}
-            onChange={setExtraCheckin}
-            label="Aanmeldprocedure vereist"
-            sub="Schakel in als de locatie een speciale aanmeldprocedure heeft"
           />
         </div>
       </SectionCard>
@@ -692,24 +688,6 @@ export default function VloerscanAanmaken() {
 
       <div className="h-px bg-slate-50" />
 
-      <div>
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-300 mb-2">
-          Aanmeldprocedure
-        </p>
-        <div
-          className={`flex items-center gap-2 px-3 py-2 rounded-lg ${extraCheckin ? "bg-amber-50 border border-amber-100" : "bg-slate-50 border border-slate-100"}`}
-        >
-          <ShieldCheckIcon
-            className={`w-4 h-4 shrink-0 ${extraCheckin ? "text-amber-500" : "text-slate-300"}`}
-          />
-          <p
-            className={`text-xs font-semibold ${extraCheckin ? "text-amber-700" : "text-slate-400"}`}
-          >
-            {extraCheckin ? "Vereist" : "Niet vereist"}
-          </p>
-        </div>
-      </div>
-
       <div className="h-px bg-slate-50" />
 
       {/* Wagen */}
@@ -858,15 +836,10 @@ export default function VloerscanAanmaken() {
                   done={step3Done}
                 />
                 <div className="w-3 md:w-4 h-px bg-slate-200 shrink-0" />
-                <StepBadge
-                  number={4}
-                  label="Procedure"
-                  active={step3Done}
-                  done={false}
-                />
+
                 <div className="w-3 md:w-4 h-px bg-slate-200 shrink-0" />
                 <StepBadge
-                  number={5}
+                  number={4}
                   label="Wagen"
                   active={step3Done && !step4Done}
                   done={step4Done}

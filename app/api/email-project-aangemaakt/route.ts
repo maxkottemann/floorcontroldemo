@@ -62,6 +62,10 @@ export async function POST(req: Request) {
     .map((p: any) => p.email)
     .filter(Boolean) as string[];
 
+  if (emails.length === 0) {
+    return Response.json({ message: "Geen emails" }, { status: 200 });
+  }
+
   try {
     const { data: data3, error: error3 } = await resend.emails.send({
       from: "Duofort <no-reply@rso-floorcontrol.nl>",

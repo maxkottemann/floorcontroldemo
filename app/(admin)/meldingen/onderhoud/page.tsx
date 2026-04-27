@@ -1,23 +1,36 @@
 "use client";
+
 import Toast from "@/components/layout/toast";
 import Topbar from "@/components/layout/topbar";
 import Sidebar from "@/components/layout/sidebar";
 import { useToast } from "@/components/hooks/usetoasts";
 import { useEffect, useState } from "react";
-import { melding } from "@/types/melding";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import {
-  BellAlertIcon,
-  ChevronRightIcon,
+  ClipboardDocumentListIcon,
+  MapPinIcon,
+  CalendarDaysIcon,
   CheckCircleIcon,
   MagnifyingGlassIcon,
-  ExclamationTriangleIcon,
-  CalendarDaysIcon,
-  ClipboardDocumentListIcon,
+  ChevronRightIcon,
+  UserIcon,
+  ClockIcon,
 } from "@heroicons/react/24/outline";
 
-function formatDate(d?: string) {
+interface OnderhoudAanvraag {
+  id: string;
+  naam: string;
+  beschrijving: string | null;
+  opmerkingen: string | null;
+  afgehandeld: boolean;
+  aangemaakt_op: string;
+  locatie_naam: string;
+  locatie_plaats: string | null;
+  profiel_naam: string | null;
+}
+
+function formatDate(d?: string | null) {
   if (!d) return "—";
   return new Date(d).toLocaleDateString("nl-NL", {
     day: "numeric",
@@ -25,8 +38,7 @@ function formatDate(d?: string) {
     year: "numeric",
   });
 }
-
-function formatTime(d?: string) {
+function formatTime(d?: string | null) {
   if (!d) return "—";
   return new Date(d).toLocaleTimeString("nl-NL", {
     hour: "2-digit",
@@ -34,94 +46,80 @@ function formatTime(d?: string) {
   });
 }
 
-export default function MeldingenPage() {
+export default function OnderhoudAanvragenAdminPage() {
   const { toast, showToast, hideToast } = useToast();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [tab, setTab] = useState<"open" | "all">("open");
-  const [notHandledMeldingen, setNotHandledMeldingen] = useState<melding[]>([]);
-  const [allMeldingen, setAllMeldingen] = useState<melding[]>([]);
-  const [zoekterm, setZoekterm] = useState("");
+  const [aanvragen, setAanvragen] = useState<OnderhoudAanvraag[]>([]);
   const [loading, setLoading] = useState(true);
-  const [openOnderhoud, setOpenOnderhoud] = useState(0);
+  const [zoekterm, setZoekterm] = useState("");
+  const [tab, setTab] = useState<"open" | "afgehandeld">("open");
 
-  function mapMelding(d: any): melding {
+  function mapAanvraag(d: any): OnderhoudAanvraag {
     return {
       id: d.id,
-      profielnaam: (d.profielen as any)?.naam,
-      kamervloer_id: d.kamervloer_id,
-      kamervloer_naam: (d.kamer_vloeren as any)?.vloer_types?.naam,
-      titel: d.titel,
-      beschrijving: d.beschrijving,
-      afgehandeld: d.afgehandeld,
+      naam: d.naam,
+      beschrijving: d.beschrijving ?? null,
+      opmerkingen: d.opmerkingen ?? null,
+      afgehandeld: d.afgehandeld ?? false,
       aangemaakt_op: d.aangemaakt_op,
+      locatie_naam: d.locaties?.naam ?? "—",
+      locatie_plaats: d.locaties?.plaats ?? null,
+      profiel_naam: d.profielen?.naam ?? null,
     };
   }
 
   useEffect(() => {
-    async function getMeldingen() {
+    async function getAanvragen() {
       setLoading(true);
-      try {
-        const [{ data: open }, { data: all }, { data: onderhoud }] =
-          await Promise.all([
-            supabase
-              .from("meldingen")
-              .select(
-                "id,profielen(naam),kamervloer_id,kamer_vloeren(vloer_types(naam)),titel,beschrijving,afgehandeld,aangemaakt_op",
-              )
-              .eq("afgehandeld", false)
-              .order("aangemaakt_op", { ascending: false }),
-            supabase
-              .from("meldingen")
-              .select(
-                "id,profielen(naam),kamervloer_id,kamer_vloeren(vloer_types(naam)),titel,beschrijving,afgehandeld,aangemaakt_op",
-              )
-              .order("aangemaakt_op", { ascending: false }),
-            supabase
-              .from("onderhoud_aanvragen")
-              .select("id", { count: "exact" })
-              .eq("afgehandeld", false),
-          ]);
-        setNotHandledMeldingen((open ?? []).map(mapMelding));
-        setAllMeldingen((all ?? []).map(mapMelding));
-        setOpenOnderhoud(onderhoud?.length ?? 0);
-      } catch {
-        showToast("Kon meldingen niet laden", "error");
-      } finally {
+      const { data, error } = await supabase
+        .from("onderhoud_aanvragen")
+        .select(
+          "id, naam, beschrijving, opmerkingen, afgehandeld, aangemaakt_op, locaties(naam, plaats), profielen(naam)",
+        )
+        .order("aangemaakt_op", { ascending: false });
+
+      if (error) {
+        showToast("Aanvragen konden niet worden geladen", "error");
         setLoading(false);
+        return;
       }
+      setAanvragen((data ?? []).map(mapAanvraag));
+      setLoading(false);
     }
-    getMeldingen();
+    getAanvragen();
   }, []);
 
-  const active = tab === "open" ? notHandledMeldingen : allMeldingen;
-  const filtered = active.filter((m) =>
-    [m.titel, m.beschrijving, m.kamervloer_naam, m.profielnaam].some((f) =>
+  const open = aanvragen.filter((a) => !a.afgehandeld);
+  const afgehandeld = aanvragen.filter((a) => a.afgehandeld);
+  const active = tab === "open" ? open : afgehandeld;
+  const filtered = active.filter((a) =>
+    [a.naam, a.beschrijving, a.locatie_naam, a.profiel_naam].some((f) =>
       f?.toLowerCase().includes(zoekterm.toLowerCase()),
     ),
   );
 
   const tabs = [
-    { key: "open", label: "Openstaand", count: notHandledMeldingen.length },
-    { key: "all", label: "Alle", count: allMeldingen.length },
+    { key: "open", label: "Openstaand", count: open.length },
+    { key: "afgehandeld", label: "Afgehandeld", count: afgehandeld.length },
   ];
 
   const emptyState = (
     <div className="flex flex-col items-center justify-center py-14 text-center">
       <div className="w-10 h-10 rounded-2xl bg-slate-100 flex items-center justify-center mb-3">
-        <BellAlertIcon className="w-5 h-5 text-slate-300" />
+        <ClipboardDocumentListIcon className="w-5 h-5 text-slate-300" />
       </div>
       <p className="text-sm text-slate-400 font-medium">
         {tab === "open"
-          ? "Geen openstaande meldingen"
-          : "Geen meldingen gevonden"}
+          ? "Geen openstaande aanvragen"
+          : "Geen afgehandelde aanvragen"}
       </p>
       <p className="text-xs text-slate-300 mt-0.5">
         {zoekterm
           ? "Probeer een andere zoekterm"
           : tab === "open"
             ? "Alles is afgehandeld"
-            : "Er zijn nog geen meldingen"}
+            : "Er zijn nog geen afgehandelde aanvragen"}
       </p>
     </div>
   );
@@ -139,12 +137,12 @@ export default function MeldingenPage() {
 
       <div className="flex flex-col flex-1 h-screen">
         <Topbar
-          title="Meldingen"
+          title="Onderhoud aanvragen"
           onMenuToggle={() => setSidebarOpen((p) => !p)}
         />
 
         <main className="flex-1 overflow-auto p-3 md:p-8">
-          {/* ── Desktop (md+) — original layout unchanged ── */}
+          {/* Desktop */}
           <div className="hidden md:block space-y-6">
             <div className="flex items-end justify-between">
               <div>
@@ -152,45 +150,31 @@ export default function MeldingenPage() {
                   Overzicht
                 </p>
                 <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-                  Meldingen
+                  Onderhoud aanvragen
                 </h1>
                 <p className="text-sm text-slate-400 mt-0.5">
-                  Beheer en bekijk alle ingediende meldingen
+                  Beheer en verwerk alle ingediende onderhoudsverzoeken
                 </p>
               </div>
-              <div className="flex flex-row gap-2">
-                {notHandledMeldingen.length > 0 && (
-                  <div className="flex items-center gap-2 px-4 py-2.5 bg-amber-50 border border-amber-100 rounded-2xl">
-                    <BellAlertIcon className="w-4 h-4 text-amber-500" />
-                    <p className="text-sm font-bold text-amber-600">
-                      {notHandledMeldingen.length} openstaand
-                    </p>
-                  </div>
-                )}
-                <button
-                  onClick={() => router.push("/meldingen/onderhoud")}
-                  className="inline-flex items-center gap-2 px-3 md:px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-800 text-sm font-bold rounded-xl border border-slate-200 shadow-sm transition-all cursor-pointer whitespace-nowrap"
-                >
-                  <ClipboardDocumentListIcon className="w-4 h-4 shrink-0" />
-                  <span className="hidden sm:inline">Onderhoud aanvragen</span>
-                  <span className="sm:hidden">Onderhoud</span>
-                  {openOnderhoud > 0 && (
-                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-p text-white text-[10px] font-bold shrink-0">
-                      {openOnderhoud}
-                    </span>
-                  )}
-                </button>
-              </div>
+              {open.length > 0 && (
+                <div className="flex items-center gap-2 px-4 py-2.5 bg-amber-50 border border-amber-100 rounded-2xl">
+                  <ClockIcon className="w-4 h-4 text-amber-500" />
+                  <p className="text-sm font-bold text-amber-600">
+                    {open.length} openstaand
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+              {/* Toolbar */}
               <div className="flex items-center gap-4 px-5 py-3.5 border-b border-slate-100">
                 <div className="flex items-center gap-1 bg-slate-100 rounded-xl p-1">
                   {tabs.map(({ key, label, count }) => (
                     <button
                       key={key}
-                      onClick={() => setTab(key as "open" | "all")}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-all ${tab === key ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+                      onClick={() => setTab(key as "open" | "afgehandeld")}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-all cursor-pointer ${tab === key ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
                     >
                       {label}
                       <span
@@ -206,30 +190,27 @@ export default function MeldingenPage() {
                   <input
                     value={zoekterm}
                     onChange={(e) => setZoekterm(e.target.value)}
-                    placeholder="Zoek op titel, vloer..."
+                    placeholder="Zoek op naam, locatie..."
                     className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 rounded-xl border border-slate-100 outline-none focus:border-p/40 focus:ring-2 focus:ring-p/10 placeholder:text-slate-300 transition-all"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-[24px_1fr_160px_120px_100px_40px] px-5 py-2.5 border-b border-slate-50 bg-slate-50/60">
-                {[
-                  "",
-                  "Melding",
-                  "Vloertype",
-                  "Ingediend door",
-                  "Datum",
-                  "",
-                ].map((h, i) => (
-                  <p
-                    key={i}
-                    className="text-[10px] font-bold uppercase tracking-widest text-slate-400"
-                  >
-                    {h}
-                  </p>
-                ))}
+              {/* Table header */}
+              <div className="grid grid-cols-[24px_1fr_180px_140px_120px_40px] px-5 py-2.5 border-b border-slate-50 bg-slate-50/60">
+                {["", "Aanvraag", "Locatie", "Aanvrager", "Datum", ""].map(
+                  (h, i) => (
+                    <p
+                      key={i}
+                      className="text-[10px] font-bold uppercase tracking-widest text-slate-400"
+                    >
+                      {h}
+                    </p>
+                  ),
+                )}
               </div>
 
+              {/* Rows */}
               <div className="divide-y divide-slate-50">
                 {loading ? (
                   <div className="flex items-center justify-center py-12">
@@ -238,44 +219,64 @@ export default function MeldingenPage() {
                 ) : filtered.length === 0 ? (
                   emptyState
                 ) : (
-                  filtered.map((m) => (
+                  filtered.map((a) => (
                     <div
-                      key={m.id}
-                      onClick={() => router.push(`/meldingen/bekijken/${m.id}`)}
-                      className="grid grid-cols-[24px_1fr_160px_120px_100px_40px] items-center px-5 py-3.5 cursor-pointer hover:bg-slate-50 transition-colors group"
+                      key={a.id}
+                      onClick={() =>
+                        router.push(`/meldingen/onderhoud/bekijken/${a.id}`)
+                      }
+                      className="grid grid-cols-[24px_1fr_180px_140px_120px_40px] items-center px-5 py-3.5 cursor-pointer hover:bg-slate-50 transition-colors group"
                     >
                       <div className="flex items-center">
-                        {m.afgehandeld ? (
+                        {a.afgehandeld ? (
                           <CheckCircleIcon className="w-4 h-4 text-emerald-400" />
                         ) : (
                           <div className="w-2 h-2 rounded-full bg-amber-400" />
                         )}
                       </div>
-                      <div className="min-w-0">
+                      <div className="min-w-0 pr-4">
                         <p className="text-sm font-semibold text-slate-800 truncate group-hover:text-p transition-colors">
-                          {m.titel}
+                          {a.naam}
                         </p>
-                        <p className="text-xs text-slate-400 truncate mt-0.5">
-                          {m.beschrijving}
-                        </p>
+                        {a.beschrijving && (
+                          <p className="text-xs text-slate-400 truncate mt-0.5">
+                            {a.beschrijving}
+                          </p>
+                        )}
                       </div>
                       <div className="flex items-center gap-1.5 min-w-0">
-                        <div className="w-5 h-5 rounded-md bg-p/10 flex items-center justify-center shrink-0">
-                          <ExclamationTriangleIcon className="w-3 h-3 text-p" />
+                        <MapPinIcon className="w-3.5 h-3.5 text-slate-300 shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-sm text-slate-500 truncate">
+                            {a.locatie_naam}
+                          </p>
+                          {a.locatie_plaats && (
+                            <p className="text-xs text-slate-300 truncate">
+                              {a.locatie_plaats}
+                            </p>
+                          )}
                         </div>
-                        <p className="text-sm text-slate-500 truncate">
-                          {m.kamervloer_naam ?? "—"}
-                        </p>
                       </div>
-                      <p className="text-sm text-slate-400 truncate">
-                        {m.profielnaam ?? "—"}
-                      </p>
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        {a.profiel_naam ? (
+                          <>
+                            <div className="w-5 h-5 rounded-full bg-p/15 text-p text-[9px] font-bold flex items-center justify-center shrink-0">
+                              {a.profiel_naam.charAt(0)}
+                            </div>
+                            <p className="text-xs text-slate-500 truncate">
+                              {a.profiel_naam}
+                            </p>
+                          </>
+                        ) : (
+                          <p className="text-xs text-slate-300">—</p>
+                        )}
+                      </div>
                       <div>
                         <p className="text-xs font-semibold text-slate-600">
-                          {formatDate(m.aangemaakt_op)}
+                          {formatDate(a.aangemaakt_op)}
                         </p>
                         <p className="text-[10px] text-slate-400">
-                          {formatTime(m.aangemaakt_op)}
+                          {formatTime(a.aangemaakt_op)}
                         </p>
                       </div>
                       <ChevronRightIcon className="w-4 h-4 text-slate-200 group-hover:text-p transition-colors" />
@@ -286,41 +287,40 @@ export default function MeldingenPage() {
 
               <div className="px-5 py-3 border-t border-slate-50 bg-slate-50/40">
                 <p className="text-xs text-slate-400">
-                  {filtered.length} melding{filtered.length !== 1 ? "en" : ""}
+                  {filtered.length} aanvra{filtered.length !== 1 ? "gen" : "ag"}
                 </p>
               </div>
             </div>
           </div>
 
-          {/* ── Mobile (below md) ── */}
+          {/* Mobile */}
           <div className="md:hidden space-y-3">
-            {/* Header */}
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-                  Meldingen
+                  Onderhoud aanvragen
                 </h1>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  Alle ingediende meldingen
+                  Alle ingediende onderhoudsverzoeken
                 </p>
               </div>
-              {notHandledMeldingen.length > 0 && (
+              {open.length > 0 && (
                 <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 border border-amber-100 rounded-xl">
-                  <BellAlertIcon className="w-3.5 h-3.5 text-amber-500" />
+                  <ClockIcon className="w-3.5 h-3.5 text-amber-500" />
                   <p className="text-xs font-bold text-amber-600">
-                    {notHandledMeldingen.length}
+                    {open.length}
                   </p>
                 </div>
               )}
             </div>
 
             {/* Tabs */}
-            <div className="flex items-center gap-1 bg-slate-100 rounded-xl p-1 self-start">
+            <div className="flex items-center gap-1 bg-slate-100 rounded-xl p-1">
               {tabs.map(({ key, label, count }) => (
                 <button
                   key={key}
-                  onClick={() => setTab(key as "open" | "all")}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-all flex-1 justify-center ${tab === key ? "bg-white text-slate-800 shadow-sm" : "text-slate-500"}`}
+                  onClick={() => setTab(key as "open" | "afgehandeld")}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-all flex-1 justify-center cursor-pointer ${tab === key ? "bg-white text-slate-800 shadow-sm" : "text-slate-500"}`}
                 >
                   {label}
                   <span
@@ -338,12 +338,12 @@ export default function MeldingenPage() {
               <input
                 value={zoekterm}
                 onChange={(e) => setZoekterm(e.target.value)}
-                placeholder="Zoek op titel, vloer..."
+                placeholder="Zoek op naam, locatie..."
                 className="w-full pl-9 pr-4 py-2.5 text-sm bg-white rounded-xl border border-slate-100 outline-none focus:border-p/40 focus:ring-2 focus:ring-p/10 placeholder:text-slate-300 transition-all shadow-sm"
               />
             </div>
 
-            {/* List */}
+            {/* Cards */}
             {loading ? (
               <div className="flex items-center justify-center py-12">
                 <div className="w-6 h-6 rounded-full border-2 border-p border-t-transparent animate-spin" />
@@ -352,55 +352,59 @@ export default function MeldingenPage() {
               emptyState
             ) : (
               <div className="space-y-2">
-                {filtered.map((m) => (
+                {filtered.map((a) => (
                   <div
-                    key={m.id}
-                    onClick={() => router.push(`/meldingen/bekijken/${m.id}`)}
+                    key={a.id}
+                    onClick={() =>
+                      router.push(`/meldingen/onderhoud/bekijken/${a.id}`)
+                    }
                     className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 cursor-pointer active:bg-slate-50 transition-colors"
                   >
                     <div className="flex items-start gap-3">
-                      {/* Status dot */}
                       <div className="mt-1 shrink-0">
-                        {m.afgehandeld ? (
+                        {a.afgehandeld ? (
                           <CheckCircleIcon className="w-4 h-4 text-emerald-400" />
                         ) : (
                           <div className="w-2 h-2 rounded-full bg-amber-400 mt-1" />
                         )}
                       </div>
-
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-bold text-slate-800 truncate">
-                          {m.titel}
+                          {a.naam}
                         </p>
-                        {m.beschrijving && (
+                        {a.beschrijving && (
                           <p className="text-xs text-slate-400 truncate mt-0.5">
-                            {m.beschrijving}
+                            {a.beschrijving}
                           </p>
                         )}
-
-                        {/* Meta row */}
                         <div className="flex items-center gap-2 mt-2 flex-wrap">
-                          {m.kamervloer_naam && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-p/8 rounded-md text-[11px] font-semibold text-p">
-                              <ExclamationTriangleIcon className="w-3 h-3" />
-                              {m.kamervloer_naam}
-                            </span>
-                          )}
-                          {m.profielnaam && (
-                            <span className="text-[11px] text-slate-400">
-                              {m.profielnaam}
-                            </span>
+                          <div className="flex items-center gap-1">
+                            <MapPinIcon className="w-3 h-3 text-slate-300 shrink-0" />
+                            <p className="text-xs text-slate-400 truncate">
+                              {a.locatie_naam}
+                            </p>
+                          </div>
+                          {a.profiel_naam && (
+                            <>
+                              <span className="text-slate-200">·</span>
+                              <div className="flex items-center gap-1">
+                                <div className="w-4 h-4 rounded-full bg-p/15 text-p text-[8px] font-bold flex items-center justify-center shrink-0">
+                                  {a.profiel_naam.charAt(0)}
+                                </div>
+                                <p className="text-xs text-slate-400">
+                                  {a.profiel_naam}
+                                </p>
+                              </div>
+                            </>
                           )}
                         </div>
                       </div>
-
-                      {/* Date + chevron */}
                       <div className="shrink-0 text-right flex flex-col items-end gap-1">
                         <p className="text-[11px] font-semibold text-slate-600">
-                          {formatDate(m.aangemaakt_op)}
+                          {formatDate(a.aangemaakt_op)}
                         </p>
                         <p className="text-[10px] text-slate-400">
-                          {formatTime(m.aangemaakt_op)}
+                          {formatTime(a.aangemaakt_op)}
                         </p>
                         <ChevronRightIcon className="w-4 h-4 text-slate-200 mt-1" />
                       </div>
@@ -408,7 +412,7 @@ export default function MeldingenPage() {
                   </div>
                 ))}
                 <p className="text-xs text-slate-400 text-center pt-1">
-                  {filtered.length} melding{filtered.length !== 1 ? "en" : ""}
+                  {filtered.length} aanvra{filtered.length !== 1 ? "gen" : "ag"}
                 </p>
               </div>
             )}

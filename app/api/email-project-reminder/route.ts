@@ -103,6 +103,10 @@ export async function POST(req: Request) {
       (start.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
     );
 
+    if (emails.length === 0) {
+      return Response.json({ message: "Geen emails" }, { status: 200 });
+    }
+
     try {
       const { data: email, error: emailerror } = await resend.emails.send({
         from: "Duofort <no-reply@rso-floorcontrol.nl>",

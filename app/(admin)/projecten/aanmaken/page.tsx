@@ -378,6 +378,10 @@ export default function ProjectenAanmakenPage() {
   const [alleMedewerkers, setAlleMedewerkers] = useState<Medewerker[]>([]);
   const [projectBussen, setProjectBussen] = useState<ProjectBus[]>([]);
   const [busZoek, setBusZoek] = useState("");
+  const [openAanvragen, setOpenAanvragen] = useState<
+    { id: string; naam: string }[]
+  >([]);
+  const [linkedAanvraagId, setLinkedAanvraagId] = useState<string | null>(null);
 
   const [alleReinigmethodes, setAlleReinigmethodes] = useState<
     { id: string; naam: string }[]
@@ -386,6 +390,17 @@ export default function ProjectenAanmakenPage() {
   const [loadingCat, setLoadingCat] = useState(false);
 
   const router = useRouter();
+
+  async function handleLinkAanvraag(projectNaam: string) {
+    if (!linkedAanvraagId) return;
+    await supabase
+      .from("onderhoud_aanvragen")
+      .update({
+        afgehandeld: true,
+        uitleg: `Onderhoud ingepland: ${projectNaam}`,
+      })
+      .eq("id", linkedAanvraagId);
+  }
 
   // ── Resolve all selected vloer IDs including children ──────────────
   const alleGeselecteerdeVloerIds = useMemo(
@@ -426,6 +441,23 @@ export default function ProjectenAanmakenPage() {
     categorieReinig.length > 0 &&
     categorieReinig.every((c) => c.defaultMethodeId);
   const step5Done = projectBussen.length > 0;
+
+  useEffect(() => {
+    async function getOpenAanvragen() {
+      if (!selectedLocatie) {
+        setOpenAanvragen([]);
+        return;
+      }
+      const { data } = await supabase
+        .from("onderhoud_aanvragen")
+        .select("id, naam")
+        .eq("locatie_id", selectedLocatie.id)
+        .eq("afgehandeld", false);
+      setOpenAanvragen(data ?? []);
+      setLinkedAanvraagId(null);
+    }
+    getOpenAanvragen();
+  }, [selectedLocatie]);
 
   // ── Load bussen + medewerkers ───────────────────────────────────────
   useEffect(() => {
@@ -834,6 +866,7 @@ export default function ProjectenAanmakenPage() {
         body: JSON.stringify({ projectId: project.id }),
       });
     }
+    await handleLinkAanvraag(projectnaam);
     showToast("Project aangemaakt", "success");
     setTimeout(() => router.back(), 1000);
   }
@@ -1286,6 +1319,65 @@ export default function ProjectenAanmakenPage() {
           </p>
         )}
       </div>
+
+      <div className="h-px bg-slate-50" />
+
+      {openAanvragen.length > 0 && (
+        <>
+          <div className="h-px bg-slate-50" />
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-300 mb-2">
+              Openstaande aanvragen
+            </p>
+            <div className="space-y-2">
+              {openAanvragen.map((a) => {
+                const isLinked = linkedAanvraagId === a.id;
+                return (
+                  <div
+                    key={a.id}
+                    className={`rounded-xl border p-3 transition-all ${isLinked ? "bg-emerald-50 border-emerald-100" : "bg-slate-50 border-slate-100"}`}
+                  >
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-slate-700 truncate">
+                          {a.naam}
+                        </p>
+                        <p className="text-[10px] text-slate-400 mt-0.5">
+                          Onderhoud aanvraag
+                        </p>
+                      </div>
+                      {isLinked && (
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold shrink-0">
+                          <CheckCircleIcon className="w-3 h-3" />
+                          Gekoppeld
+                        </span>
+                      )}
+                    </div>
+                    {/* Slide toggle */}
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-[10px] text-slate-400 leading-snug">
+                        {isLinked
+                          ? "Project wordt gekoppeld aan deze aanvraag"
+                          : "Is dit project voor deze aanvraag?"}
+                      </p>
+                      <button
+                        onClick={() =>
+                          setLinkedAanvraagId(isLinked ? null : a.id)
+                        }
+                        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${isLinked ? "bg-emerald-500" : "bg-slate-200"}`}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${isLinked ? "translate-x-4" : "translate-x-0"}`}
+                        />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </>
+      )}
 
       <div className="h-px bg-slate-50" />
 

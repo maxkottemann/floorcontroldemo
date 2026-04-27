@@ -201,7 +201,7 @@ export default function VloerscansPage() {
                 {/* Divider */}
                 <div className="w-px h-6 bg-slate-200 shrink-0" />
                 <button
-                  onClick={() => router.push("/projecten/vloerscans/aanmaken")}
+                  onClick={() => router.push("/projecten/vloerscan/aanmaken")}
                   className="flex items-center gap-2 px-3 md:px-4 py-2.5 bg-p text-white text-sm font-bold rounded-xl shadow-sm hover:bg-p/90 transition-colors cursor-pointer whitespace-nowrap"
                 >
                   <PlusIcon className="w-4 h-4 shrink-0" />
@@ -387,12 +387,8 @@ export default function VloerscansPage() {
                       key={s.id}
                       onClick={() =>
                         s.status === "afgerond"
-                          ? router.push(
-                              `/projecten/vloerscans/afgerond/${s.id}`,
-                            )
-                          : router.push(
-                              `/projecten/vloerscans/bekijken/${s.id}`,
-                            )
+                          ? router.push(`/projecten/vloerscan/afgerond/${s.id}`)
+                          : router.push(`/projecten/vloerscan/bekijken/${s.id}`)
                       }
                       className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 cursor-pointer active:bg-slate-50 transition-colors"
                     >
