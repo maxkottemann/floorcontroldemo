@@ -72,7 +72,7 @@ export const VloerscanReminderEmail = ({
         }}
       >
         <img
-          src="https://rso-floortcontrol.nl/duofortlogo.png"
+          src="https://rso-floorcontrol.nl/duofortlogo.png"
           alt="Duofort"
           height="40"
           style={{ display: "block", marginBottom: "24px" }}
