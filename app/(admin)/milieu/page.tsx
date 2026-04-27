@@ -214,7 +214,6 @@ export default function MilieuPage() {
     (s, r) => s + safenumber(r.stroom_old) * safenumber(r.vierkante_meter),
     0,
   );
-  console.log(totalM2);
   const chemieBesparing = totalChemieOld - totalChemie;
   const waterBesparing = totalWaterOld - totalWater;
   const afvalBesparing = totalAfvalOld - totalAfval;

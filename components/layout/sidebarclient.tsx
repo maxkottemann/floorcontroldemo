@@ -10,8 +10,12 @@ import {
   BellAlertIcon,
   DocumentArrowUpIcon,
   MagnifyingGlassIcon,
+  ChartPieIcon,
 } from "@heroicons/react/24/outline";
-import { BsLeaf, BsPassport } from "react-icons/bs";
+import { BsLeaf, BsPassport, BsThermometer } from "react-icons/bs";
+import { FcCheckmark } from "react-icons/fc";
+import { GiCheckMark } from "react-icons/gi";
+import { MagnifyingGlassCircleIcon } from "@heroicons/react/24/solid";
 
 interface SidebarProps {
   className?: string;
@@ -66,13 +70,18 @@ export default function SidebarClient({
       label: "Rapporten",
     },
     {
+      href: "/klant/analysecentrum",
+      icon: <MagnifyingGlassIcon className="w-5 h-5"></MagnifyingGlassIcon>,
+      label: "Analysecentrum",
+    },
+    {
       href: "/klant/milieu",
       icon: <BsLeaf className="w-5 h-5" />,
       label: "Milieu",
     },
     {
       href: "/klant/steekproeven",
-      icon: <MagnifyingGlassIcon className="w-5 h-5" />,
+      icon: <GiCheckMark className="w-5 h-5" />,
       label: "Steekproeven",
     },
     {

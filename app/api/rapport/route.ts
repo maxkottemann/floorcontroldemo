@@ -354,7 +354,7 @@ export async function GET(req: NextRequest) {
       drawWrapped(
         methode,
         colX[0] + 8,
-        y - 8,
+        y - 13,
         colW[0] - 16,
         9,
         fontR,

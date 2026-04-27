@@ -42,7 +42,7 @@ export async function POST(req: Request) {
       .single();
     if (medewerker) {
       medewerkerNaam = `${medewerker.voornaam} ${medewerker.achternaam}`;
-      medewerkerTelefoon = medewerkerTelefoon;
+      medewerkerTelefoon = medewerker.telefoonnummer;
     }
   }
 

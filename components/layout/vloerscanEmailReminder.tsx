@@ -306,7 +306,23 @@ export const VloerscanReminderEmail = ({
                       margin: "4px 0 0 0",
                     }}
                   >
-                    <PhoneIcon className="w-3 h-3"></PhoneIcon>
+                    <span
+                      style={{
+                        display: "inline-block",
+                        fontSize: "10px",
+                        fontWeight: "700",
+                        letterSpacing: "0.08em",
+                        textTransform: "uppercase",
+                        color: "#81378e",
+                        backgroundColor: "#f5f0ff",
+                        border: "1px solid #e4d9f7",
+                        borderRadius: "4px",
+                        padding: "1px 6px",
+                        marginRight: "8px",
+                      }}
+                    >
+                      Tel
+                    </span>
                     {medewerkerTel}
                   </p>
                 )}

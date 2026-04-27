@@ -215,11 +215,13 @@ export default function MilieuPage() {
     (s, r) => s + safenumber(r.stroom_old) * safenumber(r.vierkante_meter),
     0,
   );
-  console.log(totalM2);
+
   const chemieBesparing = totalChemieOld - totalChemie;
   const waterBesparing = totalWaterOld - totalWater;
   const afvalBesparing = totalAfvalOld - totalAfval;
   const stroomBesparing = totalStroomOld - totalStroom;
+
+  console.log("WATER BESPRAING:", waterBesparing);
 
   const waterSaving = calcPercentageSave(totalWaterOld, totalWater);
   const afvalSaving = calcPercentageSave(totalAfvalOld, totalAfval);
@@ -391,6 +393,8 @@ export default function MilieuPage() {
                   const stroom =
                     safenumber(rm.stroomverbruik) *
                     safenumber(rm.vierkante_meter);
+
+                  console.log("TOTAL WATGET:", water);
 
                   const waterOld = rm.waterverbruik_old
                     ? rm.waterverbruik_old * safenumber(rm.vierkante_meter)
