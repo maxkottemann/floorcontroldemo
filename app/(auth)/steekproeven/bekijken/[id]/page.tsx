@@ -128,6 +128,7 @@ export default function SteekproefBekijkenPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [steekproef, setSteekproef] = useState<Steekproef | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
     async function getSteekproef() {
@@ -189,6 +190,24 @@ export default function SteekproefBekijkenPage() {
     }
     getSteekproef();
   }, [id]);
+
+  async function dontShow() {
+    const { error } = await supabase
+      .from("steekproeven")
+      .update({
+        weergeven: false,
+      })
+      .eq("id", steekproef?.id);
+    if (error) {
+      showToast("Er ging iets mis, probeer het opnieuw", "error");
+      console.log(error);
+      return;
+    }
+    showToast("Steekproef word niet meer weergegeven", "success");
+    setTimeout(() => {
+      router.push("/steekproeven");
+    }, 1000);
+  }
 
   if (loading)
     return (
@@ -651,7 +670,6 @@ export default function SteekproefBekijkenPage() {
               </div>
             )}
 
-            {/* Meta info */}
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
               <div className="divide-y divide-slate-50">
                 {[
@@ -692,6 +710,46 @@ export default function SteekproefBekijkenPage() {
                   </div>
                 ))}
               </div>
+            </div>
+            <div className="divide-y divide-slate-50"></div>
+            <div className="flex items-center justify-between px-4 md:px-5 py-3">
+              <button
+                onClick={() => setShowConfirm(true)}
+                className="w-fit rounded-2xl text-left px-4 md:px-5 py-3 text-slate-600 hover:text-red-600 hover:bg-red-50 transition-colors duration-200"
+              >
+                Deze steekproef niet meer weergeven
+              </button>
+              {showConfirm && (
+                <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
+                  <div className="bg-white rounded-2xl shadow-lg w-[90%] max-w-sm p-6">
+                    <h2 className="text-lg font-semibold text-slate-800 mb-2">
+                      Weet je het zeker?
+                    </h2>
+                    <p className="text-sm text-slate-500 mb-6">
+                      Deze steekproef wordt niet meer weergegeven.
+                    </p>
+
+                    <div className="flex justify-end gap-3">
+                      <button
+                        onClick={() => setShowConfirm(false)}
+                        className="px-4 py-2 text-sm rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700"
+                      >
+                        Annuleren
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setShowConfirm(false);
+                          dontShow();
+                        }}
+                        className="px-4 py-2 text-sm rounded-lg bg-red-600 hover:bg-red-700 text-white"
+                      >
+                        Bevestigen
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </main>

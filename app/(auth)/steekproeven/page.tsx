@@ -105,7 +105,8 @@ export default function SteekproevenOverviewPage() {
         .select(
           "id, project_id, projecten(naam, locaties(naam, plaats)), status, goedgekeurd, aangemaakt_op, afgerond_op, profielen(naam)",
         )
-        .order("aangemaakt_op", { ascending: false });
+        .order("aangemaakt_op", { ascending: false })
+        .eq("weergeven", true);
 
       if (error) {
         showToast("Steekproeven konden niet worden geladen", "error");
