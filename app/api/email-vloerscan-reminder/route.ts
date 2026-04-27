@@ -43,16 +43,19 @@ export async function POST(req: Request) {
   }
 
   let medewerkerNaam: string | undefined;
+  let medewerkerTelefoon: string | undefined;
   if (data.medewerker_id) {
     const { data: medewerker } = await supabaseAdmin
       .from("medewerkers")
-      .select("voornaam, achternaam")
+      .select("voornaam, achternaam,telefoonnummer")
       .eq("id", data.medewerker_id)
       .single();
     if (medewerker) {
       medewerkerNaam = `${medewerker.voornaam} ${medewerker.achternaam}`;
+      medewerkerTelefoon = medewerkerTelefoon;
     }
   }
+  console.log(medewerkerTelefoon);
 
   const { data: contact_personen } = await supabaseAdmin
     .from("profielen")
@@ -77,7 +80,8 @@ export async function POST(req: Request) {
         locatieNaam: (data.locaties as any)?.naam ?? "—",
         locatieAdres: (data.locaties as any)?.adres ?? undefined,
         locatieplaats: (data.locaties as any)?.plaats ?? undefined,
-        medewerkerNaam,
+        medewerkerNaam: medewerkerNaam,
+        medewerkerTel: medewerkerTelefoon,
         dagen,
       }),
     });

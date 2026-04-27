@@ -1,4 +1,5 @@
 // components/layout/vloerscanAangemaaktEmail.tsx
+import { PhoneIcon } from "@heroicons/react/24/outline";
 import * as React from "react";
 
 function formatDate(d?: string) {
@@ -19,6 +20,7 @@ export interface VloerscanAangemaaktEmailProps {
   locatieAdres?: string;
   locatieplaats?: string;
   medewerkerNaam?: string;
+  medewerkerTel?: string;
   extraCheckin?: boolean;
 }
 
@@ -31,6 +33,7 @@ export const VloerscanAangemaaktEmail = ({
   locatieAdres,
   locatieplaats,
   medewerkerNaam,
+  medewerkerTel,
   extraCheckin,
 }: VloerscanAangemaaktEmailProps) => (
   <div
@@ -294,6 +297,18 @@ export const VloerscanAangemaaktEmail = ({
                 >
                   {medewerkerNaam ?? "Nog niet toegewezen"}
                 </span>
+                {medewerkerTel && (
+                  <p
+                    style={{
+                      fontSize: "13px",
+                      color: "#64748b",
+                      margin: "4px 0 0 0",
+                    }}
+                  >
+                    <PhoneIcon className="w-3 h-3"></PhoneIcon>
+                    {medewerkerTel}
+                  </p>
+                )}
                 <p
                   style={{
                     fontSize: "13px",

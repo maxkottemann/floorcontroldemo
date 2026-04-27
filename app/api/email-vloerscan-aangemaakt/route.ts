@@ -31,17 +31,18 @@ export async function POST(req: Request) {
   }
 
   const locatie_id = (data.locaties as any)?.id;
-
   // Fetch medewerker naam
+  let medewerkerTelefoon: string | undefined;
   let medewerkerNaam: string | undefined;
   if (data.medewerker_id) {
     const { data: medewerker } = await supabaseAdmin
       .from("medewerkers")
-      .select("voornaam, achternaam")
+      .select("voornaam, achternaam,telefoonnummer")
       .eq("id", data.medewerker_id)
       .single();
     if (medewerker) {
       medewerkerNaam = `${medewerker.voornaam} ${medewerker.achternaam}`;
+      medewerkerTelefoon = medewerkerTelefoon;
     }
   }
 
@@ -69,7 +70,7 @@ export async function POST(req: Request) {
         locatieNaam: (data.locaties as any)?.naam ?? "—",
         locatieAdres: (data.locaties as any)?.adres ?? undefined,
         locatieplaats: (data.locaties as any)?.plaats ?? undefined,
-        medewerkerNaam,
+        medewerkerNaam: medewerkerNaam,
       }),
     });
 

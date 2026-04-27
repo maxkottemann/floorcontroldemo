@@ -1,3 +1,4 @@
+import { PhoneIcon } from "@heroicons/react/24/outline";
 import * as React from "react";
 
 function formatDate(d?: string) {
@@ -18,6 +19,7 @@ export interface VloerscanReminderEmailProps {
   locatieAdres?: string;
   locatieplaats?: string;
   medewerkerNaam?: string;
+  medewerkerTel?: string;
   dagen: number;
   extraCheckin?: boolean;
 }
@@ -31,6 +33,7 @@ export const VloerscanReminderEmail = ({
   locatieAdres,
   locatieplaats,
   medewerkerNaam,
+  medewerkerTel,
   dagen,
   extraCheckin,
 }: VloerscanReminderEmailProps) => (
@@ -295,6 +298,18 @@ export const VloerscanReminderEmail = ({
                 >
                   {medewerkerNaam ?? "Nog niet toegewezen"}
                 </span>
+                {medewerkerTel && (
+                  <p
+                    style={{
+                      fontSize: "13px",
+                      color: "#64748b",
+                      margin: "4px 0 0 0",
+                    }}
+                  >
+                    <PhoneIcon className="w-3 h-3"></PhoneIcon>
+                    {medewerkerTel}
+                  </p>
+                )}
                 <p
                   style={{
                     fontSize: "13px",
@@ -308,7 +323,7 @@ export const VloerscanReminderEmail = ({
                       " komt op " +
                       formatDate(startDatum) +
                       " naar uw locatie om de vloeren te inspecteren en de staat van alle vloerbekleding te beoordelen."
-                    : "Er is nog geen medewerker toegewezen aan deze vloerscan. U ontvangt hier bericht over."}
+                    : "Er is nog geen medewerker toegewezen. U ontvangt hier bericht over zodra dit bekend is."}
                 </p>
               </td>
             </tr>
