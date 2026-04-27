@@ -15,7 +15,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { BsLeaf, BsPassport } from "react-icons/bs";
 import { PiWechatLogo } from "react-icons/pi";
-import { GiProgression } from "react-icons/gi";
+import { GiCheckMark, GiProgression } from "react-icons/gi";
 
 interface SidebarProps {
   className?: string;
@@ -42,7 +42,7 @@ export default function Sidebar({ className, open, onClose }: SidebarProps) {
     },
     {
       href: "/status",
-      icon: <GiProgression className="w-5 h-5" />,
+      icon: <ChartBarIcon className="w-5 h-5" />,
       label: "Status",
     },
     {
@@ -74,6 +74,11 @@ export default function Sidebar({ className, open, onClose }: SidebarProps) {
       href: "/milieu",
       icon: <BsLeaf className="w-5 h-5" />,
       label: "Duurzaamheid",
+    },
+    {
+      href: "/steekproeven",
+      icon: <GiCheckMark className="w-5 h-5" />,
+      label: "Steekproeven",
     },
     {
       href: "/meldingen",

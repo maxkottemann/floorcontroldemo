@@ -314,20 +314,41 @@ export default function SteekproevenUitvoerenPage() {
   async function handleAfronden() {
     if (!steekproefId) return;
     setSaving(true);
+
+    const { data, error: fetchError } = await supabase
+      .from("steekproef_vloeren")
+      .select("goedgekeurd")
+      .eq("steekproef_id", steekproefId);
+
+    if (!data || fetchError) {
+      showToast("Geen vloeren gevonden", "error");
+      setSaving(false);
+      return;
+    }
+
+    const good = data.filter((d) => d.goedgekeurd === true).length;
+    const pct = data.length > 0 ? (good / data.length) * 100 : 0;
+    const approved = pct >= 95;
+
     const { error } = await supabase
       .from("steekproeven")
-      .update({ status: "afgerond", afgerond_op: new Date().toISOString() })
+      .update({
+        status: "afgerond",
+        afgerond_op: new Date().toISOString(),
+        goedgekeurd: approved,
+      })
       .eq("id", steekproefId);
+
     setSaving(false);
     if (error) {
       showToast("Afronden mislukt: " + error.message, "error");
       return;
     }
+
     setAfgerond(true);
     showToast("Steekproef afgerond", "success");
     setTimeout(() => router.back(), 1000);
   }
-
   return (
     <div className="min-h-screen flex bg-[#F5F6FA]">
       <SidebarClient
