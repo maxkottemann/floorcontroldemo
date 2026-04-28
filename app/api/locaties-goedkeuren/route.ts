@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
 
   const { data: linkData, error: linkError } =
     await supabaseAdmin.auth.resetPasswordForEmail(email, {
-      redirectTo: "https://rso-floorcontrol.nl/wachtwoordveranderen",
+      redirectTo: "https://floorcontroldemo.vercel.app/wachtwoordveranderen",
     });
 
   if (linkError) {

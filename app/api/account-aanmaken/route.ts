@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
   const { data: authUser, error: authError } =
     await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
       data: { naam },
-      redirectTo: "https://rso-floorcontrol.nl/confirm",
+      redirectTo: "https://floorcontroldemo.vercel.app/confirm",
     });
   if (authError || !authUser.user) {
     console.error("Auth error:", authError?.message);
