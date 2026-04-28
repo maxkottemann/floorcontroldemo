@@ -113,7 +113,7 @@ export default function Sidebar({ className, open, onClose }: SidebarProps) {
         `}
       >
         <div className="px-4 pb-2">
-          <img src="/logo2.png" alt="Logo" className="w-full mx-auto" />
+          <img src="/duofortlogo.png" alt="Logo" className="w-full mx-auto" />
         </div>
 
         <div className="border-t border-gray-200 mx-4 my-3" />
