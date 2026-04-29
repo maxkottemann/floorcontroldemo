@@ -113,10 +113,14 @@ export default function Sidebar({ className, open, onClose }: SidebarProps) {
         `}
       >
         <div className="px-4 pb-2">
-          <img src="/duofortlogo.png" alt="Logo" className="w-full mx-auto" />
+          <img
+            src="/floorcontrol.png"
+            alt="Logo"
+            className="w-full mt-2 mx-auto"
+          />
         </div>
 
-        <div className="border-t border-gray-200 mx-4 my-3" />
+        <div className="border-t border-gray-200 mx-4 mb-2" />
 
         <div className="flex-1  overflow-y-auto">
           {links.map((l) => (

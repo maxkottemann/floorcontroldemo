@@ -74,7 +74,7 @@ export const VloerscanAangemaaktEmail = ({
         }}
       >
         <img
-          src="https://rso-floorcontrol.nl/duofortlogo.png"
+          src="https://rso-floorcontrol.nl/floorcontrol.png"
           alt="Duofort"
           height="40"
           style={{ display: "block", marginBottom: "24px" }}
