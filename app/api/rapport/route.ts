@@ -11,9 +11,9 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
 );
 
-const PRIMARY = rgb(0.42, 0.18, 0.58);
-const PRIMARY2 = rgb(0.32, 0.12, 0.46);
-const ACCENT = rgb(0.42, 0.18, 0.58);
+const PRIMARY = rgb(0.37, 0.6, 0.99);
+const PRIMARY2 = rgb(0.37, 0.6, 0.99);
+const ACCENT = rgb(0.37, 0.6, 0.99);
 const LIGHT = rgb(0.97, 0.95, 0.99);
 const DARK = rgb(0.1, 0.06, 0.16);
 const MUTED = rgb(0.45, 0.4, 0.52);
@@ -139,7 +139,7 @@ export async function GET(req: NextRequest) {
       font: fontR,
       color: MUTED,
     });
-    page.drawText("Duofort B.V. · Toonaangevend in Vloeronderhoud", {
+    page.drawText("NEP B.V. · Toonaangevend in Vloeronderhoud", {
       x: pageW - margin - 170,
       y: 22,
       size: 7,
@@ -232,7 +232,7 @@ export async function GET(req: NextRequest) {
       height: logoDims.height,
     });
   } else {
-    txt("Duofort B.V.", margin, pageH - margin - 20, 15, fontB, PRIMARY);
+    txt("CM SOFTWARE.", margin, pageH - margin - 20, 15, fontB, PRIMARY);
   }
 
   txt(
@@ -397,7 +397,7 @@ export async function GET(req: NextRequest) {
 
   rect(margin, y - sigH, sigW, sigH, WHITE, BORDER);
   rect(margin, y - sigH, sigW, 3, ACCENT);
-  txt("UITVOERDER (DUOFORT)", margin + 8, y - 14, 6, fontB, MUTED);
+  txt("UITVOERDER ", margin + 8, y - 14, 6, fontB, MUTED);
   if (werknemerBytes) {
     try {
       const img = await pdfDoc.embedPng(werknemerBytes);
