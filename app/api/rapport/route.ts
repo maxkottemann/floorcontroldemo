@@ -83,15 +83,14 @@ export async function GET(req: NextRequest) {
   const klantHt = handtekeningen?.find((h) => h.type === "klant");
 
   async function fetchSignatureBytes(url: string): Promise<Uint8Array | null> {
-    const { data: signed } = await supabase.storage
-      .from("handtekeningen")
-      .createSignedUrl(url, 60);
-    if (!signed?.signedUrl) return null;
-    const res = await fetch(signed.signedUrl);
-    if (!res.ok) return null;
-    return new Uint8Array(await res.arrayBuffer());
+    try {
+      const res = await fetch(url);
+      if (!res.ok) return null;
+      return new Uint8Array(await res.arrayBuffer());
+    } catch {
+      return null;
+    }
   }
-
   const werknemerBytes = werknemerHt?.url
     ? await fetchSignatureBytes(werknemerHt.url)
     : null;
