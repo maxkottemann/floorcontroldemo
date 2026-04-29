@@ -555,8 +555,8 @@ export default function StatusPage() {
                       <div className="flex items-center gap-6">
                         <DonutChart
                           segments={vloertypeSegments}
-                          centerLabel={`${washedM2}m²`}
-                          centerSub="totaal"
+                          centerLabel={`${washedM2}`}
+                          centerSub="totaal m²"
                           size={150}
                           strokeWidth={20}
                         />

@@ -71,7 +71,6 @@ export default function Datepicker({
   }
 
   function getFirstDayOfMonth(year: number, month: number) {
-    // 0 = Sunday, shift to Monday = 0
     const day = new Date(year, month, 1).getDay();
     return day === 0 ? 6 : day - 1;
   }
