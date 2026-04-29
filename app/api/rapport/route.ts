@@ -11,15 +11,14 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
 );
 
-const PRIMARY = rgb(0.37, 0.6, 0.99);
-const PRIMARY2 = rgb(0.37, 0.6, 0.99);
-const ACCENT = rgb(0.37, 0.6, 0.99);
-const LIGHT = rgb(0.97, 0.95, 0.99);
-const DARK = rgb(0.1, 0.06, 0.16);
-const MUTED = rgb(0.45, 0.4, 0.52);
-const BORDER = rgb(0.86, 0.82, 0.91);
+const PRIMARY = rgb(0.067, 0.282, 0.529); // #114887 — main blue
+const PRIMARY2 = rgb(0.05, 0.22, 0.42); // darker shade for headers
+const ACCENT = rgb(0.067, 0.282, 0.529); // same as primary
+const LIGHT = rgb(0.92, 0.95, 0.98); // very light blue tint
+const DARK = rgb(0.06, 0.08, 0.12); // near black
+const MUTED = rgb(0.4, 0.45, 0.52); // blue-gray muted text
+const BORDER = rgb(0.78, 0.85, 0.92); // light blue border
 const WHITE = rgb(1, 1, 1);
-
 function formatDate(d?: string | null) {
   if (!d) return "—";
   return new Date(d).toLocaleDateString("nl-NL", {
@@ -83,13 +82,14 @@ export async function GET(req: NextRequest) {
   const klantHt = handtekeningen?.find((h) => h.type === "klant");
 
   async function fetchSignatureBytes(url: string): Promise<Uint8Array | null> {
-    const { data: signed } = await supabase.storage
-      .from("handtekeningen")
-      .createSignedUrl(url, 60);
-    if (!signed?.signedUrl) return null;
-    const res = await fetch(signed.signedUrl);
-    if (!res.ok) return null;
-    return new Uint8Array(await res.arrayBuffer());
+    try {
+      if (!url || url === "geen-handtekening") return null;
+      const res = await fetch(url);
+      if (!res.ok) return null;
+      return new Uint8Array(await res.arrayBuffer());
+    } catch {
+      return null;
+    }
   }
 
   const werknemerBytes = werknemerHt?.url
@@ -318,7 +318,7 @@ export async function GET(req: NextRequest) {
     drawWrapped(
       groep.vloertype,
       margin + 12,
-      y - 13,
+      y - 16,
       colW[0] - 24,
       10,
       fontB,
@@ -397,7 +397,6 @@ export async function GET(req: NextRequest) {
 
   rect(margin, y - sigH, sigW, sigH, WHITE, BORDER);
   rect(margin, y - sigH, sigW, 3, ACCENT);
-  txt("UITVOERDER ", margin + 8, y - 14, 6, fontB, MUTED);
   if (werknemerBytes) {
     try {
       const img = await pdfDoc.embedPng(werknemerBytes);
@@ -415,7 +414,6 @@ export async function GET(req: NextRequest) {
   const rx = margin + sigW + 12;
   rect(rx, y - sigH, sigW, sigH, WHITE, BORDER);
   rect(rx, y - sigH, sigW, 3, ACCENT);
-  txt("OPDRACHTGEVER", rx + 8, y - 14, 6, fontB, MUTED);
   if (klantBytes) {
     try {
       const img = await pdfDoc.embedPng(klantBytes);
