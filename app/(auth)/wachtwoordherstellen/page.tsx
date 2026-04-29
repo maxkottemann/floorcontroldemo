@@ -62,7 +62,7 @@ export default function SetupPaswoordPage() {
       {/* Left banner */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
         <img
-          src="/logingbg.png"
+          src="/loginbg2.jpg"
           alt="FloorControl"
           className="absolute inset-0 w-full h-full object-cover"
         />

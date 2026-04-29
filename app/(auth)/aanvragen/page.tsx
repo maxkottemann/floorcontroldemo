@@ -36,7 +36,7 @@ export default function AccountAanvragenPage() {
     <div className="min-h-screen flex">
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
         <img
-          src="/logingbg.png"
+          src="/loginbg2.jpg"
           alt="FloorControl"
           className="absolute inset-0 w-full h-full object-cover"
         />
@@ -44,7 +44,7 @@ export default function AccountAanvragenPage() {
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
           <div>
             <img
-              src="/logo.png"
+              src="/floorcontrol.png"
               alt="FloorControl"
               className="h-0 object-contain brightness-0 invert"
             />
@@ -98,9 +98,9 @@ export default function AccountAanvragenPage() {
               <div className="mb-8">
                 <div>
                   <img
-                    src="/logo.png"
+                    src="/floorcontrol.png"
                     alt="FloorControl"
-                    className="h-25 object-contain mb-8"
+                    className="h-20 object-contain mb-5"
                   />
                 </div>
                 <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#154273]/60 mb-2">

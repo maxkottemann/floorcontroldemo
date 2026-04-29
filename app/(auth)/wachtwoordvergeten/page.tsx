@@ -19,7 +19,7 @@ export default function WachtwoordVergetenPage() {
     setLoading(true);
     setError("");
     const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: "https://rso-floorcontrol.nl/wachtwoordherstellen",
+      redirectTo: "https://floorcontroldemo.vercel.app/wachtwoordherstellen",
     });
     setLoading(false);
     if (err) {
@@ -33,7 +33,7 @@ export default function WachtwoordVergetenPage() {
     <div className="min-h-screen flex">
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
         <img
-          src="/logingbg.png"
+          src="/loginbg2.jpg"
           alt="FloorControl"
           className="absolute inset-0 w-full h-full object-cover"
         />
@@ -41,14 +41,14 @@ export default function WachtwoordVergetenPage() {
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
           <div>
             <img
-              src="/logo.png"
+              src="/floorcontrol.png"
               alt="FloorControl"
               className="h-0 object-contain brightness-0 invert"
             />
           </div>
           <div>
             <p className="text-white/60 text-xs font-bold uppercase tracking-[0.2em] mb-3">
-              Duofort B.V.
+              CM SOFTWARE
             </p>
             <h1 className="text-4xl font-bold text-white leading-tight mb-4">
               Floor<span className="text-[#3AB8BF]">Control</span>
@@ -99,9 +99,9 @@ export default function WachtwoordVergetenPage() {
             <>
               <div className="flex flex-row w-full">
                 <img
-                  src="/logo.png"
+                  src="/floorcontrol.png"
                   alt="FloorControl"
-                  className="h-25 object-contain  mb-10"
+                  className="h-20 object-contain mb-5"
                 />
               </div>
               <div className="mb-8">

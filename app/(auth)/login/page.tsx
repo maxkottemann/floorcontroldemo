@@ -36,7 +36,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex">
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
         <img
-          src="/logingbg.png"
+          src="/loginbg2.jpg"
           alt="FloorControl"
           className="absolute inset-0 w-full h-full object-cover"
         />
@@ -44,17 +44,17 @@ export default function LoginPage() {
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
           <div>
             <img
-              src="/logo.png"
+              src="/floorcontrol.png"
               alt="FloorControl"
               className="h-0 object-contain brightness-0 invert"
             />
           </div>
           <div>
             <p className="text-white/60 text-xs font-bold uppercase tracking-[0.2em] mb-3">
-              Duofort B.V.
+              CM SOFTWARE
             </p>
             <h1 className="text-4xl font-bold text-white leading-tight mb-4">
-              Floor<span className="text-p">Control</span>
+              Floor<span className="text-[#3AB8BF]">Control</span>
             </h1>
             <p className="text-white/70 text-base leading-relaxed max-w-xs">
               Beheer uw locaties, projecten en vloeren vanuit één platform.
@@ -72,11 +72,11 @@ export default function LoginPage() {
       <div className="flex-1 flex flex-col justify-center items-center p-6 md:p-12 bg-[#F5F6FA]">
         <div className="w-full max-w-sm">
           <div className="mb-8">
-            <div className="mb-5">
+            <div className="mb-5 items-center mr-">
               <img
-                src="/logo.png"
+                src="/floorcontrol.png"
                 alt="FloorControl"
-                className="h-25 object-contain"
+                className="h-20 object-contain items-center mr-2"
               />
             </div>
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#154273]/60 mb-2">
