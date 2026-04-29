@@ -89,7 +89,7 @@ export const ProjectReminderEmail = ({
         }}
       >
         <img
-          src="https://floor-control.vercel.app/floorcontrol.png"
+          src="https://floorcontroldemo.vercel.app/floorcontrol.png"
           alt="Duofort"
           height="40"
           style={{ display: "block", marginBottom: "24px" }}

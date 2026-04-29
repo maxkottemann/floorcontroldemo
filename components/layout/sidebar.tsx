@@ -112,11 +112,11 @@ export default function Sidebar({ className, open, onClose }: SidebarProps) {
           ${className ?? ""}
         `}
       >
-        <div className="px-4 pb-2">
+        <div className="px-4 mt-2">
           <img
             src="/floorcontrol.png"
             alt="Logo"
-            className="w-full mt-2 mx-auto"
+            className="w-full mr-1 mx-auto"
           />
         </div>
 

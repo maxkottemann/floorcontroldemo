@@ -107,7 +107,7 @@ export async function GET(req: NextRequest) {
   let logoDims = { width: 0, height: 0 };
   try {
     const logoBytes = fs.readFileSync(
-      path.join(process.cwd(), "public", "duofortlogo.png"),
+      path.join(process.cwd(), "public", "floorcontrol.png"),
     );
     logoImage = await pdfDoc.embedPng(logoBytes);
     logoDims = logoImage.scaleToFit(120, 36);

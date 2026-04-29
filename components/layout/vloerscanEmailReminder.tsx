@@ -75,7 +75,7 @@ export const VloerscanReminderEmail = ({
         }}
       >
         <img
-          src="https://rso-floorcontrol.nl/floorcontrol.png"
+          src="https://floorcontroldemo.vercel.app/floorcontrol.png"
           alt="Duofort"
           height="40"
           style={{ display: "block", marginBottom: "24px" }}
