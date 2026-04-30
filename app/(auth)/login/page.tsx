@@ -72,11 +72,11 @@ export default function LoginPage() {
       <div className="flex-1 flex flex-col justify-center items-center p-6 md:p-12 bg-[#F5F6FA]">
         <div className="w-full max-w-sm">
           <div className="mb-8">
-            <div className="mb-5 items-center mr-">
+            <div className="mb-7">
               <img
                 src="/floorcontrol.png"
                 alt="FloorControl"
-                className="h-20 object-contain items-center mr-2"
+                className="h-20 object-contain ml-10"
               />
             </div>
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#154273]/60 mb-2">
