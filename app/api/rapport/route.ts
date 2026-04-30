@@ -396,7 +396,6 @@ export async function GET(req: NextRequest) {
 
   rect(margin, y - sigH, sigW, sigH, WHITE, BORDER);
   rect(margin, y - sigH, sigW, 3, ACCENT);
-  txt("UITVOERDER (DUOFORT)", margin + 8, y - 14, 6, fontB, MUTED);
   if (werknemerBytes) {
     try {
       const img = await pdfDoc.embedPng(werknemerBytes);
@@ -414,7 +413,6 @@ export async function GET(req: NextRequest) {
   const rx = margin + sigW + 12;
   rect(rx, y - sigH, sigW, sigH, WHITE, BORDER);
   rect(rx, y - sigH, sigW, 3, ACCENT);
-  txt("OPDRACHTGEVER", rx + 8, y - 14, 6, fontB, MUTED);
   if (klantBytes) {
     try {
       const img = await pdfDoc.embedPng(klantBytes);
