@@ -109,10 +109,10 @@ export default function DashboardPage() {
   }, []);
 
   const sustainability = [
-    { label: "CO₂-reductie mobiliteit", value: 18, target: 25, suffix: "%" },
-    { label: "Afvalreductie", value: 42, target: 50, suffix: "%" },
-    { label: "Chemiereductie", value: 61, target: 70, suffix: "%" },
-    { label: "Elektrische ritten", value: 74, target: 80, suffix: "%" },
+    { label: "CO₂-reductie mobiliteit", value: 93, target: 90, suffix: "%" },
+    { label: "Afvalreductie", value: 52, target: 50, suffix: "%" },
+    { label: "Chemiereductie", value: 30, target: 30, suffix: "%" },
+    { label: "Afvalwater reductie", value: 39, target: 40, suffix: "%" },
   ];
   const ring = (value: number) => ({
     background: `conic-gradient(#154273 0 ${value}%, #e5e7eb ${value}% 100%)`,
