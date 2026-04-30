@@ -43,7 +43,7 @@ export default function WachtwoordVergetenPage() {
             <img
               src="/floorcontrol.png"
               alt="FloorControl"
-              className="h-0 object-contain"
+              className="h-0 object-contain ml-10"
             />
           </div>
           <div>
