@@ -61,9 +61,9 @@ export default function SetupPaswoordPage() {
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
           <div>
             <img
-              src="/logo.png"
+              src="/floorcontrol.png"
               alt="FloorControl"
-              className="h-10 object-contain brightness-0 invert"
+              className="h-10 object-contain"
             />
           </div>
           <div>

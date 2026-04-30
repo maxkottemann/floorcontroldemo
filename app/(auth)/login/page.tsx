@@ -44,7 +44,7 @@ export default function LoginPage() {
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
           <div>
             <img
-              src="/logo.png"
+              src="/floorcontrol.png"
               alt="FloorControl"
               className="h-0 object-contain brightness-0 invert"
             />
@@ -74,9 +74,9 @@ export default function LoginPage() {
           <div className="mb-8">
             <div className="mb-5">
               <img
-                src="/logo.png"
+                src="/floorcontrol.png"
                 alt="FloorControl"
-                className="h-25 object-contain"
+                className="h-20 object-contain"
               />
             </div>
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#154273]/60 mb-2">

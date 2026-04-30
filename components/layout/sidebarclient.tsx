@@ -110,11 +110,15 @@ export default function SidebarClient({
           ${className ?? ""}
         `}
       >
-        <div className="px-4  pb-2">
-          <img src="/logo2.png" alt="Logo" className="w-full mx-auto" />
+        <div className="px-4 pb-2">
+          <img
+            src="/floorcontrol.png"
+            alt="Logo"
+            className="w-full mx-auto mt-3"
+          />
         </div>
 
-        <div className="border-t border-gray-200 mx-4 my-3" />
+        <div className="border-t border-gray-200 mx-4 mb-3" />
 
         <div className="flex-1  overflow-y-auto">
           {links.map((l) => (

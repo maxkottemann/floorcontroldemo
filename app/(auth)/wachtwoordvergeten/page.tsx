@@ -41,9 +41,9 @@ export default function WachtwoordVergetenPage() {
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
           <div>
             <img
-              src="/logo.png"
+              src="/floorcontrol.png"
               alt="FloorControl"
-              className="h-0 object-contain brightness-0 invert"
+              className="h-0 object-contain"
             />
           </div>
           <div>
@@ -51,7 +51,7 @@ export default function WachtwoordVergetenPage() {
               Duofort B.V.
             </p>
             <h1 className="text-4xl font-bold text-white leading-tight mb-4">
-              Floor<span className="text-[#3AB8BF]">Control</span>
+              Floor<span className="text-p">Control</span>
             </h1>
             <p className="text-white/70 text-base leading-relaxed max-w-xs">
               Beheer uw locaties, projecten en vloeren vanuit één platform.
@@ -99,9 +99,9 @@ export default function WachtwoordVergetenPage() {
             <>
               <div className="flex flex-row w-full">
                 <img
-                  src="/logo.png"
+                  src="/floorcontrol.png"
                   alt="FloorControl"
-                  className="h-25 object-contain  mb-10"
+                  className="h-20 object-contain mb-5"
                 />
               </div>
               <div className="mb-8">
@@ -149,7 +149,7 @@ export default function WachtwoordVergetenPage() {
                   ) : (
                     <>
                       <KeyIcon className="w-4 h-4" />
-                      Verstuur herstelLink
+                      Herstel link versturen
                     </>
                   )}
                 </button>

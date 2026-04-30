@@ -9,7 +9,11 @@ export default function AanvraagSuccesPage() {
     <div className="min-h-screen flex items-center justify-center bg-[#F5F5F5] px-4">
       <div className="w-full max-w-md">
         <div className="flex justify-center mb-8">
-          <img src="/logo.png" alt="Logo" className="w-100 object-contain" />
+          <img
+            src="/floorcontrol.png"
+            alt="Logo"
+            className="w-100 object-contain"
+          />
         </div>
 
         <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
