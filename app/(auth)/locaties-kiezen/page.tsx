@@ -132,7 +132,7 @@ export default function LocatiesKiezenPage() {
         {/* Header */}
         <div className="text-center">
           <img
-            src="/logo.png"
+            src="/floorcontrol.png"
             className="h-10 mx-auto mb-5 object-contain"
             alt="FloorControl"
           />
