@@ -388,6 +388,7 @@ export default function ProjectenAanmakenPage() {
   >([]);
   const [categorieReinig, setCategorieReinig] = useState<CategorieReinig[]>([]);
   const [loadingCat, setLoadingCat] = useState(false);
+  const [savingProject, setSavingProject] = useState(false);
 
   const router = useRouter();
 
@@ -793,82 +794,90 @@ export default function ProjectenAanmakenPage() {
       showToast("Selecteer minimaal één vloer", "error");
       return;
     }
+    setSavingProject(true);
 
-    const { data: project, error: projectError } = await supabase
-      .from("projecten")
-      .insert({
-        naam: projectnaam,
-        beschrijving,
-        locatie_id: selectedLocatie!.id,
-        opmerkingen: opmerking,
-        start_datum: startDatum || null,
-        eind_datum: eindDatum || null,
-      })
-      .select("id,start_datum")
-      .single();
-    if (projectError || !project) {
-      showToast("Project kon niet worden aangemaakt", "error");
-      return;
-    }
-
-    const vloerMethodeMap: Record<string, string> = {};
-    for (const cat of categorieReinig)
-      for (const v of cat.vloeren)
-        vloerMethodeMap[v.id] = v.overrideMethodeId || cat.defaultMethodeId;
-
-    const { error: vloerError } = await supabase.from("project_vloeren").insert(
-      alleGeselecteerdeVloerIds.map((id) => ({
-        project_id: project.id,
-        kamervloer_id: id,
-        reinigmethode_id: vloerMethodeMap[id] || null,
-      })),
-    );
-    if (vloerError) {
-      await supabase.from("projecten").delete().eq("id", project.id);
-      showToast(
-        "Vloeren konden niet worden opgeslagen, project verwijderd",
-        "error",
-      );
-      return;
-    }
-
-    for (const pb of projectBussen) {
-      const { data: projectBus, error: busError } = await supabase
-        .from("project_bussen")
-        .insert({ project_id: project.id, bus_id: pb.bus.id })
-        .select("id")
+    try {
+      const { data: project, error: projectError } = await supabase
+        .from("projecten")
+        .insert({
+          naam: projectnaam,
+          beschrijving,
+          locatie_id: selectedLocatie!.id,
+          opmerkingen: opmerking,
+          start_datum: startDatum || null,
+          eind_datum: eindDatum || null,
+        })
+        .select("id,start_datum")
         .single();
-      if (busError || !projectBus) {
-        showToast(`Bus ${pb.bus.naam} kon niet worden opgeslagen`, "error");
-        continue;
+      if (projectError || !project) {
+        showToast("Project kon niet worden aangemaakt", "error");
+        return;
       }
-      if (pb.medewerkerIds.length > 0)
-        await supabase.from("project_bus_medewerkers").insert(
-          pb.medewerkerIds.map((medewerker_id) => ({
-            project_bus_id: projectBus.id,
-            medewerker_id,
+
+      const vloerMethodeMap: Record<string, string> = {};
+      for (const cat of categorieReinig)
+        for (const v of cat.vloeren)
+          vloerMethodeMap[v.id] = v.overrideMethodeId || cat.defaultMethodeId;
+
+      const { error: vloerError } = await supabase
+        .from("project_vloeren")
+        .insert(
+          alleGeselecteerdeVloerIds.map((id) => ({
+            project_id: project.id,
+            kamervloer_id: id,
+            reinigmethode_id: vloerMethodeMap[id] || null,
           })),
         );
-    }
+      if (vloerError) {
+        await supabase.from("projecten").delete().eq("id", project.id);
+        showToast(
+          "Vloeren konden niet worden opgeslagen, project verwijderd",
+          "error",
+        );
+        return;
+      }
 
-    await fetch("/api/email-project-aangemaakt", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ projectId: project.id }),
-    });
-    if (
-      dagenTotStart(project.start_datum) <= 5 &&
-      dagenTotStart(project.start_datum) >= 0
-    ) {
-      await fetch("/api/email-project-reminder", {
+      for (const pb of projectBussen) {
+        const { data: projectBus, error: busError } = await supabase
+          .from("project_bussen")
+          .insert({ project_id: project.id, bus_id: pb.bus.id })
+          .select("id")
+          .single();
+        if (busError || !projectBus) {
+          showToast(`Bus ${pb.bus.naam} kon niet worden opgeslagen`, "error");
+          continue;
+        }
+        if (pb.medewerkerIds.length > 0)
+          await supabase.from("project_bus_medewerkers").insert(
+            pb.medewerkerIds.map((medewerker_id) => ({
+              project_bus_id: projectBus.id,
+              medewerker_id,
+            })),
+          );
+      }
+
+      await fetch("/api/email-project-aangemaakt", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ projectId: project.id }),
       });
+      if (
+        dagenTotStart(project.start_datum) <= 5 &&
+        dagenTotStart(project.start_datum) >= 0
+      ) {
+        await fetch("/api/email-project-reminder", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ projectId: project.id }),
+        });
+      }
+      await handleLinkAanvraag(projectnaam);
+      setSavingProject(false);
+      showToast("Project aangemaakt", "success");
+      setTimeout(() => router.back(), 1000);
+    } finally {
+      setSavingProject(false);
     }
-    await handleLinkAanvraag(projectnaam);
-    showToast("Project aangemaakt", "success");
-    setTimeout(() => router.back(), 1000);
   }
 
   // ── Steps JSX ───────────────────────────────────────────────────────
@@ -1451,13 +1460,26 @@ export default function ProjectenAanmakenPage() {
       <div className="h-px bg-slate-50" />
 
       <button
-        onClick={handleSubmit}
-        disabled={!step1Done || !step2Done || !step3Done || !step4Done}
+        onClick={() => {
+          handleSubmit();
+        }}
+        disabled={
+          !step1Done || !step2Done || !step3Done || !step4Done || savingProject
+        }
         className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold transition-all duration-200
-          bg-p text-white shadow-sm hover:bg-p/90 hover:shadow-md disabled:opacity-30 disabled:cursor-not-allowed disabled:shadow-none cursor-pointer"
+    bg-p text-white shadow-sm hover:bg-p/90 hover:shadow-md disabled:opacity-30 disabled:cursor-not-allowed disabled:shadow-none cursor-pointer"
       >
-        <PlusIcon className="w-4 h-4" />
-        Project aanmaken
+        {savingProject ? (
+          <>
+            <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin shrink-0" />
+            Project opslaan & emails versturen...
+          </>
+        ) : (
+          <>
+            <PlusIcon className="w-4 h-4" />
+            Project aanmaken
+          </>
+        )}
       </button>
 
       {(!step1Done || !step2Done || !step3Done || !step4Done) && (
