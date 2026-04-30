@@ -313,6 +313,8 @@ export default function StatusPage() {
   );
   const progressPct = totalM2 > 0 ? Math.round((washedM2 / totalM2) * 100) : 0;
 
+  console.log("Progress:", progressPct);
+
   const washedFloorIds = new Set(finishedFloors.map((f: any) => f.id));
   const floorsDone = finishedFloors.length;
   const floorsToDo =
@@ -321,6 +323,7 @@ export default function StatusPage() {
 
   const statusCount = { goed: 0, matig: 0, slecht: 0 };
   for (const f of finishedFloors) {
+    console.log(progressPct);
     const s = (f.kamervloer_status ?? "").toLowerCase();
     if (s === "goed") statusCount.goed++;
     else if (s === "matig") statusCount.matig++;
@@ -523,9 +526,8 @@ export default function StatusPage() {
                   ))}
                 </div>
 
-                {/* Progress bar — slim separator row */}
                 <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-6 py-4 hidden md:flex">
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-4 w-full">
                     <p className="text-xs font-bold text-slate-500 shrink-0">
                       Voortgang m²
                     </p>
