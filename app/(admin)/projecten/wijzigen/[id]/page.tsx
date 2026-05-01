@@ -422,7 +422,6 @@ export default function ProjectWijzigenPage() {
     categorieReinig.every((c) => c.defaultMethodeId);
   const step5Done = projectBussen.length > 0;
 
-  // ── Load existing project data ──────────────────────────────────────
   useEffect(() => {
     async function loadProject() {
       if (!projectId) return;
@@ -462,7 +461,6 @@ export default function ProjectWijzigenPage() {
         });
       }
 
-      // Load existing vloer selections
       const { data: projectVloeren } = await supabase
         .from("project_vloeren")
         .select("kamervloer_id, reinigmethode_id")
@@ -474,7 +472,6 @@ export default function ProjectWijzigenPage() {
         }));
       }
 
-      // Load existing bussen + medewerkers
       const { data: projectBussenData } = await supabase
         .from("project_bussen")
         .select(
@@ -498,7 +495,6 @@ export default function ProjectWijzigenPage() {
     loadProject();
   }, [projectId]);
 
-  // ── Load bussen + medewerkers ───────────────────────────────────────
   useEffect(() => {
     async function load() {
       const [{ data: bussen }, { data: medewerkers }] = await Promise.all([
@@ -537,13 +533,13 @@ export default function ProjectWijzigenPage() {
       ),
     );
 
-  // ── Load categories ─────────────────────────────────────────────────
   useEffect(() => {
     async function loadCategories() {
       if (alleGeselecteerdeVloerIds.length === 0) {
         setCategorieReinig([]);
         return;
       }
+
       setLoadingCat(true);
 
       const [{ data: methodes }, { data: vloerData }] = await Promise.all([
@@ -562,14 +558,27 @@ export default function ProjectWijzigenPage() {
         return;
       }
 
-      // Load existing reinigmethode overrides for this project
       const { data: bestaandeVloeren } = await supabase
         .from("project_vloeren")
         .select("kamervloer_id, reinigmethode_id")
         .eq("project_id", projectId);
+
+      console.log("projectId:", projectId);
+      console.log("bestaandeVloeren:", bestaandeVloeren);
+
       const overrideMap: Record<string, string> = {};
       for (const v of bestaandeVloeren ?? [])
         overrideMap[v.kamervloer_id] = v.reinigmethode_id ?? "";
+
+      const catMethodeMap: Record<string, string> = {};
+      for (const v of bestaandeVloeren ?? []) {
+        const vloer = vloerData.find((vd) => vd.id === v.kamervloer_id);
+        if (vloer) {
+          const cat = (vloer.vloer_types as any)?.catogorie ?? "Overig";
+          if (!catMethodeMap[cat])
+            catMethodeMap[cat] = v.reinigmethode_id ?? "";
+        }
+      }
 
       const catMap: Record<
         string,
@@ -588,9 +597,7 @@ export default function ProjectWijzigenPage() {
             standaardMethodeId: standaard,
             totalM2: 0,
           };
-        const existing = categorieReinig
-          .find((c) => c.categorie === cat)
-          ?.vloeren.find((vl) => vl.id === v.id);
+
         catMap[cat].vloeren.push({
           id: v.id,
           kamerNaam: kamer?.naam ?? "—",
@@ -598,24 +605,38 @@ export default function ProjectWijzigenPage() {
           bouwdeelNaam: bouwdeel?.naam ?? "—",
           vloertypeNaam: vt?.naam ?? "Onbekend",
           m2: v.vierkante_meter ?? 0,
-          overrideMethodeId:
-            existing?.overrideMethodeId ?? overrideMap[v.id] ?? "",
+          overrideMethodeId: overrideMap[v.id] ?? "",
         });
         catMap[cat].totalM2 += v.vierkante_meter ?? 0;
       }
 
-      setCategorieReinig((prev) =>
+      // After building catMap, detect the real default per category
+      setCategorieReinig(
         Object.entries(catMap).map(([categorie, val]) => {
-          const prevCat = prev.find((c) => c.categorie === categorie);
+          // Find the most common reinigmethode in this category = the default
+          const methodeCount: Record<string, number> = {};
+          for (const v of val.vloeren) {
+            const m = overrideMap[v.id] ?? "";
+            if (m) methodeCount[m] = (methodeCount[m] ?? 0) + 1;
+          }
+          const defaultMethodeId =
+            Object.entries(methodeCount).sort((a, b) => b[1] - a[1])[0]?.[0] ??
+            val.standaardMethodeId;
+
           return {
             categorie,
-            defaultMethodeId:
-              prevCat?.defaultMethodeId ?? val.standaardMethodeId,
+            defaultMethodeId,
             totalM2: val.totalM2,
-            vloeren: val.vloeren,
-            expanded: prevCat?.expanded ?? false,
-            expandedBouwdelen: prevCat?.expandedBouwdelen ?? {},
-            expandedVerdiepingen: prevCat?.expandedVerdiepingen ?? {},
+            vloeren: val.vloeren.map((v) => ({
+              ...v,
+              overrideMethodeId:
+                overrideMap[v.id] && overrideMap[v.id] !== defaultMethodeId
+                  ? overrideMap[v.id]
+                  : "",
+            })),
+            expanded: false,
+            expandedBouwdelen: {},
+            expandedVerdiepingen: {},
           };
         }),
       );
