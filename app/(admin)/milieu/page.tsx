@@ -129,8 +129,6 @@ export default function MilieuPage() {
         });
       });
 
-      const kgsaved = Number(max - total);
-      setco2Tonsaved(kgsaved);
       const tonssaved = Number(((max - total) / 1000).toFixed(2));
       setco2Tonsaved(tonssaved);
 
