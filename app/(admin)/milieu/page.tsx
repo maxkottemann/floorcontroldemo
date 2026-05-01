@@ -165,7 +165,7 @@ export default function MilieuPage() {
           afvalwater_old: d.afvalwater_old,
           chemievebruik_old: d.chemieverbruik_old,
           stroom_old: d.stroom_old,
-          vierkante_meter: d.vierkante_meter,
+          vierkante_meter: d.totaal_m2,
         })),
       );
       setLoading(false);

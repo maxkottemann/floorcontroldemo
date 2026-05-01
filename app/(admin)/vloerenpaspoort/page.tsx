@@ -442,9 +442,7 @@ function VloerTable({
             onChange={(e) => setSortBy(e.target.value as any)}
             className="text-sm text-slate-600 bg-slate-50 border border-slate-100 rounded-lg px-3 py-1.5 outline-none cursor-pointer"
           >
-            <option value="naam">Naam</option>
             <option value="status">Status</option>
-            <option value="laatste_onderhoud">Wasbeurt</option>
             <option value="gebouw">Gebouw</option>
             <option value="verdieping">Verdieping</option>
           </select>
@@ -703,7 +701,8 @@ export default function VloerenPaspoortPage() {
         .in(
           "verdieping_id",
           verdiepingen.map((v) => v.id),
-        );
+        )
+        .order("naam", { ascending: true });
       if (!kamers?.length) {
         setLoading(false);
         return;
