@@ -214,7 +214,7 @@ export default function DashboardPage() {
           `id, naam, beschrijving, project_vloeren(kamer_vloeren(vierkante_meter)), gewassen_vloeren(vierkante_meter), project_bussen(bussen(id, naam, kenteken, type))`,
         )
         .eq("status", "bezig")
-        .limit(5);
+        .limit(2);
 
       if (error || !data) {
         setActiveProjecten([]);
@@ -568,6 +568,12 @@ export default function DashboardPage() {
             </Card>
 
             <Card className="col-span-3 md:col-span-2">
+              <div className="mb-6">
+                <p className="text-lg font-bold">Snelle acties</p>
+                <p className="text-sm text-slate-500">
+                  Klik hieronder om snel acties uit te voeren
+                </p>
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 {[
                   {
