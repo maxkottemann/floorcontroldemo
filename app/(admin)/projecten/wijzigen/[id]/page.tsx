@@ -610,10 +610,8 @@ export default function ProjectWijzigenPage() {
         catMap[cat].totalM2 += v.vierkante_meter ?? 0;
       }
 
-      // After building catMap, detect the real default per category
       setCategorieReinig(
         Object.entries(catMap).map(([categorie, val]) => {
-          // Find the most common reinigmethode in this category = the default
           const methodeCount: Record<string, number> = {};
           for (const v of val.vloeren) {
             const m = overrideMap[v.id] ?? "";
