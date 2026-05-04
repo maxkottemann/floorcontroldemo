@@ -130,8 +130,6 @@ export default function MilieuPage() {
         });
       });
 
-      const kgsaved = Number(max - total);
-      setco2Tonsaved(kgsaved);
       const tonssaved = Number(((max - total) / 1000).toFixed(2));
       setco2Tonsaved(tonssaved);
 
@@ -166,7 +164,7 @@ export default function MilieuPage() {
           afvalwater_old: d.afvalwater_old,
           chemievebruik_old: d.chemieverbruik_old,
           stroom_old: d.stroom_old,
-          vierkante_meter: d.vierkante_meter,
+          vierkante_meter: d.totaal_m2,
         })),
       );
       setLoading(false);
@@ -215,13 +213,10 @@ export default function MilieuPage() {
     (s, r) => s + safenumber(r.stroom_old) * safenumber(r.vierkante_meter),
     0,
   );
-
   const chemieBesparing = totalChemieOld - totalChemie;
   const waterBesparing = totalWaterOld - totalWater;
   const afvalBesparing = totalAfvalOld - totalAfval;
   const stroomBesparing = totalStroomOld - totalStroom;
-
-  console.log("WATER BESPRAING:", waterBesparing);
 
   const waterSaving = calcPercentageSave(totalWaterOld, totalWater);
   const afvalSaving = calcPercentageSave(totalAfvalOld, totalAfval);
@@ -393,8 +388,6 @@ export default function MilieuPage() {
                   const stroom =
                     safenumber(rm.stroomverbruik) *
                     safenumber(rm.vierkante_meter);
-
-                  console.log("TOTAL WATGET:", water);
 
                   const waterOld = rm.waterverbruik_old
                     ? rm.waterverbruik_old * safenumber(rm.vierkante_meter)

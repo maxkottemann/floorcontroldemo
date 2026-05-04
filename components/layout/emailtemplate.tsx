@@ -79,7 +79,7 @@ export const ProjectAangemaaktEmail = ({
         }}
       >
         <img
-          src="https://floor-control.vercel.app/duofortlogo.png"
+          src="https://rso-floorcontrol.nl/duofortlogo.png"
           alt="Duofort"
           height="40"
           style={{ display: "block", marginBottom: "24px" }}
