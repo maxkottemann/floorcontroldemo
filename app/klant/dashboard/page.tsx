@@ -297,7 +297,7 @@ export default function DashboardPage() {
                 <p className="text-3xl font-bold text-p mb-2">{planningPct}%</p>
               )}
               <p className="text-slate-400 text-xs">
-                Onderhoudsjaar {wasJaarLabel} · {data?.totaalGepland ?? "—"}/
+                {data?.totaalGepland ?? "—"}/
                 {data?.totaalLocaties ?? "—"} locaties
               </p>
               <div className="mt-3 h-1.5 rounded-full bg-slate-100 overflow-hidden">
