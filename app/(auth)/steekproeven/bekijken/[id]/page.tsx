@@ -149,12 +149,18 @@ export default function SteekproefBekijkenPage() {
         return;
       }
 
-      const { data: vloerData } = await supabase
+      const { data: vloerData, error: vloerDataError} = await supabase
         .from("steekproef_vloeren")
         .select(
           "id, kamervloer_id, goedgekeurd, opmerking, status, kamer_vloeren(vierkante_meter, vloer_types(naam), kamers(naam, verdiepingen(naam, bouwdeel(naam))))",
         )
         .eq("steekproef_id", id)
+
+      if(vloerDataError){
+showToast("Steekproef kon niet worden geladen", "error");
+        setLoading(false)
+        return
+      }
         
 
       setSteekproef({
