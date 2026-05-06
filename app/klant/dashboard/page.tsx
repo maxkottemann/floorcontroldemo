@@ -404,7 +404,7 @@ export default function DashboardPage() {
                           </p>
                           <p className="text-xs text-slate-400">
                             {p.totaal} locaties · {p.gepland - p.afgerond}{" "}
-                            gepland · {p.afgerond} afgerond
+                            projecten · {p.afgerond} afgerond
                           </p>
                         </div>
                         <span className="text-sm font-bold text-p">

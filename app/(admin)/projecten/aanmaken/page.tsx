@@ -403,7 +403,6 @@ export default function ProjectenAanmakenPage() {
       .eq("id", linkedAanvraagId);
   }
 
-  // ── Resolve all selected vloer IDs including children ──────────────
   const alleGeselecteerdeVloerIds = useMemo(
     () => [
       ...new Set([
@@ -499,7 +498,6 @@ export default function ProjectenAanmakenPage() {
       ),
     );
 
-  // ── Load categories ─────────────────────────────────────────────────
   useEffect(() => {
     async function loadCategories() {
       if (alleGeselecteerdeVloerIds.length === 0) {
@@ -777,7 +775,6 @@ export default function ProjectenAanmakenPage() {
       ),
     );
 
-  // ── Submit ──────────────────────────────────────────────────────────
   function dagenTotStart(startDatum: string): number {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -796,6 +793,11 @@ export default function ProjectenAanmakenPage() {
     }
     setSavingProject(true);
 
+    const isFullBuilding =
+      alleGeselecteerdeVloerIds.length === alleKamersvloeren.length;
+
+    console.log(isFullBuilding);
+
     try {
       const { data: project, error: projectError } = await supabase
         .from("projecten")
@@ -806,11 +808,13 @@ export default function ProjectenAanmakenPage() {
           opmerkingen: opmerking,
           start_datum: startDatum || null,
           eind_datum: eindDatum || null,
+          full_building: isFullBuilding,
         })
         .select("id,start_datum")
         .single();
       if (projectError || !project) {
         showToast("Project kon niet worden aangemaakt", "error");
+        console.log(projectError);
         return;
       }
 
@@ -870,6 +874,18 @@ export default function ProjectenAanmakenPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ projectId: project.id }),
         });
+
+        const { error: uppdateError } = await supabase
+          .from("projecten")
+          .update({
+            reminder_verzonden: true,
+          })
+          .eq("id", project.id);
+
+        if (uppdateError) {
+          showToast("Kon reminder niet versturen", "error");
+          return;
+        }
       }
       await handleLinkAanvraag(projectnaam);
       setSavingProject(false);

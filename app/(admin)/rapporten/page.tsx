@@ -42,7 +42,7 @@ export default function RapportenPage() {
           "id, naam, locaties!projecten_locatie_id_fkey(naam, plaats), aangemaakt_op, start_datum, eind_datum",
         )
         .eq("status", "afgerond")
-        .order("aangemaakt_op", { ascending: false })
+        .order("eind_datum", { ascending: false })
         .limit(20);
 
       if (error || !data) {
@@ -180,7 +180,7 @@ export default function RapportenPage() {
                           </div>
 
                           <p className="text-sm text-slate-400">
-                            {formatDate(p.aangemaakt_op)}
+                            {formatDate(p.eind_datum)}
                           </p>
 
                           <ChevronRightIcon
