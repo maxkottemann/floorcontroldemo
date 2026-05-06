@@ -155,7 +155,7 @@ export default function SteekproefBekijkenPage() {
           "id, kamervloer_id, goedgekeurd, opmerking, status, kamer_vloeren(vierkante_meter, vloer_types(naam), kamers(naam, verdiepingen(naam, bouwdeel(naam))))",
         )
         .eq("steekproef_id", id)
-        .order("aangemaakt_op", { ascending: true });
+        
 
       setSteekproef({
         id: data.id,
