@@ -277,22 +277,6 @@ export default function VloerPaspoortBekijkenPage() {
     getAllVloertypes();
   }, []);
 
-  async function handleUpdate() {
-    const { error } = await supabase
-      .from("kamervloeren_id")
-      .update({
-        vierkante_meter: updatedM2,
-        status: updatedStatus,
-        vloertype_id: updatedVloertypeId,
-      })
-      .eq("id", id);
-
-    if (error) {
-      showToast("Kon vloergegevens niet wijzigen", "error");
-      return;
-    }
-  }
-
   const lastWasbeurt = wasbeurten[0];
   const opmerkingen = alleOpmerkingen;
 

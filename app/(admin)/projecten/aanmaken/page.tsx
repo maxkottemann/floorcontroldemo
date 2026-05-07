@@ -7,7 +7,7 @@ import { useToast } from "@/components/hooks/usetoasts";
 import Inputfield from "@/components/layout/inputfield";
 import Datepicker from "@/components/layout/datepicker";
 import { useEffect, useRef, useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Locatie } from "@/types/locatie";
 import { supabase } from "@/lib/supabase";
 import { bouwdeel } from "@/types/bouwdeel";
@@ -31,6 +31,7 @@ import {
   SparklesIcon,
   ChevronDownIcon,
 } from "@heroicons/react/24/outline";
+import { stat } from "fs";
 
 interface SelectedState {
   bouwdeelIds: string[];
@@ -392,6 +393,11 @@ export default function ProjectenAanmakenPage() {
 
   const router = useRouter();
 
+  const searchParams = useSearchParams();
+  const aanvraagId = searchParams.get("aanvraag_id");
+
+  const [preloadedVloerIds, setPreloadedVloerIds] = useState<string[]>([]);
+
   async function handleLinkAanvraag(projectNaam: string) {
     if (!linkedAanvraagId) return;
     await supabase
@@ -459,7 +465,6 @@ export default function ProjectenAanmakenPage() {
     getOpenAanvragen();
   }, [selectedLocatie]);
 
-  // ── Load bussen + medewerkers ───────────────────────────────────────
   useEffect(() => {
     async function load() {
       const [{ data: bussen }, { data: medewerkers }] = await Promise.all([
@@ -579,7 +584,6 @@ export default function ProjectenAanmakenPage() {
     loadCategories();
   }, [alleGeselecteerdeVloerIds]);
 
-  // ── Load locatie data ───────────────────────────────────────────────
   useEffect(() => {
     async function loadLocatieData() {
       if (!selectedLocatie) return;
@@ -664,11 +668,15 @@ export default function ProjectenAanmakenPage() {
         vloeren.map((v) => ({
           id: v.id,
           kamer_id: v.kamer_id,
-          vloertype_naam: (v.vloer_types as any)?.[0]?.naam,
+          vloertype_naam: (v.vloer_types as any)?.naam,
           vierkante_meter: v.vierkante_meter,
           status: v.status,
         })),
       );
+      if (preloadedVloerIds.length > 0) {
+        setSelected((prev) => ({ ...prev, vloerIds: preloadedVloerIds }));
+        setPreloadedVloerIds([]);
+      }
     }
     loadLocatieData();
   }, [selectedLocatie]);
@@ -702,8 +710,36 @@ export default function ProjectenAanmakenPage() {
     getAllLocaties();
   }, []);
 
+  useEffect(() => {
+    async function loadFromAanvraag() {
+      if (!aanvraagId) return;
+      const { data } = await supabase
+        .from("onderhouds_aanvragen")
+        .select(
+          `locaties(id, naam, plaats), beschrijving, onderhouds_aanvragen_vloeren(kamervloer_id)`,
+        )
+        .eq("id", aanvraagId)
+        .single();
+
+      if (!data) return;
+
+      const locatie = data.locaties as any;
+      setSelectedLocatie({
+        id: locatie.id,
+        naam: locatie.naam,
+        plaats: locatie.plaats,
+      });
+
+      const vloerIds = (data.onderhouds_aanvragen_vloeren as any[]).map(
+        (v) => v.kamervloer_id,
+      );
+      setPreloadedVloerIds(vloerIds);
+    }
+    loadFromAanvraag();
+  }, [aanvraagId]);
+
   const filteredLocatie = alleLocaties.filter((l) =>
-    l.naam.toLowerCase().includes(locatieZoekterm.toLowerCase()),
+    l.naam!.toLowerCase().includes(locatieZoekterm.toLowerCase()),
   );
   const beschikbareBussen = alleBussen.filter(
     (b) => !projectBussen.find((pb) => pb.bus.id === b.id),
@@ -714,7 +750,6 @@ export default function ProjectenAanmakenPage() {
       .includes(busZoek.toLowerCase()),
   );
 
-  // ── Category helpers ────────────────────────────────────────────────
   const setDefaultMethode = (catIdx: number, methodeId: string) =>
     setCategorieReinig((prev) =>
       prev.map((c, i) =>
@@ -809,6 +844,7 @@ export default function ProjectenAanmakenPage() {
           start_datum: startDatum || null,
           eind_datum: eindDatum || null,
           full_building: isFullBuilding,
+          aanvraag_id: aanvraagId ?? null,
         })
         .select("id,start_datum")
         .single();
@@ -887,7 +923,21 @@ export default function ProjectenAanmakenPage() {
           return;
         }
       }
-      await handleLinkAanvraag(projectnaam);
+
+      const { error: aanvraagError } = await supabase
+        .from("onderhouds_aanvragen")
+        .update({
+          status: "ingepland",
+        })
+        .eq("id", aanvraagId);
+
+      if (aanvraagError) {
+        showToast(
+          "Kon onderhoudsaanvraag status niet bijwerken, het project is wel ingepland",
+          "error",
+        );
+        return;
+      }
       setSavingProject(false);
       showToast("Project aangemaakt", "success");
       setTimeout(() => router.back(), 1000);
@@ -896,7 +946,6 @@ export default function ProjectenAanmakenPage() {
     }
   }
 
-  // ── Steps JSX ───────────────────────────────────────────────────────
   const steps = (
     <div className="space-y-4 md:space-y-5">
       <SectionCard

@@ -18,8 +18,8 @@ import {
   Square3Stack3DIcon,
   SwatchIcon,
   ChevronRightIcon,
+  ChevronDownIcon,
   XCircleIcon,
-  TrashIcon,
   EyeSlashIcon,
 } from "@heroicons/react/24/outline";
 
@@ -57,6 +57,7 @@ function formatDate(d?: string | null) {
     year: "numeric",
   });
 }
+
 function formatDateTime(d?: string | null) {
   if (!d) return "—";
   return new Date(d).toLocaleDateString("nl-NL", {
@@ -123,6 +124,159 @@ function ProgressBar({ pct, critical }: { pct: number; critical: boolean }) {
   );
 }
 
+function CollapsibleTableGroup({
+  title,
+  count,
+  children,
+}: {
+  title: string;
+  count: number;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <tr
+        className="bg-slate-50/80 cursor-pointer hover:bg-slate-100/60 transition-colors"
+        onClick={() => setOpen((p) => !p)}
+      >
+        <td colSpan={4} className="px-5 py-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Square3Stack3DIcon className="w-3.5 h-3.5 text-slate-400" />
+              <span className="text-xs font-bold text-slate-600">{title}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-bold text-slate-400">
+                {count} vloeren
+              </span>
+              {open ? (
+                <ChevronDownIcon className="w-3.5 h-3.5 text-slate-400" />
+              ) : (
+                <ChevronRightIcon className="w-3.5 h-3.5 text-slate-400" />
+              )}
+            </div>
+          </div>
+        </td>
+      </tr>
+      {open && children}
+    </>
+  );
+}
+
+function CollapsibleTableSubGroup({
+  title,
+  count,
+  children,
+}: {
+  title: string;
+  count: number;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <tr
+        className="cursor-pointer hover:bg-slate-50/60 transition-colors"
+        onClick={() => setOpen((p) => !p)}
+      >
+        <td
+          colSpan={4}
+          className="px-10 py-1.5 bg-white border-t border-slate-50"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Square3Stack3DIcon className="w-3 h-3 text-slate-300" />
+              <span className="text-[11px] font-semibold text-slate-400">
+                {title}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] text-slate-300">{count}</span>
+              {open ? (
+                <ChevronDownIcon className="w-3 h-3 text-slate-300" />
+              ) : (
+                <ChevronRightIcon className="w-3 h-3 text-slate-300" />
+              )}
+            </div>
+          </div>
+        </td>
+      </tr>
+      {open && children}
+    </>
+  );
+}
+
+function CollapsibleMobileGroup({
+  title,
+  count,
+  children,
+}: {
+  title: string;
+  count: number;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div>
+      <div
+        className="flex items-center justify-between gap-2 px-4 py-2.5 bg-slate-50/80 cursor-pointer hover:bg-slate-100/60 transition-colors"
+        onClick={() => setOpen((p) => !p)}
+      >
+        <div className="flex items-center gap-2">
+          <Square3Stack3DIcon className="w-3.5 h-3.5 text-slate-400" />
+          <span className="text-xs font-bold text-slate-600">{title}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-bold text-slate-400">{count}</span>
+          {open ? (
+            <ChevronDownIcon className="w-3.5 h-3.5 text-slate-400" />
+          ) : (
+            <ChevronRightIcon className="w-3.5 h-3.5 text-slate-400" />
+          )}
+        </div>
+      </div>
+      {open && children}
+    </div>
+  );
+}
+
+function CollapsibleMobileSubGroup({
+  title,
+  count,
+  children,
+}: {
+  title: string;
+  count: number;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div>
+      <div
+        className="flex items-center justify-between gap-2 px-8 py-2 bg-white cursor-pointer hover:bg-slate-50/60 transition-colors border-t border-slate-50"
+        onClick={() => setOpen((p) => !p)}
+      >
+        <div className="flex items-center gap-2">
+          <Square3Stack3DIcon className="w-3 h-3 text-slate-300" />
+          <span className="text-[11px] font-semibold text-slate-400">
+            {title}
+          </span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="text-[10px] text-slate-300">{count}</span>
+          {open ? (
+            <ChevronDownIcon className="w-3 h-3 text-slate-300" />
+          ) : (
+            <ChevronRightIcon className="w-3 h-3 text-slate-300" />
+          )}
+        </div>
+      </div>
+      {open && children}
+    </div>
+  );
+}
+
 export default function SteekproefBekijkenPage() {
   const { toast, showToast, hideToast } = useToast();
   const { id } = useParams();
@@ -136,18 +290,16 @@ export default function SteekproefBekijkenPage() {
     async function getSteekproef() {
       if (!id) return;
       setLoading(true);
-
       const { data, error } = await supabase
         .from("steekproeven")
         .select(
-          "id, project_id, status, aangemaakt_op, afgerond_op, afgerond_door,profielen(naam) ,projecten(naam, locaties(naam, plaats))",
+          "id, project_id, status, aangemaakt_op, afgerond_op, afgerond_door, profielen(naam), projecten(naam, locaties(naam, plaats))",
         )
         .eq("id", id)
         .single();
 
       if (error || !data) {
         showToast("Steekproef kon niet worden geladen", "error");
-        console.log(error);
         setLoading(false);
         return;
       }
@@ -161,7 +313,6 @@ export default function SteekproefBekijkenPage() {
 
       if (vloerDataError) {
         showToast("Steekproef kon niet worden geladen", "error");
-        console.log(vloerDataError);
         setLoading(false);
         return;
       }
@@ -191,7 +342,7 @@ export default function SteekproefBekijkenPage() {
             vierkante_meter: kv?.vierkante_meter ?? null,
             status: v.status ?? null,
             goedgekeurd: v.goedgekeurd ?? null,
-            opmerking: v.opmerking ?? null,
+            opmerking: v.opmerkingen ?? null,
           };
         }),
       });
@@ -203,19 +354,14 @@ export default function SteekproefBekijkenPage() {
   async function dontShow() {
     const { error } = await supabase
       .from("steekproeven")
-      .update({
-        weergeven: false,
-      })
+      .update({ weergeven: false })
       .eq("id", steekproef?.id);
     if (error) {
       showToast("Er ging iets mis, probeer het opnieuw", "error");
-      console.log(error);
       return;
     }
     showToast("Steekproef word niet meer weergegeven", "success");
-    setTimeout(() => {
-      router.push("/steekproeven");
-    }, 1000);
+    setTimeout(() => router.push("/steekproeven"), 1000);
   }
 
   if (loading)
@@ -251,11 +397,9 @@ export default function SteekproefBekijkenPage() {
     (v) => v.goedgekeurd === false,
   ).length;
   const metOpmerking = steekproef.vloeren.filter((v) => v.opmerking).length;
-
   const pctGedaan = totaal > 0 ? (gedaan / totaal) * 100 : 0;
   const pctGoedgekeurd = gedaan > 0 ? (goedgekeurd / gedaan) * 100 : 0;
   const isCritical = gedaan > 0 && pctGoedgekeurd < 95;
-  const isAfgerond = steekproef.status === "afgerond";
 
   const grouped: Record<string, Record<string, SteekproefVloer[]>> = {};
   for (const v of steekproef.vloeren) {
@@ -276,12 +420,51 @@ export default function SteekproefBekijkenPage() {
         <Toast message={toast.message} type={toast.type} onClose={hideToast} />
       )}
 
+      {showConfirm && (
+        <div
+          className="fixed inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm z-50"
+          onClick={() => setShowConfirm(false)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-xl border border-slate-100 w-full max-w-sm mx-4 p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center mb-4">
+              <EyeSlashIcon className="w-5 h-5 text-slate-500" />
+            </div>
+            <h2 className="text-base font-bold text-slate-800 mb-1">
+              Steekproef verbergen
+            </h2>
+            <p className="text-sm text-slate-500 leading-relaxed mb-6">
+              Deze steekproef wordt verborgen uit je overzicht. De gegevens
+              blijven bewaard en zijn niet verwijderd.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowConfirm(false)}
+                className="flex-1 px-4 py-2.5 text-sm font-semibold text-slate-500 bg-slate-100 hover:bg-slate-200 rounded-xl cursor-pointer transition-colors"
+              >
+                Annuleren
+              </button>
+              <button
+                onClick={() => {
+                  setShowConfirm(false);
+                  dontShow();
+                }}
+                className="flex-1 px-4 py-2.5 text-sm font-semibold text-slate-700 bg-slate-200 hover:bg-slate-300 rounded-xl transition-colors cursor-pointer"
+              >
+                Verbergen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col flex-1 h-screen">
         <Topbar
           title="Steekproef"
           onMenuToggle={() => setSidebarOpen((p) => !p)}
         />
-
         <main className="flex-1 overflow-auto p-3 md:p-8">
           <div className="space-y-4 md:space-y-6">
             {/* Header */}
@@ -313,7 +496,6 @@ export default function SteekproefBekijkenPage() {
                     )}
                   </div>
                 </div>
-
                 <div className="flex items-center gap-2 shrink-0">
                   <button
                     onClick={() => setShowConfirm(true)}
@@ -326,6 +508,7 @@ export default function SteekproefBekijkenPage() {
                 </div>
               </div>
             </div>
+
             {/* Critical banner */}
             {isCritical && (
               <div className="flex items-start gap-3 px-4 py-4 bg-red-50 border border-red-100 rounded-2xl">
@@ -345,6 +528,7 @@ export default function SteekproefBekijkenPage() {
               </div>
             )}
 
+            {/* Stat cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {[
                 {
@@ -409,12 +593,11 @@ export default function SteekproefBekijkenPage() {
               ))}
             </div>
 
-            {/* Progress bars */}
+            {/* Progress */}
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 md:p-5 space-y-4">
               <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
                 Voortgang
               </p>
-
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-sm font-semibold text-slate-700">
@@ -432,7 +615,6 @@ export default function SteekproefBekijkenPage() {
                   {pctGedaan.toFixed(0)}% van alle vloeren gecontroleerd
                 </p>
               </div>
-
               {gedaan > 0 && (
                 <div>
                   <div className="flex items-center justify-between mb-2">
@@ -442,14 +624,13 @@ export default function SteekproefBekijkenPage() {
                       </p>
                       {isCritical && (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-50 border border-red-100 text-[10px] font-bold text-red-600">
-                          <ExclamationTriangleIcon className="w-3 h-3" />
+                          <ExclamationTriangleIcon className="w-3 h-3" />{" "}
                           Kritisch
                         </span>
                       )}
                       {!isCritical && pctGoedgekeurd >= 95 && (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-100 text-[10px] font-bold text-emerald-600">
-                          <CheckCircleIcon className="w-3 h-3" />
-                          Norm gehaald
+                          <CheckCircleIcon className="w-3 h-3" /> Norm gehaald
                         </span>
                       )}
                     </div>
@@ -463,20 +644,18 @@ export default function SteekproefBekijkenPage() {
                     </p>
                   </div>
                   <ProgressBar pct={pctGoedgekeurd} critical={isCritical} />
-                  <div className="flex items-center justify-between mt-1">
-                    <p
-                      className={`text-xs ${isCritical ? "text-red-500 font-semibold" : "text-slate-400"}`}
-                    >
-                      {isCritical
-                        ? `${(95 - pctGoedgekeurd).toFixed(1)}% onder de vereiste norm van 95%`
-                        : `${(pctGoedgekeurd - 95).toFixed(1)}% boven de norm`}
-                    </p>
-                  </div>
+                  <p
+                    className={`text-xs mt-1 ${isCritical ? "text-red-500 font-semibold" : "text-slate-400"}`}
+                  >
+                    {isCritical
+                      ? `${(95 - pctGoedgekeurd).toFixed(1)}% onder de vereiste norm van 95%`
+                      : `${(pctGoedgekeurd - 95).toFixed(1)}% boven de norm`}
+                  </p>
                 </div>
               )}
             </div>
 
-            {/* Floor detail table */}
+            {/* Floor detail */}
             {totaal > 0 && (
               <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                 <div className="flex items-center gap-3 px-4 md:px-5 py-4 border-b border-slate-50">
@@ -515,90 +694,88 @@ export default function SteekproefBekijkenPage() {
                     <tbody>
                       {Object.entries(grouped).map(
                         ([bouwdeel, verdiepingen]) => (
-                          <>
-                            <tr
-                              key={`bd-${bouwdeel}`}
-                              className="bg-slate-50/80"
-                            >
-                              <td colSpan={4} className="px-5 py-2">
-                                <div className="flex items-center gap-2">
-                                  <Square3Stack3DIcon className="w-3.5 h-3.5 text-slate-400" />
-                                  <span className="text-xs font-bold text-slate-600">
-                                    {bouwdeel}
-                                  </span>
-                                </div>
-                              </td>
-                            </tr>
+                          <CollapsibleTableGroup
+                            key={bouwdeel}
+                            title={bouwdeel}
+                            count={Object.values(verdiepingen).flat().length}
+                          >
                             {Object.entries(verdiepingen).map(
-                              ([verdieping, vloeren]) =>
-                                vloeren.map((v) => (
-                                  <tr
-                                    key={v.id}
-                                    className={`border-t border-slate-50 ${v.goedgekeurd === false ? "bg-red-50/30" : v.goedgekeurd === true ? "bg-emerald-50/20" : ""}`}
-                                  >
-                                    <td className="px-5 py-3.5">
-                                      <div className="flex items-center gap-2.5">
-                                        <div className="w-7 h-7 rounded-lg bg-p/10 flex items-center justify-center shrink-0">
-                                          <SwatchIcon className="w-3.5 h-3.5 text-p" />
-                                        </div>
-                                        <div>
-                                          <p className="text-sm font-semibold text-slate-800">
-                                            {v.vloertype_naam}
-                                          </p>
-                                          {v.vierkante_meter && (
-                                            <p className="text-xs text-slate-400">
-                                              {v.vierkante_meter}m²
+                              ([verdieping, vloeren]) => (
+                                <CollapsibleTableSubGroup
+                                  key={verdieping}
+                                  title={verdieping}
+                                  count={vloeren.length}
+                                >
+                                  {vloeren.map((v) => (
+                                    <tr
+                                      key={v.id}
+                                      className={`border-t border-slate-50 ${v.goedgekeurd === false ? "bg-red-50/30" : v.goedgekeurd === true ? "bg-emerald-50/20" : ""}`}
+                                    >
+                                      <td className="px-5 py-3.5">
+                                        <div className="flex items-center gap-2.5">
+                                          <div className="w-7 h-7 rounded-lg bg-p/10 flex items-center justify-center shrink-0">
+                                            <SwatchIcon className="w-3.5 h-3.5 text-p" />
+                                          </div>
+                                          <div>
+                                            <p className="text-sm font-semibold text-slate-800">
+                                              {v.vloertype_naam}
                                             </p>
-                                          )}
+                                            {v.vierkante_meter && (
+                                              <p className="text-xs text-slate-400">
+                                                {v.vierkante_meter}m²
+                                              </p>
+                                            )}
+                                          </div>
                                         </div>
-                                      </div>
-                                    </td>
-                                    <td className="px-5 py-3.5">
-                                      <div className="flex items-center gap-1.5">
-                                        <HomeModernIcon className="w-3 h-3 text-slate-300 shrink-0" />
-                                        <div>
-                                          <p className="text-xs font-medium text-slate-600">
-                                            {v.kamer_naam}
-                                          </p>
-                                          <p className="text-xs text-slate-400">
-                                            {verdieping}
-                                          </p>
+                                      </td>
+                                      <td className="px-5 py-3.5">
+                                        <div className="flex items-center gap-1.5">
+                                          <HomeModernIcon className="w-3 h-3 text-slate-300 shrink-0" />
+                                          <div>
+                                            <p className="text-xs font-medium text-slate-600">
+                                              {v.kamer_naam}
+                                            </p>
+                                            <p className="text-xs text-slate-400">
+                                              {v.verdieping_naam}
+                                            </p>
+                                          </div>
                                         </div>
-                                      </div>
-                                    </td>
-                                    <td className="px-5 py-3.5">
-                                      {v.goedgekeurd === null ? (
-                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-400 border border-slate-200">
-                                          <ClockIcon className="w-3 h-3" />{" "}
-                                          Wacht
-                                        </span>
-                                      ) : v.goedgekeurd ? (
-                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
-                                          <CheckCircleIcon className="w-3 h-3" />{" "}
-                                          OK
-                                        </span>
-                                      ) : (
-                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold bg-red-50 text-red-700 border border-red-100">
-                                          <XCircleIcon className="w-3 h-3" />{" "}
-                                          Afgekeurd
-                                        </span>
-                                      )}
-                                    </td>
-                                    <td className="px-5 py-3.5">
-                                      {v.opmerking ? (
-                                        <p className="text-xs text-slate-500 max-w-xs truncate">
-                                          {v.opmerking}
-                                        </p>
-                                      ) : (
-                                        <span className="text-xs text-slate-200">
-                                          —
-                                        </span>
-                                      )}
-                                    </td>
-                                  </tr>
-                                )),
+                                      </td>
+                                      <td className="px-5 py-3.5">
+                                        {v.goedgekeurd === null ? (
+                                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-400 border border-slate-200">
+                                            <ClockIcon className="w-3 h-3" />{" "}
+                                            Wacht
+                                          </span>
+                                        ) : v.goedgekeurd ? (
+                                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
+                                            <CheckCircleIcon className="w-3 h-3" />{" "}
+                                            OK
+                                          </span>
+                                        ) : (
+                                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold bg-red-50 text-red-700 border border-red-100">
+                                            <XCircleIcon className="w-3 h-3" />{" "}
+                                            Afgekeurd
+                                          </span>
+                                        )}
+                                      </td>
+                                      <td className="px-5 py-3.5">
+                                        {v.opmerking ? (
+                                          <p className="text-xs text-slate-500 max-w-xs truncate">
+                                            {v.opmerking}
+                                          </p>
+                                        ) : (
+                                          <span className="text-xs text-slate-200">
+                                            —
+                                          </span>
+                                        )}
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </CollapsibleTableSubGroup>
+                              ),
                             )}
-                          </>
+                          </CollapsibleTableGroup>
                         ),
                       )}
                     </tbody>
@@ -611,72 +788,77 @@ export default function SteekproefBekijkenPage() {
                   </div>
                 </div>
 
-                {/* Mobile cards */}
+                {/* Mobile */}
                 <div className="md:hidden divide-y divide-slate-50">
                   {Object.entries(grouped).map(([bouwdeel, verdiepingen]) => (
-                    <div key={bouwdeel}>
-                      <div className="flex items-center gap-2 px-4 py-2.5 bg-slate-50/80">
-                        <Square3Stack3DIcon className="w-3.5 h-3.5 text-slate-400" />
-                        <span className="text-xs font-bold text-slate-600">
-                          {bouwdeel}
-                        </span>
-                      </div>
+                    <CollapsibleMobileGroup
+                      key={bouwdeel}
+                      title={bouwdeel}
+                      count={Object.values(verdiepingen).flat().length}
+                    >
                       {Object.entries(verdiepingen).map(
-                        ([verdieping, vloeren]) =>
-                          vloeren.map((v) => (
-                            <div
-                              key={v.id}
-                              className={`px-4 py-3.5 ${v.goedgekeurd === false ? "bg-red-50/30" : v.goedgekeurd === true ? "bg-emerald-50/20" : ""}`}
-                            >
-                              <div className="flex items-start justify-between gap-3 mb-2">
-                                <div className="flex items-center gap-2.5 min-w-0">
-                                  <div className="w-7 h-7 rounded-lg bg-p/10 flex items-center justify-center shrink-0">
-                                    <SwatchIcon className="w-3.5 h-3.5 text-p" />
-                                  </div>
-                                  <div className="min-w-0">
-                                    <p className="text-sm font-semibold text-slate-800 truncate">
-                                      {v.vloertype_naam}
-                                    </p>
-                                    <div className="flex items-center gap-1 mt-0.5">
-                                      <HomeModernIcon className="w-3 h-3 text-slate-300" />
-                                      <p className="text-xs text-slate-400">
-                                        {v.kamer_naam} · {verdieping}
+                        ([verdieping, vloeren]) => (
+                          <CollapsibleMobileSubGroup
+                            key={verdieping}
+                            title={verdieping}
+                            count={vloeren.length}
+                          >
+                            {vloeren.map((v) => (
+                              <div
+                                key={v.id}
+                                className={`px-4 py-3.5 border-t border-slate-50 ${v.goedgekeurd === false ? "bg-red-50/30" : v.goedgekeurd === true ? "bg-emerald-50/20" : ""}`}
+                              >
+                                <div className="flex items-start justify-between gap-3 mb-2">
+                                  <div className="flex items-center gap-2.5 min-w-0">
+                                    <div className="w-7 h-7 rounded-lg bg-p/10 flex items-center justify-center shrink-0">
+                                      <SwatchIcon className="w-3.5 h-3.5 text-p" />
+                                    </div>
+                                    <div className="min-w-0">
+                                      <p className="text-sm font-semibold text-slate-800 truncate">
+                                        {v.vloertype_naam}
                                       </p>
-                                      {v.vierkante_meter && (
-                                        <span className="text-xs text-slate-300">
-                                          · {v.vierkante_meter}m²
-                                        </span>
-                                      )}
+                                      <div className="flex items-center gap-1 mt-0.5">
+                                        <HomeModernIcon className="w-3 h-3 text-slate-300" />
+                                        <p className="text-xs text-slate-400">
+                                          {v.kamer_naam} · {v.verdieping_naam}
+                                        </p>
+                                        {v.vierkante_meter && (
+                                          <span className="text-xs text-slate-300">
+                                            · {v.vierkante_meter}m²
+                                          </span>
+                                        )}
+                                      </div>
                                     </div>
                                   </div>
+                                  {v.goedgekeurd === null ? (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-400 border border-slate-200 shrink-0">
+                                      <ClockIcon className="w-3 h-3" /> Wacht
+                                    </span>
+                                  ) : v.goedgekeurd ? (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-100 shrink-0">
+                                      <CheckCircleIcon className="w-3 h-3" /> OK
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold bg-red-50 text-red-700 border border-red-100 shrink-0">
+                                      <XCircleIcon className="w-3 h-3" />{" "}
+                                      Afgekeurd
+                                    </span>
+                                  )}
                                 </div>
-                                {v.goedgekeurd === null ? (
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-400 border border-slate-200 shrink-0">
-                                    <ClockIcon className="w-3 h-3" /> Wacht
-                                  </span>
-                                ) : v.goedgekeurd ? (
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-100 shrink-0">
-                                    <CheckCircleIcon className="w-3 h-3" /> OK
-                                  </span>
-                                ) : (
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold bg-red-50 text-red-700 border border-red-100 shrink-0">
-                                    <XCircleIcon className="w-3 h-3" />{" "}
-                                    Afgekeurd
-                                  </span>
+                                {v.opmerking && (
+                                  <div className="flex items-start gap-2 mt-2 px-3 py-2 bg-amber-50 border border-amber-100 rounded-lg">
+                                    <ExclamationTriangleIcon className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
+                                    <p className="text-xs text-amber-700">
+                                      {v.opmerking}
+                                    </p>
+                                  </div>
                                 )}
                               </div>
-                              {v.opmerking && (
-                                <div className="flex items-start gap-2 mt-2 px-3 py-2 bg-amber-50 border border-amber-100 rounded-lg">
-                                  <ExclamationTriangleIcon className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
-                                  <p className="text-xs text-amber-700">
-                                    {v.opmerking}
-                                  </p>
-                                </div>
-                              )}
-                            </div>
-                          )),
+                            ))}
+                          </CollapsibleMobileSubGroup>
+                        ),
                       )}
-                    </div>
+                    </CollapsibleMobileGroup>
                   ))}
                   <div className="px-4 py-3 bg-slate-50/40">
                     <p className="text-xs text-slate-400 text-center">
@@ -688,6 +870,7 @@ export default function SteekproefBekijkenPage() {
               </div>
             )}
 
+            {/* Meta info */}
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
               <div className="divide-y divide-slate-50">
                 {[
@@ -728,48 +911,6 @@ export default function SteekproefBekijkenPage() {
                   </div>
                 ))}
               </div>
-            </div>
-            <div className="divide-y divide-slate-50"></div>
-            <div className="flex items-center justify-between px-4 md:px-5 py-3">
-              {showConfirm && (
-                <div
-                  className="fixed inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm z-50"
-                  onClick={() => setShowConfirm(false)}
-                >
-                  <div
-                    className="bg-white rounded-2xl shadow-xl border border-slate-100 w-full max-w-sm mx-4 p-6"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center mb-4">
-                      <EyeSlashIcon className="w-5 h-5 text-slate-500" />
-                    </div>
-                    <h2 className="text-base font-bold text-slate-800 mb-1">
-                      Steekproef verbergen
-                    </h2>
-                    <p className="text-sm text-slate-500 leading-relaxed mb-6">
-                      Deze steekproef wordt verborgen uit je overzicht. De
-                      gegevens blijven bewaard en zijn niet verwijderd.
-                    </p>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => setShowConfirm(false)}
-                        className="flex-1 px-4 py-2.5 text-sm font-semibold text-slate-500 bg-slate-100 hover:bg-slate-200 rounded-xl cursor-pointer transition-colors"
-                      >
-                        Annuleren
-                      </button>
-                      <button
-                        onClick={() => {
-                          setShowConfirm(false);
-                          dontShow();
-                        }}
-                        className="flex-1 px-4 py-2.5 text-sm font-semibold text-white bg-p hover:bg-ph rounded-xl transition-colors cursor-pointer"
-                      >
-                        Verbergen
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </main>

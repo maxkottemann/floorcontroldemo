@@ -11,11 +11,13 @@ import {
   DocumentArrowUpIcon,
   MagnifyingGlassIcon,
   ChartPieIcon,
+  WrenchIcon,
 } from "@heroicons/react/24/outline";
 import { BsLeaf, BsPassport, BsThermometer } from "react-icons/bs";
 import { FcCheckmark } from "react-icons/fc";
 import { GiCheckMark } from "react-icons/gi";
 import { MagnifyingGlassCircleIcon } from "@heroicons/react/24/solid";
+import { MdRequestQuote } from "react-icons/md";
 
 interface SidebarProps {
   className?: string;
@@ -86,8 +88,8 @@ export default function SidebarClient({
     },
     {
       href: "/klant/meldingen",
-      icon: <BellAlertIcon className="w-5 h-5" />,
-      label: "Meldingen",
+      icon: <WrenchIcon className="w-5 h-5" />,
+      label: "Onderhoud aanvragen",
     },
   ];
 

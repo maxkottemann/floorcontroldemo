@@ -246,13 +246,16 @@ export default function SteekproevenUitvoerenPage() {
           "id",
           gwIds.map((d) => d.kamervloer_id),
         );
-      if (!kv) {
+      const sorted = (kv ?? []).sort((a: any, b: any) =>
+        (a.kamers?.naam ?? "").localeCompare(b.kamers?.naam ?? ""),
+      );
+      if (!sorted) {
         setLoading(false);
         return;
       }
 
       setVloeren(
-        kv.map((km: any) => ({
+        sorted.map((km: any) => ({
           id: km.id,
           kamer_naam: km.kamers?.naam ?? "—",
           vloertype_naam: km.vloer_types?.naam ?? "—",
@@ -342,6 +345,18 @@ export default function SteekproevenUitvoerenPage() {
     if (!steekproefId) return;
     setSaving(true);
 
+    const user_id = (await supabase.auth.getUser()).data.user?.id;
+    let userid = "";
+    try {
+      const { data } = await supabase
+        .from("profielen")
+        .select("id")
+        .eq("gebruiker_id", user_id)
+        .single();
+
+      userid = data?.id;
+    } catch {}
+
     const { data, error: fetchError } = await supabase
       .from("steekproef_vloeren")
       .select("goedgekeurd")
@@ -363,6 +378,7 @@ export default function SteekproevenUitvoerenPage() {
         status: "afgerond",
         afgerond_op: new Date().toISOString(),
         goedgekeurd: approved,
+        afgerond_door: userid,
       })
       .eq("id", steekproefId);
 

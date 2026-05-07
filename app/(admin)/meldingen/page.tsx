@@ -4,20 +4,33 @@ import Topbar from "@/components/layout/topbar";
 import Sidebar from "@/components/layout/sidebar";
 import { useToast } from "@/components/hooks/usetoasts";
 import { useEffect, useState } from "react";
-import { melding } from "@/types/melding";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import {
-  BellAlertIcon,
-  ChevronRightIcon,
-  CheckCircleIcon,
-  MagnifyingGlassIcon,
-  ExclamationTriangleIcon,
   CalendarDaysIcon,
-  ClipboardDocumentListIcon,
+  ChevronRightIcon,
+  MagnifyingGlassIcon,
+  ClockIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  ArrowPathIcon,
+  MapPinIcon,
+  SwatchIcon,
 } from "@heroicons/react/24/outline";
 
-function formatDate(d?: string) {
+interface OnderhoudAanvraag {
+  id: string;
+  beschrijving: string;
+  status: string;
+  aangemaakt_op: string;
+  geplande_datum: string | null;
+  locatie_naam: string;
+  locatie_plaats: string | null;
+  aangevraagd_door_naam: string | null;
+  vloeren_count: number;
+}
+
+function formatDate(d?: string | null) {
   if (!d) return "—";
   return new Date(d).toLocaleDateString("nl-NL", {
     day: "numeric",
@@ -26,7 +39,7 @@ function formatDate(d?: string) {
   });
 }
 
-function formatTime(d?: string) {
+function formatTime(d?: string | null) {
   if (!d) return "—";
   return new Date(d).toLocaleTimeString("nl-NL", {
     hour: "2-digit",
@@ -34,97 +47,177 @@ function formatTime(d?: string) {
   });
 }
 
-export default function MeldingenPage() {
+const statusConfig: Record<
+  string,
+  {
+    label: string;
+    bg: string;
+    text: string;
+    border: string;
+    dot: string;
+    icon: React.ReactNode;
+  }
+> = {
+  ingediend: {
+    label: "Ingediend",
+    bg: "bg-blue-50",
+    text: "text-blue-700",
+    border: "border-blue-100",
+    dot: "bg-blue-400",
+    icon: <ClockIcon className="w-3.5 h-3.5 text-blue-500" />,
+  },
+  in_behandeling: {
+    label: "In behandeling",
+    bg: "bg-amber-50",
+    text: "text-amber-700",
+    border: "border-amber-100",
+    dot: "bg-amber-400 animate-pulse",
+    icon: <ArrowPathIcon className="w-3.5 h-3.5 text-amber-500" />,
+  },
+  ingepland: {
+    label: "Ingepland",
+    bg: "bg-p/10",
+    text: "text-p",
+    border: "border-p/20",
+    dot: "bg-p",
+    icon: <CalendarDaysIcon className="w-3.5 h-3.5 text-p" />,
+  },
+  afgerond: {
+    label: "Afgerond",
+    bg: "bg-emerald-50",
+    text: "text-emerald-700",
+    border: "border-emerald-100",
+    dot: "bg-emerald-400",
+    icon: <CheckCircleIcon className="w-3.5 h-3.5 text-emerald-500" />,
+  },
+  afgewezen: {
+    label: "Afgewezen",
+    bg: "bg-red-50",
+    text: "text-red-700",
+    border: "border-red-100",
+    dot: "bg-red-400",
+    icon: <XCircleIcon className="w-3.5 h-3.5 text-red-500" />,
+  },
+};
+
+function StatusBadge({ status }: { status: string }) {
+  const s = statusConfig[status] ?? {
+    label: status,
+    bg: "bg-slate-100",
+    text: "text-slate-500",
+    border: "border-slate-200",
+    dot: "bg-slate-400",
+    icon: null,
+  };
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[10px] font-bold border ${s.bg} ${s.text} ${s.border}`}
+    >
+      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${s.dot}`} />
+      {s.label}
+    </span>
+  );
+}
+
+const STATUS_TABS = [
+  { key: "actief", label: "Actief", statuses: ["ingediend", "in_behandeling"] },
+  { key: "ingepland", label: "Ingepland", statuses: ["ingepland"] },
+  { key: "afgerond", label: "Afgerond", statuses: ["afgerond", "afgewezen"] },
+  { key: "all", label: "Alle", statuses: [] },
+];
+
+export default function OnderhoudAanvragenAdminPage() {
   const { toast, showToast, hideToast } = useToast();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [tab, setTab] = useState<"open" | "all">("open");
-  const [notHandledMeldingen, setNotHandledMeldingen] = useState<melding[]>([]);
-  const [allMeldingen, setAllMeldingen] = useState<melding[]>([]);
-  const [zoekterm, setZoekterm] = useState("");
+  const [aanvragen, setAanvragen] = useState<OnderhoudAanvraag[]>([]);
   const [loading, setLoading] = useState(true);
-  const [openOnderhoud, setOpenOnderhoud] = useState(0);
-
-  function mapMelding(d: any): melding {
-    return {
-      id: d.id,
-      profielnaam: (d.profielen as any)?.naam,
-      kamervloer_id: d.kamervloer_id,
-      kamervloer_naam: (d.kamer_vloeren as any)?.vloer_types?.naam,
-      titel: d.titel,
-      beschrijving: d.beschrijving,
-      afgehandeld: d.afgehandeld,
-      aangemaakt_op: d.aangemaakt_op,
-    };
-  }
+  const [zoekterm, setZoekterm] = useState("");
+  const [tab, setTab] = useState<string>("actief");
 
   useEffect(() => {
-    async function getMeldingen() {
+    async function getAanvragen() {
       setLoading(true);
       try {
-        const [{ data: open }, { data: all }, { data: onderhoud }] =
-          await Promise.all([
-            supabase
-              .from("meldingen")
-              .select(
-                "id,profielen(naam),kamervloer_id,kamer_vloeren(vloer_types(naam)),titel,beschrijving,afgehandeld,aangemaakt_op",
-              )
-              .eq("afgehandeld", false)
-              .order("aangemaakt_op", { ascending: false }),
-            supabase
-              .from("meldingen")
-              .select(
-                "id,profielen(naam),kamervloer_id,kamer_vloeren(vloer_types(naam)),titel,beschrijving,afgehandeld,aangemaakt_op",
-              )
-              .order("aangemaakt_op", { ascending: false }),
-            supabase
-              .from("onderhoud_aanvragen")
-              .select("id", { count: "exact" })
-              .eq("afgehandeld", false),
-          ]);
-        setNotHandledMeldingen((open ?? []).map(mapMelding));
-        setAllMeldingen((all ?? []).map(mapMelding));
-        setOpenOnderhoud(onderhoud?.length ?? 0);
+        const { data, error } = await supabase
+          .from("onderhouds_aanvragen")
+          .select(
+            `
+            id, beschrijving, status, aangemaakt_op, geplande_datum,
+            locaties(naam, plaats),
+            profielen!aangevraagd_door(naam),
+            onderhouds_aanvragen_vloeren(count)
+          `,
+          )
+          .order("aangemaakt_op", { ascending: false });
+
+        if (error) throw error;
+
+        setAanvragen(
+          (data ?? []).map((d: any) => ({
+            id: d.id,
+            beschrijving: d.beschrijving,
+            status: d.status,
+            aangemaakt_op: d.aangemaakt_op,
+            geplande_datum: d.geplande_datum ?? null,
+            locatie_naam: d.locaties?.naam ?? "—",
+            locatie_plaats: d.locaties?.plaats ?? null,
+            aangevraagd_door_naam: d.profielen?.naam ?? null,
+            vloeren_count: d.onderhouds_aanvragen_vloeren?.[0]?.count ?? 0,
+          })),
+        );
       } catch {
-        showToast("Kon meldingen niet laden", "error");
+        showToast("Kon aanvragen niet laden", "error");
       } finally {
         setLoading(false);
       }
     }
-    getMeldingen();
+    getAanvragen();
   }, []);
 
-  const active = tab === "open" ? notHandledMeldingen : allMeldingen;
-  const filtered = active.filter((m) =>
-    [m.titel, m.beschrijving, m.kamervloer_naam, m.profielnaam].some((f) =>
-      f?.toLowerCase().includes(zoekterm.toLowerCase()),
-    ),
-  );
+  const activeTab = STATUS_TABS.find((t) => t.key === tab)!;
+  const filtered = aanvragen
+    .filter(
+      (a) =>
+        activeTab.statuses.length === 0 ||
+        activeTab.statuses.includes(a.status),
+    )
+    .filter((a) =>
+      [
+        a.locatie_naam,
+        a.locatie_plaats,
+        a.beschrijving,
+        a.aangevraagd_door_naam,
+      ].some((f) => f?.toLowerCase().includes(zoekterm.toLowerCase())),
+    );
 
-  const tabs = [
-    { key: "open", label: "Openstaand", count: notHandledMeldingen.length },
-    { key: "all", label: "Alle", count: allMeldingen.length },
-  ];
+  const countForTab = (statuses: string[]) =>
+    statuses.length === 0
+      ? aanvragen.length
+      : aanvragen.filter((a) => statuses.includes(a.status)).length;
 
   const emptyState = (
     <div className="flex flex-col items-center justify-center py-14 text-center">
       <div className="w-10 h-10 rounded-2xl bg-slate-100 flex items-center justify-center mb-3">
-        <BellAlertIcon className="w-5 h-5 text-slate-300" />
+        <CalendarDaysIcon className="w-5 h-5 text-slate-300" />
       </div>
       <p className="text-sm text-slate-400 font-medium">
-        {tab === "open"
-          ? "Geen openstaande meldingen"
-          : "Geen meldingen gevonden"}
+        {zoekterm
+          ? "Geen resultaten gevonden"
+          : "Geen aanvragen in deze categorie"}
       </p>
       <p className="text-xs text-slate-300 mt-0.5">
         {zoekterm
           ? "Probeer een andere zoekterm"
-          : tab === "open"
-            ? "Alles is afgehandeld"
-            : "Er zijn nog geen meldingen"}
+          : "Aanvragen verschijnen hier zodra ze zijn ingediend"}
       </p>
     </div>
   );
+
+  const tabs = STATUS_TABS.map((t) => ({
+    ...t,
+    count: countForTab(t.statuses),
+  }));
 
   return (
     <div className="min-h-screen flex bg-[#F5F6FA]">
@@ -139,12 +232,12 @@ export default function MeldingenPage() {
 
       <div className="flex flex-col flex-1 h-screen">
         <Topbar
-          title="Meldingen"
+          title="Onderhoud aanvragen"
           onMenuToggle={() => setSidebarOpen((p) => !p)}
         />
 
         <main className="flex-1 overflow-auto p-3 md:p-8">
-          {/* ── Desktop (md+) — original layout unchanged ── */}
+          {/* ── Desktop ── */}
           <div className="hidden md:block space-y-6">
             <div className="flex items-end justify-between">
               <div>
@@ -152,71 +245,84 @@ export default function MeldingenPage() {
                   Overzicht
                 </p>
                 <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-                  Meldingen
+                  Onderhoud aanvragen
                 </h1>
                 <p className="text-sm text-slate-400 mt-0.5">
-                  Beheer en bekijk alle ingediende meldingen
+                  Beheer en verwerk binnenkomende onderhoudaanvragen
                 </p>
               </div>
-              <div className="flex flex-row gap-2">
-                {notHandledMeldingen.length > 0 && (
-                  <div className="flex items-center gap-2 px-4 py-2.5 bg-amber-50 border border-amber-100 rounded-2xl">
-                    <BellAlertIcon className="w-4 h-4 text-amber-500" />
-                    <p className="text-sm font-bold text-amber-600">
-                      {notHandledMeldingen.length} openstaand
-                    </p>
-                  </div>
+              <div className="flex items-center gap-2">
+                {[
+                  {
+                    label: "Actief",
+                    count: countForTab(["ingediend", "in_behandeling"]),
+                    bg: "bg-amber-50",
+                    text: "text-amber-600",
+                    border: "border-amber-100",
+                    dot: "bg-amber-400",
+                  },
+                  {
+                    label: "Ingepland",
+                    count: countForTab(["ingepland"]),
+                    bg: "bg-p/10",
+                    text: "text-p",
+                    border: "border-p/20",
+                    dot: "bg-p",
+                  },
+                ].map(({ label, count, bg, text, border, dot }) =>
+                  count > 0 ? (
+                    <div
+                      key={label}
+                      className={`flex items-center gap-2 px-4 py-2.5 ${bg} border ${border} rounded-2xl`}
+                    >
+                      <span className={`w-2 h-2 rounded-full ${dot}`} />
+                      <p className={`text-sm font-bold ${text}`}>
+                        {count} {label.toLowerCase()}
+                      </p>
+                    </div>
+                  ) : null,
                 )}
-                <button
-                  onClick={() => router.push("/meldingen/onderhoud")}
-                  className="inline-flex items-center gap-2 px-3 md:px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-800 text-sm font-bold rounded-xl border border-slate-200 shadow-sm transition-all cursor-pointer whitespace-nowrap"
-                >
-                  <ClipboardDocumentListIcon className="w-4 h-4 shrink-0" />
-                  <span className="hidden sm:inline">Onderhoud aanvragen</span>
-                  <span className="sm:hidden">Onderhoud</span>
-                  {openOnderhoud > 0 && (
-                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-p text-white text-[10px] font-bold shrink-0">
-                      {openOnderhoud}
-                    </span>
-                  )}
-                </button>
               </div>
             </div>
 
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
               <div className="flex items-center gap-4 px-5 py-3.5 border-b border-slate-100">
                 <div className="flex items-center gap-1 bg-slate-100 rounded-xl p-1">
-                  {tabs.map(({ key, label, count }) => (
-                    <button
-                      key={key}
-                      onClick={() => setTab(key as "open" | "all")}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-all ${tab === key ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
-                    >
-                      {label}
-                      <span
-                        className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${tab === key ? (key === "open" && count > 0 ? "bg-amber-100 text-amber-600" : "bg-slate-100 text-slate-500") : "bg-slate-200 text-slate-400"}`}
+                  {tabs.map(({ key, label, count }) => {
+                    const isActive = tab === key;
+                    const hasAlert = key === "actief" && count > 0;
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => setTab(key)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-all ${isActive ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
                       >
-                        {count}
-                      </span>
-                    </button>
-                  ))}
+                        {label}
+                        <span
+                          className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${isActive ? (hasAlert ? "bg-amber-100 text-amber-600" : "bg-slate-100 text-slate-500") : "bg-slate-200 text-slate-400"}`}
+                        >
+                          {count}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
                 <div className="relative flex-1 max-w-xs ml-auto">
                   <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
                   <input
                     value={zoekterm}
                     onChange={(e) => setZoekterm(e.target.value)}
-                    placeholder="Zoek op titel, vloer..."
+                    placeholder="Zoek op locatie, beschrijving..."
                     className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 rounded-xl border border-slate-100 outline-none focus:border-p/40 focus:ring-2 focus:ring-p/10 placeholder:text-slate-300 transition-all"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-[24px_1fr_160px_120px_100px_40px] px-5 py-2.5 border-b border-slate-50 bg-slate-50/60">
+              <div className="grid grid-cols-[1fr_140px_100px_120px_80px_40px] px-5 py-2.5 border-b border-slate-50 bg-slate-50/60">
                 {[
-                  "",
-                  "Melding",
-                  "Vloertype",
+                  "Locatie",
+                  "Status",
+                  "Vloeren",
                   "Ingediend door",
                   "Datum",
                   "",
@@ -238,44 +344,43 @@ export default function MeldingenPage() {
                 ) : filtered.length === 0 ? (
                   emptyState
                 ) : (
-                  filtered.map((m) => (
+                  filtered.map((a) => (
                     <div
-                      key={m.id}
-                      onClick={() => router.push(`/meldingen/bekijken/${m.id}`)}
-                      className="grid grid-cols-[24px_1fr_160px_120px_100px_40px] items-center px-5 py-3.5 cursor-pointer hover:bg-slate-50 transition-colors group"
+                      key={a.id}
+                      onClick={() =>
+                        router.push(`/meldingen/onderhoud/${a.id}`)
+                      }
+                      className="grid grid-cols-[1fr_140px_100px_120px_80px_40px] items-center px-5 py-3.5 cursor-pointer hover:bg-slate-50 transition-colors group"
                     >
-                      <div className="flex items-center">
-                        {m.afgehandeld ? (
-                          <CheckCircleIcon className="w-4 h-4 text-emerald-400" />
-                        ) : (
-                          <div className="w-2 h-2 rounded-full bg-amber-400" />
-                        )}
-                      </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-semibold text-slate-800 truncate group-hover:text-p transition-colors">
-                          {m.titel}
-                        </p>
-                        <p className="text-xs text-slate-400 truncate mt-0.5">
-                          {m.beschrijving}
+                        <div className="flex items-center gap-1.5">
+                          <MapPinIcon className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <p className="text-sm font-semibold text-slate-800 truncate group-hover:text-p transition-colors">
+                            {a.locatie_naam}
+                          </p>
+                        </div>
+                        <p className="text-xs text-slate-400 truncate mt-0.5 pl-5">
+                          {a.beschrijving}
                         </p>
                       </div>
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <div className="w-5 h-5 rounded-md bg-p/10 flex items-center justify-center shrink-0">
-                          <ExclamationTriangleIcon className="w-3 h-3 text-p" />
-                        </div>
-                        <p className="text-sm text-slate-500 truncate">
-                          {m.kamervloer_naam ?? "—"}
+                      <div>
+                        <StatusBadge status={a.status} />
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <SwatchIcon className="w-3.5 h-3.5 text-slate-300" />
+                        <p className="text-sm text-slate-500">
+                          {a.vloeren_count}
                         </p>
                       </div>
                       <p className="text-sm text-slate-400 truncate">
-                        {m.profielnaam ?? "—"}
+                        {a.aangevraagd_door_naam ?? "—"}
                       </p>
                       <div>
                         <p className="text-xs font-semibold text-slate-600">
-                          {formatDate(m.aangemaakt_op)}
+                          {formatDate(a.aangemaakt_op)}
                         </p>
                         <p className="text-[10px] text-slate-400">
-                          {formatTime(m.aangemaakt_op)}
+                          {formatTime(a.aangemaakt_op)}
                         </p>
                       </div>
                       <ChevronRightIcon className="w-4 h-4 text-slate-200 group-hover:text-p transition-colors" />
@@ -286,45 +391,43 @@ export default function MeldingenPage() {
 
               <div className="px-5 py-3 border-t border-slate-50 bg-slate-50/40">
                 <p className="text-xs text-slate-400">
-                  {filtered.length} melding{filtered.length !== 1 ? "en" : ""}
+                  {filtered.length} aanvra{filtered.length !== 1 ? "gen" : "ag"}
                 </p>
               </div>
             </div>
           </div>
 
-          {/* ── Mobile (below md) ── */}
+          {/* ── Mobile ── */}
           <div className="md:hidden space-y-3">
-            {/* Header */}
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-                  Meldingen
+                  Onderhoud aanvragen
                 </h1>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  Alle ingediende meldingen
+                  Alle binnenkomende aanvragen
                 </p>
               </div>
-              {notHandledMeldingen.length > 0 && (
+              {countForTab(["ingediend", "in_behandeling"]) > 0 && (
                 <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 border border-amber-100 rounded-xl">
-                  <BellAlertIcon className="w-3.5 h-3.5 text-amber-500" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
                   <p className="text-xs font-bold text-amber-600">
-                    {notHandledMeldingen.length}
+                    {countForTab(["ingediend", "in_behandeling"])}
                   </p>
                 </div>
               )}
             </div>
 
-            {/* Tabs */}
-            <div className="flex items-center gap-1 bg-slate-100 rounded-xl p-1 self-start">
+            <div className="flex items-center gap-1 bg-slate-100 rounded-xl p-1">
               {tabs.map(({ key, label, count }) => (
                 <button
                   key={key}
-                  onClick={() => setTab(key as "open" | "all")}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-all flex-1 justify-center ${tab === key ? "bg-white text-slate-800 shadow-sm" : "text-slate-500"}`}
+                  onClick={() => setTab(key)}
+                  className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex-1 justify-center ${tab === key ? "bg-white text-slate-800 shadow-sm" : "text-slate-500"}`}
                 >
                   {label}
                   <span
-                    className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${tab === key ? (key === "open" && count > 0 ? "bg-amber-100 text-amber-600" : "bg-slate-100 text-slate-500") : "bg-slate-200 text-slate-400"}`}
+                    className={`text-[10px] font-bold px-1 py-0.5 rounded-full ${tab === key ? (key === "actief" && count > 0 ? "bg-amber-100 text-amber-600" : "bg-slate-100 text-slate-500") : "bg-slate-200 text-slate-400"}`}
                   >
                     {count}
                   </span>
@@ -332,18 +435,16 @@ export default function MeldingenPage() {
               ))}
             </div>
 
-            {/* Search */}
             <div className="relative">
               <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
               <input
                 value={zoekterm}
                 onChange={(e) => setZoekterm(e.target.value)}
-                placeholder="Zoek op titel, vloer..."
+                placeholder="Zoek op locatie..."
                 className="w-full pl-9 pr-4 py-2.5 text-sm bg-white rounded-xl border border-slate-100 outline-none focus:border-p/40 focus:ring-2 focus:ring-p/10 placeholder:text-slate-300 transition-all shadow-sm"
               />
             </div>
 
-            {/* List */}
             {loading ? (
               <div className="flex items-center justify-center py-12">
                 <div className="w-6 h-6 rounded-full border-2 border-p border-t-transparent animate-spin" />
@@ -352,55 +453,61 @@ export default function MeldingenPage() {
               emptyState
             ) : (
               <div className="space-y-2">
-                {filtered.map((m) => (
+                {filtered.map((a) => (
                   <div
-                    key={m.id}
-                    onClick={() => router.push(`/meldingen/bekijken/${m.id}`)}
+                    key={a.id}
+                    onClick={() => router.push(`/meldingen/onderhoud/${a.id}`)}
                     className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 cursor-pointer active:bg-slate-50 transition-colors"
                   >
                     <div className="flex items-start gap-3">
-                      {/* Status dot */}
-                      <div className="mt-1 shrink-0">
-                        {m.afgehandeld ? (
-                          <CheckCircleIcon className="w-4 h-4 text-emerald-400" />
-                        ) : (
-                          <div className="w-2 h-2 rounded-full bg-amber-400 mt-1" />
+                      <div
+                        className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${statusConfig[a.status]?.bg ?? "bg-slate-100"}`}
+                      >
+                        {statusConfig[a.status]?.icon ?? (
+                          <CalendarDaysIcon className="w-3.5 h-3.5 text-slate-400" />
                         )}
                       </div>
-
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-slate-800 truncate">
-                          {m.titel}
+                        <div className="flex items-start justify-between gap-2 mb-1">
+                          <div className="flex items-center gap-1 min-w-0">
+                            <MapPinIcon className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                            <p className="text-sm font-bold text-slate-800 truncate">
+                              {a.locatie_naam}
+                            </p>
+                          </div>
+                          <StatusBadge status={a.status} />
+                        </div>
+                        <p className="text-xs text-slate-500 line-clamp-2 mt-0.5">
+                          {a.beschrijving}
                         </p>
-                        {m.beschrijving && (
-                          <p className="text-xs text-slate-400 truncate mt-0.5">
-                            {m.beschrijving}
-                          </p>
-                        )}
-
-                        {/* Meta row */}
-                        <div className="flex items-center gap-2 mt-2 flex-wrap">
-                          {m.kamervloer_naam && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-p/8 rounded-md text-[11px] font-semibold text-p">
-                              <ExclamationTriangleIcon className="w-3 h-3" />
-                              {m.kamervloer_naam}
-                            </span>
+                        <div className="flex items-center gap-3 mt-2 flex-wrap">
+                          <div className="flex items-center gap-1">
+                            <SwatchIcon className="w-3.5 h-3.5 text-slate-300" />
+                            <p className="text-xs text-slate-400">
+                              {a.vloeren_count} vloeren
+                            </p>
+                          </div>
+                          {a.aangevraagd_door_naam && (
+                            <p className="text-xs text-slate-400">
+                              {a.aangevraagd_door_naam}
+                            </p>
                           )}
-                          {m.profielnaam && (
-                            <span className="text-[11px] text-slate-400">
-                              {m.profielnaam}
-                            </span>
+                          {a.geplande_datum && (
+                            <div className="flex items-center gap-1">
+                              <CalendarDaysIcon className="w-3.5 h-3.5 text-p" />
+                              <p className="text-xs text-p font-semibold">
+                                {formatDate(a.geplande_datum)}
+                              </p>
+                            </div>
                           )}
                         </div>
                       </div>
-
-                      {/* Date + chevron */}
                       <div className="shrink-0 text-right flex flex-col items-end gap-1">
                         <p className="text-[11px] font-semibold text-slate-600">
-                          {formatDate(m.aangemaakt_op)}
+                          {formatDate(a.aangemaakt_op)}
                         </p>
                         <p className="text-[10px] text-slate-400">
-                          {formatTime(m.aangemaakt_op)}
+                          {formatTime(a.aangemaakt_op)}
                         </p>
                         <ChevronRightIcon className="w-4 h-4 text-slate-200 mt-1" />
                       </div>
@@ -408,7 +515,7 @@ export default function MeldingenPage() {
                   </div>
                 ))}
                 <p className="text-xs text-slate-400 text-center pt-1">
-                  {filtered.length} melding{filtered.length !== 1 ? "en" : ""}
+                  {filtered.length} aanvra{filtered.length !== 1 ? "gen" : "ag"}
                 </p>
               </div>
             )}
