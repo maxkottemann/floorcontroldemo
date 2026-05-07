@@ -284,7 +284,7 @@ export default function RapportBekijkenPage() {
         </div>
         <div className="px-5 py-4 border-b border-slate-50">
           <button
-            onClick={() => router.push(`/projecten/bekijken/${id}`)}
+            onClick={() => router.push(`/projecten/afgerond/bekijken/${id}`)}
             className="w-full cursor-pointer flex items-center gap-3 px-4 py-3 rounded-xl bg-p/5 hover:bg-p/10 border border-p/15 transition-all duration-150 group"
           >
             <div className="w-8 h-8 rounded-lg bg-p/15 flex items-center justify-center shrink-0">

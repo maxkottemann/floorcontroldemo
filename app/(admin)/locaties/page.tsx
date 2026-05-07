@@ -187,50 +187,44 @@ export default function locatiePage() {
               ) : (
                 <ul className="space-y-2">
                   {filtered.map((l) => (
-                    <li
-                      key={l.id}
-                      className="flex items-center justify-between px-4 py-3 bg-white border border-gray-100 rounded-xl hover:border-gray-200 hover:bg-gray-50 transition-all duration-150 group"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
-                          <svg
-                            className="w-4 h-4 text-gray-500"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="1.5"
-                            viewBox="0 0 24 24"
-                          >
-                            <path d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-                          </svg>
-                        </div>
-                        <div>
-                          <span className="text-sm font-medium text-gray-900">
-                            {l.naam}
-                          </span>
-                          <div className="flex items-center gap-1.5 mt-0.5">
-                            <span className="text-xs text-gray-400">
-                              {l.type}
-                            </span>
-                            <span className="text-xs text-gray-300">•</span>
-                            <span className="text-xs text-gray-400">
-                              {l.perceel}
-                            </span>
+                    <a href={`/locaties/bekijken/${l.id}`} key={l.id}>
+                      <li className="flex items-center justify-between px-4 py-3 bg-white border border-gray-100 rounded-xl hover:border-gray-200 hover:bg-gray-50 transition-all duration-150 group">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+                            <svg
+                              className="w-4 h-4 text-gray-500"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                              viewBox="0 0 24 24"
+                            >
+                              <path d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                            </svg>
                           </div>
+                          <div>
+                            <span className="text-sm font-medium text-gray-900">
+                              {l.naam}
+                            </span>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span className="text-xs text-gray-400">
+                                {l.type}
+                              </span>
+                              <span className="text-xs text-gray-300">•</span>
+                              <span className="text-xs text-gray-400">
+                                {l.perceel}
+                              </span>
+                            </div>
+                          </div>
+                          {l.extra_checkin && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-orange-50 text-orange-500 text-xs font-medium border border-orange-100">
+                              <ChatBubbleBottomCenterTextIcon className="w-3 h-3 mr-2"></ChatBubbleBottomCenterTextIcon>{" "}
+                              Aanmeldprocedure
+                            </span>
+                          )}
                         </div>
-                        {l.extra_checkin && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-orange-50 text-orange-500 text-xs font-medium border border-orange-100">
-                            <ChatBubbleBottomCenterTextIcon className="w-3 h-3 mr-2"></ChatBubbleBottomCenterTextIcon>{" "}
-                            Aanmeldprocedure
-                          </span>
-                        )}
-                      </div>
-                      <a href={`/locaties/bekijken/${l.id}`}>
-                        <button className="text-xs font-medium text-gray-400 border border-gray-200 rounded-md px-3 py-1 opacity-0 group-hover:opacity-100 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50 active:scale-95 transition-all duration-150 cursor-pointer">
-                          Bekijk
-                        </button>
-                      </a>
-                    </li>
+                      </li>
+                    </a>
                   ))}
                 </ul>
               )}

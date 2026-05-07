@@ -6,7 +6,7 @@ import { useToast } from "@/components/hooks/usetoasts";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { Locatie } from "@/types/locatie";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import MultiSelect from "@/components/layout/multiselect";
 import { formatNumber } from "@/lib/utils";
 import {
@@ -22,6 +22,9 @@ import {
   ArrowLeftIcon,
   BuildingOfficeIcon,
   ChatBubbleBottomCenterTextIcon,
+  CalendarDaysIcon,
+  CheckIcon,
+  ClipboardDocumentCheckIcon,
 } from "@heroicons/react/24/outline";
 import SidebarClient from "@/components/layout/sidebarclient";
 
@@ -78,8 +81,6 @@ function formatDate(d?: string | null) {
   });
 }
 
-// ── Step 1: Locatie picker ─────────────────────────────────────────────────
-
 function LocatiePicker({
   locaties,
   onSelect,
@@ -121,7 +122,6 @@ function LocatiePicker({
 
   return (
     <div className="h-full flex flex-col gap-4 md:gap-5">
-      {/* Header */}
       <div>
         <p className="text-xs font-bold uppercase tracking-[0.14em] text-p/60 mb-1">
           Vloerpaspoort
@@ -134,7 +134,6 @@ function LocatiePicker({
         </p>
       </div>
 
-      {/* Search + filters */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-3 md:px-4 py-3 flex flex-col md:flex-row items-stretch md:items-center gap-2 md:gap-3 md:flex-wrap shrink-0">
         <div className="relative flex-1 min-w-0 md:min-w-[220px]">
           <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
@@ -220,6 +219,12 @@ function LocatiePicker({
                           {l.type}
                         </span>
                       )}
+                      {l.laatste_onderhoud && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
+                          <CheckIcon className="w-3 h-3" />
+                          {formatDate(l.laatste_onderhoud)}
+                        </span>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -236,8 +241,6 @@ function LocatiePicker({
     </div>
   );
 }
-
-// ── Step 2: Vloer table ────────────────────────────────────────────────────
 
 function VloerTable({
   locatie,
@@ -334,41 +337,67 @@ function VloerTable({
           <ArrowLeftIcon className="w-4 h-4" />
           <span className="hidden sm:inline">Alle locaties</span>
         </button>
-        <div className="w-px h-5 bg-slate-200 hidden sm:block" />
+
+        <div className="w-px h-5 bg-slate-200 hidden sm:block shrink-0" />
+
         <div className="min-w-0 flex-1">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-p/60 hidden sm:block">
-              Vloerpaspoort
-            </p>
-            <h1 className="text-lg md:text-2xl font-bold text-slate-900 tracking-tight truncate">
-              {locatie.naam}
-            </h1>
-            {locatie.plaats && (
-              <p className="text-sm text-slate-400 hidden sm:block">
-                {locatie.plaats}
+          <div className="flex flex-row items-center justify-between gap-4">
+            <div className="min-w-0">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-p/60 hidden sm:block">
+                Vloerpaspoort
               </p>
+              <h1 className="text-lg md:text-2xl font-bold text-slate-900 tracking-tight truncate">
+                {locatie.naam}
+              </h1>
+              {locatie.plaats && (
+                <div className="hidden sm:flex items-center gap-1 mt-0.5">
+                  <MapPinIcon className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <p className="text-sm text-slate-400">{locatie.plaats}</p>
+                </div>
+              )}
+            </div>
+
+            {locatie.laatste_onderhoud && (
+              <div className="hidden sm:flex flex-col items-end gap-0.5 shrink-0 border-l border-slate-100 pl-4 ml-2">
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+                  Laatste onderhoud
+                </p>
+                <div className="flex items-center gap-2 mt-1">
+                  <CalendarDaysIcon className="w-4 h-4 text-emerald-500" />
+                  <span className="text-base font-bold text-slate-700">
+                    {formatDate(locatie.laatste_onderhoud)}
+                  </span>
+                </div>
+              </div>
             )}
           </div>
         </div>
+
         {locatie.extra_checkin && (
-          <div className=" items-center gap-2 px-3 h-10 mt-0 bg-amber-50 border border-amber-100 rounded-lg shadow-sm hidden md:inline-flex">
-            <ChatBubbleBottomCenterTextIcon className="w-4 h-4 text-amber-500 shrink-0" />
-            <div className="flex flex-col">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-amber-600">
-                Aanmeldprocedure
-              </span>
-              <span className="text-sm font-bold text-amber-700">
-                {locatie.extra_checkin}
+          <div className="hidden md:flex flex-col items-end gap-0.5 shrink-0 border-l border-slate-100 pl-4 ml-2">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+              Aanmeldprocedure
+            </p>
+            <div className="flex items-center gap-1.5 mt-1">
+              <ClipboardDocumentCheckIcon className="w-4 h-4 text-amber-500 shrink-0" />
+              <span className="text-base font-bold text-amber-600">
+                Vereist
               </span>
             </div>
           </div>
         )}
-        <span className="text-xs text-slate-400 font-medium shrink-0">
-          {filtered.length} vloeren
-        </span>
-      </div>
 
-      {/* Filters toolbar */}
+        <div className="hidden sm:flex flex-col items-end gap-0.5 shrink-0 border-l border-slate-100 pl-4 ml-2">
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+            Vloeren
+          </p>
+          <div className="flex items-center gap-2 mt-1">
+            <span className="text-base font-bold text-slate-700">
+              {filtered.length}
+            </span>
+          </div>
+        </div>
+      </div>
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-3 md:px-4 py-3 flex flex-col md:flex-row items-stretch md:items-center gap-2 md:gap-3 md:flex-wrap shrink-0">
         <div className="relative flex-1 min-w-0 md:min-w-[180px]">
           <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
@@ -636,8 +665,6 @@ function VloerTable({
   );
 }
 
-// ── Main page ──────────────────────────────────────────────────────────────
-
 export default function VloerenPaspoortPage() {
   const { toast, showToast, hideToast } = useToast();
   const router = useRouter();
@@ -647,15 +674,18 @@ export default function VloerenPaspoortPage() {
   const [selectedLocatie, setSelectedLocatie] = useState<Locatie | null>(null);
   const [vloeren, setVloeren] = useState<VloerRij[]>([]);
   const [loading, setLoading] = useState(false);
+  const searchParams = useSearchParams();
+  const preselectedLocatieId = searchParams.get("LocatieId");
 
   useEffect(() => {
     async function getLocaties() {
       const { data } = await supabase
         .from("locaties")
         .select(
-          "id,naam,type,plaats,adres,contact_persoon,telefoonnummer,percelen(naam),extra_checkin",
+          "id,naam,type,plaats,adres,contact_persoon,telefoonnummer,percelen(naam),extra_checkin,projecten(eind_datum,full_building,status)",
         )
         .order("naam", { ascending: true });
+
       if (!data) return;
       setLocaties(
         data.map((d) => ({
@@ -668,11 +698,27 @@ export default function VloerenPaspoortPage() {
           telefoonnummer: d.telefoonnummer,
           perceel: (d.percelen as any)?.naam,
           extra_checkin: d.extra_checkin,
+          laatste_onderhoud:
+            (d.projecten as any[])
+              .filter(
+                (p) => p.full_building === true && p.status === "afgerond",
+              )
+              ?.map((p) => p.eind_datum)
+              .sort()
+              .at(-1) ?? null,
         })),
       );
     }
     getLocaties();
   }, []);
+
+  useEffect(() => {
+    if (preselectedLocatieId && locaties.length > 0) {
+      setSelectedLocatie(
+        locaties.find((l) => l.id === preselectedLocatieId) ?? null,
+      );
+    }
+  }, [preselectedLocatieId, locaties]);
 
   useEffect(() => {
     async function getVloeren() {

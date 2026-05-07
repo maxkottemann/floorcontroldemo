@@ -130,7 +130,7 @@ export default function LocatieBekijkenPage() {
       sub: "Bekijk alle kamers van deze locatie",
     },
     {
-      href: `/vloerenpaspoort`,
+      href: `/vloerenpaspoort?LocatieId=${id}`,
       icon: <BsPassport className="w-4 h-4 text-[#154273]" />,
       label: "Vloerenpaspoort",
       sub: "Bekijk vloerenpaspoort van deze locatie",

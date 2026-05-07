@@ -21,12 +21,18 @@ import {
   SparklesIcon,
   ExclamationTriangleIcon,
   CalendarDaysIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { melding } from "@/types/melding";
 import SidebarClient from "@/components/layout/sidebarclient";
+import MainButton from "@/components/layout/mainbutton";
+import { vloerType } from "@/types/vloertype";
+import Dropdown from "@/components/layout/dropdown";
+import DropdownString from "@/components/layout/dropdownstrings";
 
 interface VloerInfo {
   vloertype_naam: string;
+  vloertype_id: string;
   vierkante_meter: number;
   status: string;
   kamer_naam: string;
@@ -81,7 +87,7 @@ function StatusBadge({ status }: { status: string }) {
   };
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border mr-3 ${s.bg} ${s.text} ${s.border}`}
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border  ${s.bg} ${s.text} ${s.border}`}
     >
       {status}
     </span>
@@ -93,6 +99,7 @@ export default function VloerPaspoortBekijkenPage() {
   const { id } = useParams();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  const [allVloerTypes, setAllvloerTypes] = useState<vloerType[]>([]);
   const [vloerInfo, setVloerInfo] = useState<VloerInfo>();
   const [wasbeurten, setWasbeurten] = useState<gewassenvloer[]>([]);
   const [loadingInfo, setLoadingInfo] = useState(true);
@@ -100,6 +107,13 @@ export default function VloerPaspoortBekijkenPage() {
   const [alleOpmerkingen, setAlleOpmerkingen] = useState<Opmerking[]>([]);
   const [meldingen, setMeldingen] = useState<melding[]>([]);
   const [nextOnderhound, setNextOnderhoud] = useState("");
+
+  const [updatedVloertypeId, setUpdatedVloertypeId] = useState("");
+  const [updatedM2, setUpdatedM2] = useState<number>(0);
+  const [updatedStatus, setUpdatedStatus] = useState("Goed");
+
+  const [showEditFloorDetails, setShowEditFloorDetails] = useState(false);
+
   const router = useRouter();
 
   useEffect(() => {
@@ -155,7 +169,7 @@ export default function VloerPaspoortBekijkenPage() {
       const { data } = await supabase
         .from("kamer_vloeren")
         .select(
-          "vierkante_meter,status,vloer_types(naam),kamers(naam,verdiepingen(naam,bouwdeel(naam,locaties(naam))))",
+          "vierkante_meter,status,vloer_types(naam,id),kamers(naam,verdiepingen(naam,bouwdeel(naam,locaties(naam))))",
         )
         .eq("id", id)
         .single();
@@ -166,6 +180,7 @@ export default function VloerPaspoortBekijkenPage() {
         const locatie = bouwdeel?.locaties;
         setVloerInfo({
           vloertype_naam: (data.vloer_types as any)?.naam ?? "Onbekend",
+          vloertype_id: (data.vloer_types as any)?.id,
           vierkante_meter: data.vierkante_meter,
           status: data.status,
           kamer_naam: kamer?.naam ?? "—",
@@ -240,6 +255,43 @@ export default function VloerPaspoortBekijkenPage() {
     }
     getMeldingen();
   }, [id]);
+
+  useEffect(() => {
+    async function getAllVloertypes() {
+      const { data, error } = await supabase
+        .from("vloer_types")
+        .select("id,naam");
+
+      if (!data || error) {
+        showToast("Kon vloertypes niet laden", "error");
+        return;
+      }
+
+      setAllvloerTypes(
+        (data || []).map((d) => ({
+          id: d.id,
+          naam: d.naam,
+        })),
+      );
+    }
+    getAllVloertypes();
+  }, []);
+
+  async function handleUpdate() {
+    const { error } = await supabase
+      .from("kamervloeren_id")
+      .update({
+        vierkante_meter: updatedM2,
+        status: updatedStatus,
+        vloertype_id: updatedVloertypeId,
+      })
+      .eq("id", id);
+
+    if (error) {
+      showToast("Kon vloergegevens niet wijzigen", "error");
+      return;
+    }
+  }
 
   const lastWasbeurt = wasbeurten[0];
   const opmerkingen = alleOpmerkingen;
@@ -388,6 +440,7 @@ export default function VloerPaspoortBekijkenPage() {
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
       />
+
       {toast && (
         <Toast message={toast.message} type={toast.type} onClose={hideToast} />
       )}

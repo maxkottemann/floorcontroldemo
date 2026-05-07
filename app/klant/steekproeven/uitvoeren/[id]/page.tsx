@@ -31,40 +31,61 @@ interface VloerRij {
 interface Beoordeling {
   [kamervloer_id: string]: boolean | null;
 }
+interface Opmerkingen {
+  [kamervloer_id: string]: string;
+}
 
 function BeoordelingButton({
+  kamervloer_id,
   value,
+  opmerking,
   onChange,
+  onOpmerkingChange,
   disabled,
 }: {
+  kamervloer_id: string;
   value: boolean | null;
+  opmerking: string;
   onChange: (v: boolean) => void;
+  onOpmerkingChange: (v: string) => void;
   disabled?: boolean;
 }) {
   return (
-    <div className="flex items-center gap-2 shrink-0">
-      <button
-        onClick={() => !disabled && onChange(true)}
-        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all
-          ${value === true ? "bg-emerald-500 text-white border-emerald-500 shadow-sm" : "bg-white text-emerald-600 border-emerald-200 hover:bg-emerald-50"}
-          ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-      >
-        <CheckCircleIcon className="w-3.5 h-3.5" />
-        Goed
-      </button>
-      <button
-        onClick={() => !disabled && onChange(false)}
-        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all
-          ${value === false ? "bg-red-500 text-white border-red-500 shadow-sm" : "bg-white text-red-500 border-red-200 hover:bg-red-50"}
-          ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-      >
-        <XCircleIcon className="w-3.5 h-3.5" />
-        Niet goed
-      </button>
+    <div className="flex flex-col gap-2 w-full">
+      <div className="flex items-center gap-2 shrink-0">
+        <button
+          onClick={() => !disabled && onChange(true)}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all
+            ${value === true ? "bg-emerald-500 text-white border-emerald-500 shadow-sm" : "bg-white text-emerald-600 border-emerald-200 hover:bg-emerald-50"}
+            ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+        >
+          <CheckCircleIcon className="w-3.5 h-3.5" />
+          Goed
+        </button>
+        <button
+          onClick={() => !disabled && onChange(false)}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all
+            ${value === false ? "bg-red-500 text-white border-red-500 shadow-sm" : "bg-white text-red-500 border-red-200 hover:bg-red-50"}
+            ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+        >
+          <XCircleIcon className="w-3.5 h-3.5" />
+          Niet goed
+        </button>
+      </div>
+
+      {value !== null && value !== undefined && (
+        <textarea
+          value={opmerking}
+          onChange={(e) => onOpmerkingChange(e.target.value)}
+          disabled={disabled}
+          placeholder="Optionele opmerking..."
+          rows={2}
+          className="w-full px-3 py-2 text-xs text-slate-600 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-p/40 focus:ring-2 focus:ring-p/10 resize-none placeholder:text-slate-300 transition-all disabled:opacity-50"
+        />
+      )}
     </div>
   );
 }
-
 // Collapsible for bouwdeel (top level)
 function CollapsibleSection({
   title,
@@ -172,6 +193,8 @@ export default function SteekproevenUitvoerenPage() {
   const [saving, setSaving] = useState(false);
   const [afgerond, setAfgerond] = useState(false);
 
+  const [opmerkingen, setOpmerkingen] = useState<Opmerkingen>({});
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
@@ -239,16 +262,20 @@ export default function SteekproevenUitvoerenPage() {
         })),
       );
 
-      // 3. Load existing beoordelingen
       const { data: existing } = await supabase
         .from("steekproef_vloeren")
-        .select("kamervloer_id, goedgekeurd")
+        .select("kamervloer_id, goedgekeurd, opmerkingen")
         .eq("steekproef_id", sid);
 
       if (existing?.length) {
-        const map: Beoordeling = {};
-        for (const e of existing) map[e.kamervloer_id] = e.goedgekeurd;
-        setBeoordelingen(map);
+        const bMap: Beoordeling = {};
+        const oMap: Opmerkingen = {};
+        for (const e of existing) {
+          bMap[e.kamervloer_id] = e.goedgekeurd;
+          oMap[e.kamervloer_id] = e.opmerkingen ?? "";
+        }
+        setBeoordelingen(bMap);
+        setOpmerkingen(oMap);
       }
 
       setLoading(false);
@@ -348,6 +375,19 @@ export default function SteekproevenUitvoerenPage() {
     setAfgerond(true);
     showToast("Steekproef afgerond", "success");
     setTimeout(() => router.back(), 1000);
+  }
+
+  async function setOpmerking(vloerId: string, tekst: string) {
+    if (afgerond || !steekproefId) return;
+    setOpmerkingen((prev) => ({ ...prev, [vloerId]: tekst }));
+    await supabase.from("steekproef_vloeren").upsert(
+      {
+        steekproef_id: steekproefId,
+        kamervloer_id: vloerId,
+        opmerkingen: tekst,
+      },
+      { onConflict: "steekproef_id,kamervloer_id" },
+    );
   }
   return (
     <div className="min-h-screen flex bg-[#F5F6FA]">
@@ -461,15 +501,24 @@ export default function SteekproevenUitvoerenPage() {
                                                 {v.vierkante_meter}m²
                                               </p>
                                             </div>
-                                            <BeoordelingButton
-                                              value={
-                                                beoordelingen[v.id] ?? null
-                                              }
-                                              onChange={(val) =>
-                                                setBeoordeling(v.id, val)
-                                              }
-                                              disabled={afgerond}
-                                            />
+                                            <div>
+                                              <BeoordelingButton
+                                                kamervloer_id={v.id}
+                                                value={
+                                                  beoordelingen[v.id] ?? null
+                                                }
+                                                opmerking={
+                                                  opmerkingen[v.id] ?? ""
+                                                }
+                                                onChange={(val) =>
+                                                  setBeoordeling(v.id, val)
+                                                }
+                                                onOpmerkingChange={(val) =>
+                                                  setOpmerking(v.id, val)
+                                                }
+                                                disabled={afgerond}
+                                              />
+                                            </div>
                                           </div>
                                         ))}
                                       </CollapsibleRow>
@@ -486,7 +535,6 @@ export default function SteekproevenUitvoerenPage() {
                 )}
               </div>
 
-              {/* RIGHT — sticky sidebar */}
               <div className="w-64 shrink-0 sticky top-0">
                 <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                   <div className="px-5 py-5 border-b border-slate-50 space-y-4">

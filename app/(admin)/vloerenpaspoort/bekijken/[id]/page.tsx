@@ -21,8 +21,14 @@ import {
   SparklesIcon,
   ExclamationTriangleIcon,
   CalendarDaysIcon,
+  XMarkIcon,
+  PencilSquareIcon,
+  PlusIcon,
+  TrashIcon,
 } from "@heroicons/react/24/outline";
 import { melding } from "@/types/melding";
+import MainButton from "@/components/layout/mainbutton";
+import { vloerType } from "@/types/vloertype";
 
 interface VloerInfo {
   vloertype_naam: string;
@@ -31,6 +37,7 @@ interface VloerInfo {
   kamer_naam: string;
   verdieping_naam: string;
   bouwdeel_naam: string;
+  vloertype_id?: string;
   locatie_naam: string;
 }
 interface Opmerking {
@@ -80,7 +87,7 @@ function StatusBadge({ status }: { status: string }) {
   };
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border mr-3 ${s.bg} ${s.text} ${s.border}`}
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border  ${s.bg} ${s.text} ${s.border}`}
     >
       {status}
     </span>
@@ -92,6 +99,7 @@ export default function VloerPaspoortBekijkenPage() {
   const { id } = useParams();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  const [allVloerTypes, setAllvloerTypes] = useState<vloerType[]>([]);
   const [vloerInfo, setVloerInfo] = useState<VloerInfo>();
   const [wasbeurten, setWasbeurten] = useState<gewassenvloer[]>([]);
   const [loadingInfo, setLoadingInfo] = useState(true);
@@ -101,24 +109,35 @@ export default function VloerPaspoortBekijkenPage() {
   const [nextOnderhound, setNextOnderhoud] = useState("");
   const router = useRouter();
 
+  const [updatedVloertypeId, setUpdatedVloertypeId] = useState("");
+  const [updatedM2, setUpdatedM2] = useState<number>(0);
+  const [updatedStatus, setUpdatedStatus] = useState("Goed");
+
+  const [showAddOpmerking, setShowAddOpmerking] = useState(false);
+  const [newOpmerking, setNewOpmerking] = useState("");
+  const [savingOpmerking, setSavingOpmerking] = useState(false);
+
+  const [showEditFloorDetails, setShowEditFloorDetails] = useState(false);
+
+  async function getOpmerkingen() {
+    if (!id) return;
+    const { data } = await supabase
+      .from("gewassen_vloeren")
+      .select("id,opmerking,aangemaakt_op,projecten(naam)")
+      .eq("kamervloer_id", id)
+      .not("opmerking", "is", null)
+      .neq("opmerking", "");
+    setAlleOpmerkingen(
+      (data ?? []).map((d: any) => ({
+        id: d.id,
+        opmerking: d.opmerking,
+        project_naam: d.projecten?.naam ?? "—",
+        aangemaakt_op: d.aangemaakt_op,
+      })),
+    );
+  }
+
   useEffect(() => {
-    async function getOpmerkingen() {
-      if (!id) return;
-      const { data } = await supabase
-        .from("gewassen_vloeren")
-        .select("id,opmerking,aangemaakt_op,projecten(naam)")
-        .eq("kamervloer_id", id)
-        .not("opmerking", "is", null)
-        .neq("opmerking", "");
-      setAlleOpmerkingen(
-        (data ?? []).map((d: any) => ({
-          id: d.id,
-          opmerking: d.opmerking,
-          project_naam: d.projecten?.naam ?? "—",
-          aangemaakt_op: d.aangemaakt_op,
-        })),
-      );
-    }
     getOpmerkingen();
   }, [id]);
 
@@ -147,37 +166,38 @@ export default function VloerPaspoortBekijkenPage() {
     getNextOnderhoud();
   }, [id]);
 
-  useEffect(() => {
-    async function getVloerInfo() {
-      if (!id) return;
-      setLoadingInfo(true);
-      const { data } = await supabase
-        .from("kamer_vloeren")
-        .select(
-          "vierkante_meter,status,vloer_types(naam),kamers(naam,verdiepingen(naam,bouwdeel(naam,locaties(naam))))",
-        )
-        .eq("id", id)
-        .single();
-      if (data) {
-        const kamer = data.kamers as any;
-        const verdieping = kamer?.verdiepingen;
-        const bouwdeel = verdieping?.bouwdeel;
-        const locatie = bouwdeel?.locaties;
-        setVloerInfo({
-          vloertype_naam: (data.vloer_types as any)?.naam ?? "Onbekend",
-          vierkante_meter: data.vierkante_meter,
-          status: data.status,
-          kamer_naam: kamer?.naam ?? "—",
-          verdieping_naam: verdieping?.naam ?? "—",
-          bouwdeel_naam: bouwdeel?.naam ?? "—",
-          locatie_naam: locatie?.naam ?? "—",
-        });
-      }
-      setLoadingInfo(false);
+  async function getVloerInfo() {
+    if (!id) return;
+    setLoadingInfo(true);
+    const { data } = await supabase
+      .from("kamer_vloeren")
+      .select(
+        "vierkante_meter,status,vloer_types(naam,id),kamers(naam,verdiepingen(naam,bouwdeel(naam,locaties(naam))))",
+      )
+      .eq("id", id)
+      .single();
+    if (data) {
+      const kamer = data.kamers as any;
+      const verdieping = kamer?.verdiepingen;
+      const bouwdeel = verdieping?.bouwdeel;
+      const locatie = bouwdeel?.locaties;
+      setVloerInfo({
+        vloertype_naam: (data.vloer_types as any)?.naam ?? "Onbekend",
+        vloertype_id: (data.vloer_types as any)?.id,
+        vierkante_meter: data.vierkante_meter,
+        status: data.status,
+        kamer_naam: kamer?.naam ?? "—",
+        verdieping_naam: verdieping?.naam ?? "—",
+        bouwdeel_naam: bouwdeel?.naam ?? "—",
+        locatie_naam: locatie?.naam ?? "—",
+      });
     }
+    setLoadingInfo(false);
+  }
+
+  useEffect(() => {
     getVloerInfo();
   }, [id]);
-
   useEffect(() => {
     async function getVloerHistory() {
       if (!id) return;
@@ -240,6 +260,87 @@ export default function VloerPaspoortBekijkenPage() {
     getMeldingen();
   }, [id]);
 
+  useEffect(() => {
+    async function getAllVloertypes() {
+      const { data, error } = await supabase
+        .from("vloer_types")
+        .select("id,naam");
+
+      if (!data || error) {
+        showToast("Kon vloertypes niet laden", "error");
+        return;
+      }
+
+      setAllvloerTypes(
+        (data || []).map((d) => ({
+          id: d.id,
+          naam: d.naam,
+        })),
+      );
+    }
+    getAllVloertypes();
+  }, []);
+
+  async function handleUpdate() {
+    const { error } = await supabase
+      .from("kamer_vloeren")
+      .update({
+        vierkante_meter: updatedM2,
+        status: updatedStatus,
+        vloertype_id: updatedVloertypeId,
+      })
+      .eq("id", id);
+
+    if (error) {
+      showToast("Kon vloergegevens niet wijzigen", "error");
+      return;
+    }
+    showToast("Vloer bijgewerkt", "success");
+    await getVloerInfo();
+  }
+
+  async function handleAddOpmerking() {
+    if (!newOpmerking.trim()) return;
+    setSavingOpmerking(true);
+    try {
+      const { data } = await supabase
+        .from("kamer_vloeren")
+        .select("opmerkingen")
+        .eq("id", id)
+        .single();
+
+      const current = (data?.opmerkingen as string[]) ?? [];
+
+      await supabase
+        .from("kamer_vloeren")
+        .update({ opmerkingen: [...current, newOpmerking.trim()] })
+        .eq("id", id);
+
+      showToast("Opmerking toegevoegd", "success");
+      setNewOpmerking("");
+      setSavingOpmerking(false);
+      setShowAddOpmerking(false);
+      await getVloerOpmerkingen();
+    } catch {
+      showToast("Kon melding niet opslaan", "error");
+    }
+  }
+
+  const [vloerOpmerkingen, setVloerOpmerkingen] = useState<string[]>([]);
+
+  async function getVloerOpmerkingen() {
+    if (!id) return;
+    const { data } = await supabase
+      .from("kamer_vloeren")
+      .select("opmerkingen")
+      .eq("id", id)
+      .single();
+    setVloerOpmerkingen((data?.opmerkingen as string[]) ?? []);
+  }
+
+  useEffect(() => {
+    getVloerOpmerkingen();
+  }, [id]);
   const lastWasbeurt = wasbeurten[0];
   const opmerkingen = alleOpmerkingen;
 
@@ -334,7 +435,63 @@ export default function VloerPaspoortBekijkenPage() {
               )}
             </div>
           ))}
+
+          <div className="pt-2 border-t border-slate-50">
+            <button
+              onClick={() => {
+                setUpdatedVloertypeId(vloerInfo?.vloertype_id ?? "");
+                setUpdatedM2(vloerInfo?.vierkante_meter ?? 0);
+                setUpdatedStatus(vloerInfo?.status ?? "Goed");
+                setShowEditFloorDetails(true);
+              }}
+              className="w-full flex items-center justify-center gap-2 cursor-pointer px-4 py-2 text-sm font-semibold text-p bg-p/5 hover:bg-p/10 rounded-xl transition-colors"
+            >
+              <PencilSquareIcon className="w-4 h-4" />
+              Bewerken
+            </button>
+          </div>
         </div>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        <div className="flex items-center justify-between px-4 md:px-5 py-4 md:py-5 border-b border-slate-50">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center">
+              <ChatBubbleBottomCenterTextIcon className="w-5 h-5 text-amber-500" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-slate-800">
+                Opmerkingen
+              </h2>
+              <p className="text-sm text-slate-400">Notities bij deze vloer</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowAddOpmerking(true)}
+            className="w-7 h-7 flex items-center justify-center cursor-pointer rounded-lg bg-slate-100 hover:bg-slate-200 transition-colors"
+          >
+            <PlusIcon className="w-4 h-4 text-slate-500" />
+          </button>
+        </div>
+
+        {vloerOpmerkingen.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <ChatBubbleBottomCenterTextIcon className="w-6 h-6 text-slate-200 mb-2" />
+            <p className="text-xs text-slate-300">Geen opmerkingen</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-50">
+            {vloerOpmerkingen.map((o, i) => (
+              <div
+                key={i}
+                className="flex items-start gap-2.5 px-4 md:px-5 py-3"
+              >
+                <div className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0 mt-1.5" />
+                <p className="text-sm text-slate-600 leading-snug">{o}</p>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
         <div className="flex items-center gap-3 px-4 md:px-5 py-4 md:py-5 border-b border-slate-50">
@@ -391,6 +548,157 @@ export default function VloerPaspoortBekijkenPage() {
         <Toast message={toast.message} type={toast.type} onClose={hideToast} />
       )}
 
+      {showAddOpmerking && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+          <div
+            className="bg-white rounded-2xl shadow-xl border border-slate-100 w-full max-w-md mx-4 p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+                  Opmerking toevoegen
+                </p>
+                <h2 className="text-lg font-bold text-slate-800 mt-0.5">
+                  {vloerInfo?.vloertype_naam}
+                </h2>
+              </div>
+              <button
+                onClick={() => setShowAddOpmerking(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 transition-colors"
+              >
+                <XMarkIcon className="w-4 h-4 text-slate-500" />
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold uppercase tracking-widest text-slate-400">
+                Opmerking
+              </label>
+              <textarea
+                value={newOpmerking}
+                onChange={(e) => setNewOpmerking(e.target.value)}
+                rows={4}
+                placeholder="Typ hier je opmerking..."
+                className="w-full px-3 py-2.5 text-sm font-medium text-slate-700 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-p/40 focus:ring-2 focus:ring-p/10 transition-all resize-none placeholder:text-slate-300"
+              />
+              <p className="text-[11px] text-slate-300 text-right">
+                {newOpmerking.length} tekens
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 mt-6">
+              <button
+                onClick={() => {
+                  setNewOpmerking("");
+                  setShowAddOpmerking(false);
+                }}
+                className="flex-1 px-4 py-2.5 text-sm font-semibold text-slate-500 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors"
+              >
+                Annuleren
+              </button>
+              <button
+                onClick={handleAddOpmerking}
+                disabled={!newOpmerking.trim() || savingOpmerking}
+                className="flex-1 px-4 py-2.5 text-sm font-semibold text-white bg-p hover:bg-p/90 rounded-xl transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {savingOpmerking ? "Opslaan..." : "Opslaan"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showEditFloorDetails && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+          <div
+            className="bg-white rounded-2xl shadow-xl border border-slate-100 w-full max-w-md mx-4 p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">
+                  Vloer bewerken
+                </p>
+                <h2 className="text-lg font-bold text-slate-800 mt-0.5">
+                  {vloerInfo?.vloertype_naam}
+                </h2>
+              </div>
+              <button
+                onClick={() => setShowEditFloorDetails(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 transition-colors"
+              >
+                <XMarkIcon className="w-4 h-4 text-slate-500" />
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold uppercase tracking-widest text-slate-400">
+                  Vloertype
+                </label>
+                <select
+                  value={updatedVloertypeId}
+                  onChange={(e) => setUpdatedVloertypeId(e.target.value)}
+                  className="w-full px-3 py-2.5 text-sm font-medium text-slate-700 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-p/40 focus:ring-2 focus:ring-p/10 transition-all"
+                >
+                  {allVloerTypes.map((type) => (
+                    <option key={type.id} value={type.id}>
+                      {type.naam}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold uppercase tracking-widest text-slate-400">
+                  Oppervlak (m²)
+                </label>
+                <input
+                  type="number"
+                  value={updatedM2}
+                  onChange={(e) => setUpdatedM2(Number(e.target.value))}
+                  className="w-full px-3 py-2.5 text-sm font-medium text-slate-700 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-p/40 focus:ring-2 focus:ring-p/10 transition-all"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold uppercase tracking-widest text-slate-400">
+                  Status
+                </label>
+                <select
+                  value={updatedStatus}
+                  onChange={(e) => setUpdatedStatus(e.target.value)}
+                  className="w-full px-3 py-2.5 text-sm font-medium text-slate-700 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-p/40 focus:ring-2 focus:ring-p/10 transition-all"
+                >
+                  <option value="Goed">Goed</option>
+                  <option value="Matig">Matig</option>
+                  <option value="Slecht">Slecht</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 mt-6">
+              <button
+                onClick={() => setShowEditFloorDetails(false)}
+                className="flex-1 px-4 py-2.5 text-sm font-semibold text-slate-500 cursor-pointer bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors"
+              >
+                Annuleren
+              </button>
+              <button
+                onClick={() => {
+                  handleUpdate();
+                  setShowEditFloorDetails(false);
+                }}
+                className="flex-1 px-4 py-2.5 text-sm font-semibold text-white bg-p cursor-pointer hover:bg-p/90 rounded-xl transition-colors"
+              >
+                Opslaan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col flex-1 h-screen">
         <Topbar
           title="Vloerpaspoort"
@@ -399,23 +707,25 @@ export default function VloerPaspoortBekijkenPage() {
 
         <main className="flex-1 overflow-auto p-3 md:p-8">
           <div className="space-y-4 md:space-y-6">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-p/60 mb-1">
-                Vloerpaspoort
-              </p>
-              <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
-                {loadingInfo
-                  ? "Laden..."
-                  : (vloerInfo?.vloertype_naam ?? "Onbekend vloertype")}
-              </h1>
-              {vloerInfo && (
-                <div className="flex flex-wrap items-center gap-2 mt-2">
-                  <StatusBadge status={vloerInfo.status} />
-                  <span className="text-sm text-slate-400 font-medium">
-                    {formatNumber(vloerInfo.vierkante_meter)}m²
-                  </span>
-                </div>
-              )}
+            <div className="flex flex-row justify-between">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-p/60 mb-1">
+                  Vloerpaspoort
+                </p>
+                <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
+                  {loadingInfo
+                    ? "Laden..."
+                    : (vloerInfo?.vloertype_naam ?? "Onbekend vloertype")}
+                </h1>
+                {vloerInfo && (
+                  <div className="flex flex-wrap items-center gap-2 mt-2">
+                    <StatusBadge status={vloerInfo.status} />
+                    <span className="text-sm text-slate-400 font-medium">
+                      {formatNumber(vloerInfo.vierkante_meter)}m²
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="hidden xl:grid xl:grid-cols-[1fr_320px] gap-6 items-start">
@@ -467,7 +777,6 @@ export default function VloerPaspoortBekijkenPage() {
                 )}
                 {historyCard()}
                 {opmerkingenCard()}
-                {meldingenCard()}
               </div>
               {sidebarContent}
             </div>
@@ -521,7 +830,6 @@ export default function VloerPaspoortBekijkenPage() {
               {sidebarContent}
               {historyCard()}
               {opmerkingenCard()}
-              {meldingenCard()}
             </div>
           </div>
         </main>
@@ -630,7 +938,9 @@ export default function VloerPaspoortBekijkenPage() {
             <ChatBubbleBottomCenterTextIcon className="w-5 h-5 text-amber-500" />
           </div>
           <div className="flex-1">
-            <h2 className="text-base font-bold text-slate-800">Opmerkingen</h2>
+            <h2 className="text-base font-bold text-slate-800">
+              Project Opmerkingen
+            </h2>
             <p className="text-sm text-slate-400">
               {opmerkingen.length} opmerking
               {opmerkingen.length !== 1 ? "en" : ""} geregistreerd
@@ -674,107 +984,6 @@ export default function VloerPaspoortBekijkenPage() {
                 </div>
               </div>
             ))}
-          </div>
-        )}
-      </div>
-    );
-  }
-  function meldingenCard() {
-    return (
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-        <div className="flex items-start gap-3 px-4 md:px-6 py-4 md:py-5 border-b border-slate-50">
-          <div className="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
-            <ExclamationTriangleIcon className="w-5 h-5 text-amber-500" />
-          </div>
-          <div className="flex-1">
-            <h2 className="text-base font-bold text-slate-800">Meldingen</h2>
-            <p className="text-sm text-slate-400">
-              {meldingen.length} melding{meldingen.length !== 1 ? "en" : ""}{" "}
-              voor deze vloer
-            </p>
-          </div>
-          {meldingen.length > 0 && (
-            <span
-              className={`text-xs font-bold px-2.5 py-1 rounded-full shrink-0 border ${
-                meldingen.some((m) => !m.afgehandeld)
-                  ? "text-amber-600 bg-amber-50 border-amber-100"
-                  : "text-emerald-600 bg-emerald-50 border-emerald-100"
-              }`}
-            >
-              {meldingen.filter((m) => !m.afgehandeld).length > 0
-                ? `${meldingen.filter((m) => !m.afgehandeld).length} open`
-                : "Alles afgehandeld"}
-            </span>
-          )}
-        </div>
-
-        {meldingen.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-10 text-center">
-            <CheckCircleIcon className="w-7 h-7 text-slate-200 mb-2" />
-            <p className="text-sm text-slate-300">
-              Geen meldingen geregistreerd
-            </p>
-          </div>
-        ) : (
-          <div className="divide-y divide-slate-50 max-h-64 overflow-y-auto">
-            {meldingen.map((m) => (
-              <div
-                key={m.id}
-                onClick={() => router.push(`/meldingen/bekijken/${m.id}`)}
-                className="flex items-start gap-3 px-4 md:px-6 py-3.5 cursor-pointer hover:bg-slate-50 active:bg-slate-100 transition-colors"
-              >
-                <div
-                  className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${m.afgehandeld ? "bg-emerald-50" : "bg-amber-50"}`}
-                >
-                  {m.afgehandeld ? (
-                    <CheckCircleIcon className="w-4 h-4 text-emerald-500" />
-                  ) : (
-                    <ExclamationTriangleIcon className="w-4 h-4 text-amber-500" />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2 mb-0.5 flex-wrap">
-                    <p className="text-xs font-bold text-slate-700 truncate">
-                      {m.titel}
-                    </p>
-                    <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0 ${
-                        m.afgehandeld
-                          ? "bg-emerald-50 text-emerald-600 border-emerald-100"
-                          : "bg-amber-50 text-amber-600 border-amber-100"
-                      }`}
-                    >
-                      {m.afgehandeld ? "Afgehandeld" : "Openstaand"}
-                    </span>
-                  </div>
-                  {m.beschrijving && (
-                    <p className="text-xs text-slate-500 leading-snug line-clamp-2">
-                      {m.beschrijving}
-                    </p>
-                  )}
-                  <p className="text-[10px] text-slate-400 mt-1">
-                    {formatDate(m.aangemaakt_op)}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-        {/* Footer totals */}
-        {meldingen.length > 0 && (
-          <div className="px-4 md:px-6 py-3 bg-slate-50/60 border-t border-slate-100 flex items-center gap-4">
-            <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full bg-amber-400" />
-              <span className="text-xs text-slate-500">
-                {meldingen.filter((m) => !m.afgehandeld).length} openstaand
-              </span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full bg-emerald-400" />
-              <span className="text-xs text-slate-500">
-                {meldingen.filter((m) => m.afgehandeld).length} afgehandeld
-              </span>
-            </div>
           </div>
         )}
       </div>

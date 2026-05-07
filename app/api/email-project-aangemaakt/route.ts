@@ -65,7 +65,7 @@ export async function POST(req: Request) {
   try {
     const { data: data3, error: error3 } = await resend.emails.send({
       from: "Duofort <no-reply@rso-floorcontrol.nl>",
-      to: [...emails, "marco@kotteman.nl", "max@kotteman.nl"],
+      to: [...emails, "max@kotteman.nl"],
       subject: "Nieuw project ingepland door Duofort",
       react: ProjectAangemaaktEmail({
         projectNaam: data?.naam,

@@ -256,7 +256,7 @@ export default function RapportenPage() {
                             Bekijk project
                           </p>
                           <p className="text-xs text-p/60">
-                            Ga naar projectoverzicht
+                            Bekijk het rapport van dit project
                           </p>
                         </div>
                         <ChevronRightIcon className="w-4 h-4 text-p/40 group-hover:text-p shrink-0 transition-colors" />

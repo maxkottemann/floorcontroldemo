@@ -8,4 +8,5 @@ export interface Locatie {
   contact_persoon?: string;
   telefoonnummer?: string;
   perceel: string;
+  laatste_onderhoud?: string;
 }

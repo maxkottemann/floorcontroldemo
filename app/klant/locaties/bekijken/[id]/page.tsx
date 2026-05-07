@@ -265,7 +265,7 @@ export default function LocatieBekijkenPage() {
               </div>
               <div className="divide-y divide-gray-50">
                 <a
-                  href={`/vloerenpaspoort`}
+                  href={`/klant/vloerenpaspoort?LocatieId=${id}`}
                   className="flex items-center gap-3 px-4 md:px-5 py-3.5 hover:bg-gray-50 active:bg-gray-100 transition-colors group"
                 >
                   <div className="w-8 h-8 rounded-lg bg-[#154273]/10 flex items-center justify-center shrink-0 group-hover:bg-[#154273]/20 transition-colors">

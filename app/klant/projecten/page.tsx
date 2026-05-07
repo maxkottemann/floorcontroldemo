@@ -159,7 +159,7 @@ export default function ProjectenOverzichtPage() {
                 <div className="w-px h-6 bg-slate-200 shrink-0" />
 
                 <button
-                  onClick={() => router.push("/klant/projecten/vloerscan")}
+                  onClick={() => ("/klant/projecten/vloerscan")}
                   className="flex items-center gap-2 px-3 md:px-4 py-2.5 bg-white text-slate-600 text-sm font-bold rounded-xl shadow-sm border border-slate-200 hover:bg-slate-50 transition-colors cursor-pointer whitespace-nowrap"
                 >
                   <ClipboardDocumentCheckIcon className="w-4 h-4 shrink-0" />
@@ -255,7 +255,7 @@ export default function ProjectenOverzichtPage() {
                           <tr
                             key={p.id}
                             onClick={() =>
-                              router.push(`/projecten/bekijken/${p.id}`)
+                              router.push(`/klant/projecten/bekijken/${p.id}`)
                             }
                             className="cursor-pointer transition-colors group hover:bg-blue-50/40 bg-white"
                           >
@@ -327,7 +327,7 @@ export default function ProjectenOverzichtPage() {
                       <div
                         key={p.id}
                         onClick={() =>
-                          router.push(`/projecten/bekijken/${p.id}`)
+                          router.push(`/klant/projecten/bekijken/${p.id}`)
                         }
                         className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 cursor-pointer active:bg-slate-50 transition-colors"
                       >
