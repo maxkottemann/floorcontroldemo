@@ -5,6 +5,7 @@ export interface Locatie {
   extra_checkin?: boolean;
   plaats?: string;
   adres?: string;
+  afstand?: string;
   contact_persoon?: string;
   telefoonnummer?: string;
   perceel?: string;
