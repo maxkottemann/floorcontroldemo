@@ -12,12 +12,14 @@ import {
   MagnifyingGlassIcon,
   ChartPieIcon,
   WrenchIcon,
+  WrenchScrewdriverIcon,
 } from "@heroicons/react/24/outline";
 import { BsLeaf, BsPassport, BsThermometer } from "react-icons/bs";
 import { FcCheckmark } from "react-icons/fc";
-import { GiCheckMark } from "react-icons/gi";
+import { GiCheckMark, GiSprout } from "react-icons/gi";
 import { MagnifyingGlassCircleIcon } from "@heroicons/react/24/solid";
-import { MdRequestQuote } from "react-icons/md";
+import { MdEco, MdRequestQuote } from "react-icons/md";
+import { BiLeaf } from "react-icons/bi";
 
 interface SidebarProps {
   className?: string;
@@ -78,7 +80,7 @@ export default function SidebarClient({
     },
     {
       href: "/klant/milieu",
-      icon: <BsLeaf className="w-5 h-5" />,
+      icon: <BiLeaf className="w-5 h-5" />,
       label: "Milieu",
     },
     {
@@ -88,7 +90,7 @@ export default function SidebarClient({
     },
     {
       href: "/klant/meldingen",
-      icon: <WrenchIcon className="w-5 h-5" />,
+      icon: <WrenchScrewdriverIcon className="w-5 h-5" />,
       label: "Onderhoud aanvragen",
     },
   ];

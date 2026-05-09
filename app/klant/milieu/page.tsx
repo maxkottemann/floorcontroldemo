@@ -21,6 +21,7 @@ import { GiWaterDrop, GiWaterRecycling } from "react-icons/gi";
 import { BsLightning } from "react-icons/bs";
 import { formatNumber } from "@/lib/utils";
 import Datepicker from "@/components/layout/datepicker";
+import SidebarClient from "@/components/layout/sidebarclient";
 
 interface Locatie {
   id: string;
@@ -629,7 +630,7 @@ export default function MilieuPage() {
 
   return (
     <div className="min-h-screen flex bg-[#F5F6FA]">
-      <Sidebar
+      <SidebarClient
         className="fixed top-0 left-0 h-screen"
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
