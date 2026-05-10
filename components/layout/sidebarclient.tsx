@@ -123,7 +123,7 @@ export default function SidebarClient({
           <img
             src="/floorcontrol.png"
             alt="Logo"
-            className="w-full  mx-auto mt-3 opacity-0"
+            className="w-full  mx-auto mt-3 "
           />
         </div>
 

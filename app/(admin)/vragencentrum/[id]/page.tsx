@@ -12,6 +12,7 @@ import {
   PaperAirplaneIcon,
   CheckIcon,
 } from "@heroicons/react/24/outline";
+import Sidebar from "@/components/layout/sidebar";
 
 interface Bericht {
   id: string;
@@ -103,7 +104,7 @@ export default function VraagThreadPage() {
     const { data, error } = await supabase
       .from("vraag_berichten")
       .select(
-        "id, profiel_id, profielen(naam), bericht, gelezen, aangemaakt_op",
+        "id, profiel_id, profiel_naam:profielen(naam), bericht, gelezen, aangemaakt_op",
       )
       .eq("thread_id", threadId)
       .order("aangemaakt_op", { ascending: true });
@@ -111,12 +112,11 @@ export default function VraagThreadPage() {
       showToast("Kon berichten niet laden", "error");
       return;
     }
-    console.log(data);
     setBerichten(
       (data ?? []).map((d: any) => ({
         id: d.id,
         profiel_id: d.profiel_id,
-        profiel_naam: d.profiel_naam?.naam ?? "Duofort",
+        profiel_naam: d.profiel_naam?.naam ?? "Onbekend",
         bericht: d.bericht,
         gelezen: d.gelezen,
         aangemaakt_op: d.aangemaakt_op,
@@ -210,7 +210,7 @@ export default function VraagThreadPage() {
 
   return (
     <div className="min-h-screen flex bg-[#F5F6FA]">
-      <SidebarClient
+      <Sidebar
         className="fixed top-0 left-0 h-screen"
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}

@@ -16,6 +16,7 @@ import {
 import { BsLeaf, BsPassport } from "react-icons/bs";
 import { PiWechatLogo } from "react-icons/pi";
 import { GiCheckMark, GiProgression } from "react-icons/gi";
+import { BiQuestionMark } from "react-icons/bi";
 
 interface SidebarProps {
   className?: string;
@@ -89,6 +90,11 @@ export default function Sidebar({ className, open, onClose }: SidebarProps) {
       href: "/gebruikers",
       icon: <UserCircleIcon className="w-5 h-5" />,
       label: "Gebruikers",
+    },
+    {
+      href: "/vragencentrum",
+      icon: <BiQuestionMark className="w-5 h-5" />,
+      label: "Vragencentrum",
     },
   ];
 
