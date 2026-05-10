@@ -116,7 +116,7 @@ export default function Sidebar({ className, open, onClose }: SidebarProps) {
           <img
             src="/floorcontrol.png"
             alt="Logo"
-            className="w-full mx-auto mt-3"
+            className="w-full mx-auto mt-3 "
           />
         </div>
 

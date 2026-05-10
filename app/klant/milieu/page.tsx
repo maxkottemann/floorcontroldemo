@@ -2,7 +2,6 @@
 
 import Toast from "@/components/layout/toast";
 import Topbar from "@/components/layout/topbar";
-import Sidebar from "@/components/layout/sidebar";
 import { useToast } from "@/components/hooks/usetoasts";
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/lib/supabase";

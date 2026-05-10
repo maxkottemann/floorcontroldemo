@@ -19,7 +19,7 @@ import { FcCheckmark } from "react-icons/fc";
 import { GiCheckMark, GiSprout } from "react-icons/gi";
 import { MagnifyingGlassCircleIcon } from "@heroicons/react/24/solid";
 import { MdEco, MdRequestQuote } from "react-icons/md";
-import { BiLeaf } from "react-icons/bi";
+import { BiLeaf, BiQuestionMark } from "react-icons/bi";
 
 interface SidebarProps {
   className?: string;
@@ -93,6 +93,11 @@ export default function SidebarClient({
       icon: <WrenchScrewdriverIcon className="w-5 h-5" />,
       label: "Onderhoud aanvragen",
     },
+    {
+      href: "/klant/vragencentrum",
+      icon: <BiQuestionMark className="w-5 h-5" />,
+      label: "Vragencentrum",
+    },
   ];
 
   return (
@@ -118,7 +123,7 @@ export default function SidebarClient({
           <img
             src="/floorcontrol.png"
             alt="Logo"
-            className="w-full mx-auto mt-3"
+            className="w-full  mx-auto mt-3 opacity-0"
           />
         </div>
 
