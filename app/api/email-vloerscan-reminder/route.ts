@@ -69,7 +69,7 @@ export async function POST(req: Request) {
 
   try {
     const { data: emailData, error: emailError } = await resend.emails.send({
-      from: "Duofort <no-reply@rso-floorcontrol.nl>",
+      from: "CM Software <no-reply@rso-floorcontrol.nl>",
       to: [...emails, "max@kotteman.nl"],
       subject: `Herinnering: Vloerscan over ${dagen} ${dagen === 1 ? "dag" : "dagen"}`,
       react: VloerscanReminderEmail({

@@ -19,7 +19,7 @@ export default function WachtwoordVergetenPage() {
     setLoading(true);
     setError("");
     const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: "https://rso-floorcontrol.nl/wachtwoordherstellen",
+      redirectTo: "https://floorcontroldemo.vercel.app/wachtwoordherstellen",
     });
     setLoading(false);
     if (err) {
@@ -33,7 +33,7 @@ export default function WachtwoordVergetenPage() {
     <div className="min-h-screen flex">
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
         <img
-          src="/logingbg.png"
+          src="/bg.jpg"
           alt="FloorControl"
           className="absolute inset-0 w-full h-full object-cover"
         />
@@ -51,7 +51,7 @@ export default function WachtwoordVergetenPage() {
               Duofort B.V.
             </p>
             <h1 className="text-4xl font-bold text-white leading-tight mb-4">
-              Floor<span className="text-p">Control</span>
+              Floor<span className="text-blue-500">Control</span>
             </h1>
             <p className="text-white/70 text-base leading-relaxed max-w-xs">
               Beheer uw locaties, projecten en vloeren vanuit één platform.
