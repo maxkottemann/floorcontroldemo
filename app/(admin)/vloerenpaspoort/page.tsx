@@ -102,7 +102,7 @@ function LocatiePicker({
 
   const filtered = locaties.filter((l) => {
     const matchZoek =
-      l.naam.toLowerCase().includes(zoek.toLowerCase()) ||
+      l.naam!.toLowerCase().includes(zoek.toLowerCase()) ||
       (l.plaats ?? "").toLowerCase().includes(zoek.toLowerCase());
     const matchType = filterType.length
       ? filterType.includes(l.type ?? "")
