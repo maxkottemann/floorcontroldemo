@@ -768,7 +768,7 @@ export default function ProjectWijzigenPage() {
   }, []);
 
   const filteredLocatie = alleLocaties.filter((l) =>
-    l.naam.toLowerCase().includes(locatieZoekterm.toLowerCase()),
+    l.naam!.toLowerCase().includes(locatieZoekterm.toLowerCase()),
   );
   const beschikbareBussen = alleBussen.filter(
     (b) => !projectBussen.find((pb) => pb.bus.id === b.id),
