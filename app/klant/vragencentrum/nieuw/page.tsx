@@ -80,7 +80,7 @@ export default function NieuweVraagPage() {
       }
 
       showToast("Bericht verzonden", "success");
-      setTimeout(() => router.push(`/klant/vragen/${thread.id}`), 800);
+      setTimeout(() => router.push(`/klant/vragencentrum/${thread.id}`), 800);
     } catch {
       showToast("Er ging iets mis", "error");
       setSaving(false);

@@ -36,7 +36,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex">
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
         <img
-          src="/logingbg.png"
+          src="/bg.jpg"
           alt="FloorControl"
           className="absolute inset-0 w-full h-full object-cover"
         />
@@ -49,12 +49,12 @@ export default function LoginPage() {
               className="h-0 object-contain brightness-0 invert"
             />
           </div>
-          <div>
+          <div className="mt-12">
             <p className="text-white/60 text-xs font-bold uppercase tracking-[0.2em] mb-3">
-              Duofort B.V.
+              CM Software
             </p>
             <h1 className="text-4xl font-bold text-white leading-tight mb-4">
-              Floor<span className="text-p">Control</span>
+              Floor<span className="text-blue-500">Control</span>
             </h1>
             <p className="text-white/70 text-base leading-relaxed max-w-xs">
               Beheer uw locaties, projecten en vloeren vanuit één platform.
